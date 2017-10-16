@@ -14,22 +14,28 @@ var (
 	redisPassword string
 )
 
-func getLog() (json.RawMessage, error) {
+func getLog() (*query, error) {
 	var data json.RawMessage
 
 	conn := pool.Get()
 	defer conn.Close()
 
-	log, err := redis.Values(conn.Do("LPOP", redisKey()))
+	reply, err := conn.Do("LPOP", redisKey())
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := redis.Scan(log, &data); err != nil {
+	data, err = redis.Bytes(reply, err)
+	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	query, err := newQuery(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return query, nil
 }
 
 //SetupRedis setup redis
