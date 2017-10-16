@@ -1,0 +1,33 @@
+{
+	"ImportPath": "github.com/brianbroderick/pg_log_shipper",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/brettallred/go-logit",
+			"Rev": "2db7d458d4e47aeaf31ee7a6d0a6cb1e5786413b"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/internal",
+			"Comment": "v1.1.0-17-g34a326d",
+			"Rev": "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
+		},
+		{
+			"ImportPath": "github.com/garyburd/redigo/redis",
+			"Comment": "v1.1.0-17-g34a326d",
+			"Rev": "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
+		},
+		{
+			"ImportPath": "github.com/lfittl/pg_query_go",
+			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
+		},
+		{
+			"ImportPath": "github.com/lfittl/pg_query_go/nodes",
+			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
+		},
+		{
+			"ImportPath": "github.com/lfittl/pg_query_go/parser",
+			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
+		}
+	]
+}
