@@ -20,7 +20,7 @@ func getLog() (json.RawMessage, error) {
 	conn := pool.Get()
 	defer conn.Close()
 
-	log, err := redis.Values(conn.Do("LPOP", "postgres"))
+	log, err := redis.Values(conn.Do("LPOP", redisKey()))
 	if err != nil {
 		return nil, err
 	}

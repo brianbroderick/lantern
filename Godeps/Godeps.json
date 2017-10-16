@@ -18,6 +18,11 @@
 			"Rev": "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
 		},
 		{
+			"ImportPath": "github.com/joho/godotenv",
+			"Comment": "v1.2.0",
+			"Rev": "a79fa1e548e2c689c241d10173efd51e5d689d5b"
+		},
+		{
 			"ImportPath": "github.com/lfittl/pg_query_go",
 			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
 		},
