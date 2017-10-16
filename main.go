@@ -1,27 +1,17 @@
 package main
 
-import (
-	"fmt"
-	"os"
-
-	pg_query "github.com/lfittl/pg_query_go"
+var (
+	//RedisKey is the key that postgres logs to
+	RedisKey = "postgres"
 )
 
 func main() {
-	arg := os.Args[1]
-	tree, err := pg_query.Normalize(arg)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-	}
+	initialSetup()
 
-	fmt.Printf("%s\n", tree)
+	forever := make(chan bool)
+	<-forever
 }
 
-func normalizeQuery(sql string) ([]byte, error) {
-	tree, err := pg_query.Normalize(sql)
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(tree), err
+func initialSetup() {
+	SetupRedis()
 }
