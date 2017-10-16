@@ -1,12 +1,18 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"regexp"
+	"strconv"
+)
 
 type query struct {
 	query           string
 	normalizedQuery string
 	duration        float64
 	message         string
+	commandTag      string
+	prepared        string
 	data            map[string]*json.RawMessage
 }
 
@@ -34,7 +40,26 @@ func newQuery(b []byte) (*query, error) {
 }
 
 func parseMessage(q *query) error {
-	q.query = "Howdy Doody"
+	r := regexp.MustCompile(`duration: (?P<duration>\d+\.\d+) ms\s+(?P<commandTag>[a-zA-Z0-9]+)\s+(?P<prepared>.*):\s*(?P<query>.*)`)
+	match := r.FindStringSubmatch(q.message)
+	result := make(map[string]string)
+	for i, name := range r.SubexpNames() {
+		if i != 0 {
+			result[name] = match[i]
+		}
+	}
+
+	duration, err := strconv.ParseFloat(result["duration"], 64)
+	if err != nil {
+		return err
+	}
+	q.duration = duration
+	q.commandTag = result["commandTag"]
+	q.prepared = result["prepared"]
+	q.query = result["query"]
+
+	// q.query = "Howdy Doody"
+	// "duration: 0.051 ms  execute <unnamed>: select * from servers"
 
 	return nil
 }

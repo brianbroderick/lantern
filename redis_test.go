@@ -30,7 +30,10 @@ func TestToAndFromRedis(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 
-	assert.Equal(t, "Howdy Doody", query.query)
+	assert.Equal(t, 0.051, query.duration)
+	assert.Equal(t, "execute", query.commandTag)
+	assert.Equal(t, "<unnamed>", query.prepared)
+	assert.Equal(t, "select * from servers", query.query)
 
 	conn.Do("DEL", redisKey())
 }
