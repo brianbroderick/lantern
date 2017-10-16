@@ -15,9 +15,10 @@ func init() {
 func TestToAndFromRedis(t *testing.T) {
 	initialSetup()
 
-	sample := readPayload("execute.json")
 	conn := pool.Get()
 	defer conn.Close()
+
+	sample := readPayload("execute.json")
 	conn.Do("LPUSH", redisKey(), sample)
 
 	llen, err := conn.Do("LLEN", redisKey())
@@ -29,7 +30,7 @@ func TestToAndFromRedis(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 
-	// fmt.Printf("%+v\n", query)
+	assert.Equal(t, "Howdy Doody", query.query)
 
 	conn.Do("DEL", redisKey())
 }

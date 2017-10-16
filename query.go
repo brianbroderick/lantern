@@ -23,9 +23,18 @@ func newQuery(b []byte) (*query, error) {
 		}
 	}
 
-	var q = new(query)
-	q.data = data
-	q.message = message
+	var que = new(query)
+	que.data = data
+	que.message = message
+	if err := parseMessage(que); err != nil {
+		return nil, err
+	}
 
-	return q, nil
+	return que, nil
+}
+
+func parseMessage(q *query) error {
+	q.query = "Howdy Doody"
+
+	return nil
 }
