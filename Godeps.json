@@ -1,0 +1,34 @@
+{
+	"ImportPath": "github.com/brianbroderick/pg_query_cli",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.0-6-gadab964",
+			"Rev": "adab96458c51a58dc1783b3335dcce5461522e75"
+		},
+		{
+			"ImportPath": "github.com/lfittl/pg_query_go",
+			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
+		},
+		{
+			"ImportPath": "github.com/lfittl/pg_query_go/nodes",
+			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
+		},
+		{
+			"ImportPath": "github.com/lfittl/pg_query_go/parser",
+			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.4-66-gf6abca5",
+			"Rev": "f6abca593680b2315d2075e0f5e2a9751e3f431a"
+		}
+	]
+}
