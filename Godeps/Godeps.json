@@ -8,6 +8,11 @@
 			"Rev": "2db7d458d4e47aeaf31ee7a6d0a6cb1e5786413b"
 		},
 		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.0-6-gadab964",
+			"Rev": "adab96458c51a58dc1783b3335dcce5461522e75"
+		},
+		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
 			"Comment": "v1.1.0-17-g34a326d",
 			"Rev": "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
@@ -33,6 +38,36 @@
 		{
 			"ImportPath": "github.com/lfittl/pg_query_go/parser",
 			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
+		},
+		{
+			"ImportPath": "github.com/pkg/errors",
+			"Comment": "v0.8.0-6-g2b3a18b",
+			"Rev": "2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.4-66-gf6abca5",
+			"Rev": "f6abca593680b2315d2075e0f5e2a9751e3f431a"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v5",
+			"Comment": "v5.0.52",
+			"Rev": "3f891f0d04aba0bba9a8bd365a9d3846efcb3527"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v5/config",
+			"Comment": "v5.0.52",
+			"Rev": "3f891f0d04aba0bba9a8bd365a9d3846efcb3527"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v5/uritemplates",
+			"Comment": "v5.0.52",
+			"Rev": "3f891f0d04aba0bba9a8bd365a9d3846efcb3527"
 		}
 	]
 }

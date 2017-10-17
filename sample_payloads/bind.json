@@ -10,6 +10,6 @@
   "virtual_transaction_id": "2/48859",
   "error_severity": "LOG",
   "application_name": "SomeApp",
-  "message": "duration: 0.311 ms  bind <unnamed>: select * from servers",
+  "message": "duration: 0.311 ms  bind <unnamed>: select * from servers where id = 1 and name = 'localhost'",
   "@timestamp": "2017-10-16T15:50:35.840+0000"
 }

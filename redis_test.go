@@ -25,7 +25,7 @@ func TestToAndFromRedis(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), llen)
 
-	message := "duration: 0.051 ms  execute <unnamed>: select * from servers"
+	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id = 1 and name = 'localhost'"
 	query, err := getLog()
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
@@ -33,7 +33,10 @@ func TestToAndFromRedis(t *testing.T) {
 	assert.Equal(t, 0.051, query.duration)
 	assert.Equal(t, "execute", query.commandTag)
 	assert.Equal(t, "<unnamed>", query.prepared)
-	assert.Equal(t, "select * from servers", query.query)
+	assert.Equal(t, "select * from servers where id = 1 and name = 'localhost'", query.query)
+
+	pgQuery := "select * from servers where id = ? and name = ?"
+	assert.Equal(t, pgQuery, query.normalizedQuery)
 
 	conn.Do("DEL", redisKey())
 }

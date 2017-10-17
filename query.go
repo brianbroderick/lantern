@@ -57,9 +57,11 @@ func parseMessage(q *query) error {
 	q.commandTag = result["commandTag"]
 	q.prepared = result["prepared"]
 	q.query = result["query"]
-
-	// q.query = "Howdy Doody"
-	// "duration: 0.051 ms  execute <unnamed>: select * from servers"
+	pgQuery, err := normalizeQuery(result["query"])
+	if err != nil {
+		return err
+	}
+	q.normalizedQuery = string(pgQuery)
 
 	return nil
 }
