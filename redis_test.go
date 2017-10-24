@@ -45,17 +45,17 @@ func TestLogFlow(t *testing.T) {
 	// fmt.Println("")
 	// fmt.Println(query.uniqueSha)
 
-	q, ok := queryMap[query.uniqueSha]
+	_, ok := queryMap[query.uniqueSha]
 	assert.False(t, ok)
-	assert.Nil(t, q)
 
-	if ok == false {
-		queryMap[query.uniqueSha] = query
-	} else {
-		queryMap[query.uniqueSha].count++
-	}
-
+	addToQueries(query)
 	assert.Equal(t, int32(1), queryMap[query.uniqueSha].count)
+
+	addToQueries(query)
+
+	_, ok = queryMap[query.uniqueSha]
+	assert.True(t, ok)
+	assert.Equal(t, int32(2), queryMap[query.uniqueSha].count)
 
 	// que, ok := queryMap[query.uniqueSha]
 	// assert.False(t, ok)

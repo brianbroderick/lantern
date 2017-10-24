@@ -45,15 +45,15 @@ func newQuery(b []byte) (*query, error) {
 	return que, nil
 }
 
-// func addToQueries(q *query) {
-// que, ok := queryMap[q.uniqueSha]
-// if ok == true {
-// 	que.count++
-// 	que.duration += q.duration
-// } else {
-// 	queryMap[q.uniqueSha] = q
-// }
-// }
+func addToQueries(q *query) {
+	_, ok := queryMap[q.uniqueSha]
+	if ok == true {
+		queryMap[q.uniqueSha].count++
+		queryMap[q.uniqueSha].duration += q.duration
+	} else {
+		queryMap[q.uniqueSha] = q
+	}
+}
 
 func parseMessage(q *query) error {
 	r := regexp.MustCompile(`duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>[a-zA-Z0-9]+)\s+(?P<prepared>.*):\s*(?P<query>.*)`)
