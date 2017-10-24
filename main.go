@@ -7,6 +7,8 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var queryMap = make(map[string]*query)
+
 func main() {
 	initialSetup()
 

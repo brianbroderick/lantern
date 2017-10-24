@@ -10,8 +10,8 @@ func init() {
 }
 
 func TestElastic(t *testing.T) {
-	initialSetup()
+	// initialSetup()
 
-	saveToElastic()
+	// saveToElastic()
 
 }

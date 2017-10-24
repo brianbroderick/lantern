@@ -12,7 +12,7 @@ func init() {
 	os.Setenv("PLATFORM_ENV", "test")
 }
 
-func TestToAndFromRedis(t *testing.T) {
+func TestLogFlow(t *testing.T) {
 	initialSetup()
 
 	conn := pool.Get()
@@ -25,18 +25,43 @@ func TestToAndFromRedis(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(1), llen)
 
-	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id = 1 and name = 'localhost'"
+	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
 	query, err := getLog()
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 
 	assert.Equal(t, 0.051, query.duration)
-	assert.Equal(t, "execute", query.commandTag)
+	assert.Equal(t, "execute", query.preparedStep)
 	assert.Equal(t, "<unnamed>", query.prepared)
-	assert.Equal(t, "select * from servers where id = 1 and name = 'localhost'", query.query)
+	assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
 
-	pgQuery := "select * from servers where id = ? and name = ?"
+	pgQuery := "select * from servers where id IN (?) and name = ?"
 	assert.Equal(t, pgQuery, query.normalizedQuery)
+
+	// data, err := json.Marshal(query.data)
+	// saveToElastic(data)
+	// assert.NoError(t, err)
+
+	// fmt.Println("")
+	// fmt.Println(query.uniqueSha)
+
+	q, ok := queryMap[query.uniqueSha]
+	assert.False(t, ok)
+	assert.Nil(t, q)
+
+	if ok == false {
+		queryMap[query.uniqueSha] = query
+	} else {
+		queryMap[query.uniqueSha].count++
+	}
+
+	assert.Equal(t, int32(1), queryMap[query.uniqueSha].count)
+
+	// que, ok := queryMap[query.uniqueSha]
+	// assert.False(t, ok)
+	// fmt.Printf("%v+", que)
+
+	// assert.Equal(t, 1, queryMap["9ac8616b76d626c6b06372f9834cce48f7660c3a"].count)
 
 	conn.Do("DEL", redisKey())
 }
