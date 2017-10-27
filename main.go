@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -12,7 +13,7 @@ import (
 
 type batch struct {
 	minute time.Time
-	query  string
+	sha    string
 }
 
 var (
@@ -23,9 +24,16 @@ var (
 
 func main() {
 	initialSetup()
-
 	defer bulkProc["bulk"].Close()
 	defer clients["bulk"].Stop()
+
+	// Flush to bulkProc every 60 seconds
+	ticker := time.NewTicker(time.Second * 60)
+	go func() {
+		for t := range ticker.C {
+			fmt.Println("Tick at", t)
+		}
+	}()
 
 	forever := make(chan bool)
 	<-forever
@@ -65,4 +73,8 @@ func redisKey() string {
 
 func currentMinute() time.Time {
 	return time.Now().UTC().Round(time.Minute)
+}
+
+func lastMinute() time.Time {
+	return currentMinute().Add(-1 * time.Minute)
 }

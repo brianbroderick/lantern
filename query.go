@@ -4,10 +4,13 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"regexp"
 	"strconv"
 	"time"
+
+	logit "github.com/brettallred/go-logit"
 )
 
 type query struct {
@@ -56,6 +59,28 @@ func addToQueries(roundMin time.Time, q *query) {
 	}
 }
 
+func iterOverQueries() {
+	var duration time.Duration
+	now := currentMinute()
+	for k := range batchMap {
+		duration = now.Sub(k.minute)
+		if duration >= (1 * time.Minute) {
+			batchMap[k].marshalAgg()
+			data, err := json.Marshal(batchMap[k].data)
+			if err != nil {
+				logit.Error("Error marshalling data: %e", err.Error())
+			}
+			sendToBulker(data)
+			delete(batchMap, k)
+		} else {
+			fmt.Printf("\n els[%s]\n", duration)
+		}
+
+		// fmt.Printf("\nkey[%s]\n", k)
+		// fmt.Printf("\nkey[%s] value[%v+]\n", k, batchMap[k])
+	}
+}
+
 func parseMessage(q *query) error {
 	r := regexp.MustCompile(`duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>[a-zA-Z0-9]+)\s+(?P<prepared>.*):\s*(?P<query>.*)`)
 	match := r.FindStringSubmatch(q.message)
@@ -75,10 +100,12 @@ func parseMessage(q *query) error {
 	q.preparedStep = result["preparedStep"]
 	q.prepared = result["prepared"]
 	q.query = result["query"]
+
 	pgQuery, err := normalizeQuery(result["query"])
 	if err != nil {
 		return err
 	}
+
 	q.normalizedQuery = string(pgQuery)
 	q.shaUnique()
 	q.marshal()
@@ -94,56 +121,69 @@ func (q *query) shaUnique() {
 	q.uniqueSha = hex.EncodeToString(h.Sum(nil))
 }
 
-func (q *query) marshal() ([]byte, error) {
+func (q *query) marshalAgg() ([]byte, error) {
+	// count
+	b, err := json.Marshal(q.count)
+	if err != nil {
+		return nil, err
+	}
+	rawCount := json.RawMessage(b)
+	q.data["count"] = &rawCount
+
 	// duration
-	b, err := json.Marshal(q.duration)
+	b, err = json.Marshal(q.duration)
 	if err != nil {
 		return nil, err
 	}
 	rawDuration := json.RawMessage(b)
 	q.data["duration"] = &rawDuration
 
+	return json.Marshal(q.data)
+}
+
+func (q *query) marshal() ([]byte, error) {
 	// preparedStep
-	b, err = json.Marshal(q.preparedStep)
+	err := marshalString(q, q.preparedStep, "prepared_step")
 	if err != nil {
 		return nil, err
 	}
-	rawPreparedStep := json.RawMessage(b)
-	q.data["prepared_step"] = &rawPreparedStep
 
 	// prepared
-	b, err = json.Marshal(q.prepared)
+	err = marshalString(q, q.prepared, "prepared")
 	if err != nil {
 		return nil, err
 	}
-	rawPrepared := json.RawMessage(b)
-	q.data["prepared"] = &rawPrepared
 
 	// query
-	b, err = json.Marshal(q.query)
+	err = marshalString(q, q.query, "query")
 	if err != nil {
 		return nil, err
 	}
-	rawQuery := json.RawMessage(b)
-	q.data["query"] = &rawQuery
 
 	// normalizedQuery
-	b, err = json.Marshal(q.normalizedQuery)
+	err = marshalString(q, q.normalizedQuery, "normalized_query")
 	if err != nil {
 		return nil, err
 	}
-	rawNormalizedQuery := json.RawMessage(b)
-	q.data["normalized_query"] = &rawNormalizedQuery
 
 	// uniqueSha
-	b, err = json.Marshal(q.uniqueSha)
+	err = marshalString(q, q.uniqueSha, "normalized_sha")
 	if err != nil {
 		return nil, err
 	}
-	rawUniqueSha := json.RawMessage(b)
-	q.data["normalized_sha"] = &rawUniqueSha
 
 	delete(q.data, "message")
 
 	return json.Marshal(q.data)
+}
+
+func marshalString(q *query, strToMarshal string, dataKey string) error {
+	b, err := json.Marshal(strToMarshal)
+	if err != nil {
+		return err
+	}
+	rawMarshal := json.RawMessage(b)
+	q.data[dataKey] = &rawMarshal
+
+	return nil
 }
