@@ -10,9 +10,13 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type batch struct {
+	minute time.Time
+	query  string
+}
+
 var (
-	// minuteMap = make(map[Time]string)
-	queryMap = make(map[string]*query)
+	batchMap = make(map[batch]*query)
 	clients  = make(map[string]*elastic.Client)
 	bulkProc = make(map[string]*elastic.BulkProcessor)
 )

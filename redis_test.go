@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -46,21 +47,16 @@ func TestLogFlow(t *testing.T) {
 	// fmt.Println("")
 	// fmt.Println(query.uniqueSha)
 
-	_, ok := queryMap[query.uniqueSha]
+	_, ok := batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
 	assert.False(t, ok)
-	addToQueries(query)
-	assert.Equal(t, int32(1), queryMap[query.uniqueSha].count)
+	addToQueries(mockCurrentMinute(), query)
 
-	addToQueries(query)
-	_, ok = queryMap[query.uniqueSha]
+	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].count)
+
+	addToQueries(mockCurrentMinute(), query)
+	_, ok = batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
 	assert.True(t, ok)
-	assert.Equal(t, int32(2), queryMap[query.uniqueSha].count)
-
-	// que, ok := queryMap[query.uniqueSha]
-	// assert.False(t, ok)
-	// fmt.Printf("%v+", que)
-
-	// assert.Equal(t, 1, queryMap["9ac8616b76d626c6b06372f9834cce48f7660c3a"].count)
+	assert.Equal(t, int32(2), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].count)
 
 	conn.Do("DEL", redisKey())
 	defer clients["bulk"].Stop()
@@ -70,4 +66,9 @@ func readPayload(filename string) []byte {
 	dat, err := ioutil.ReadFile("./sample_payloads/" + filename)
 	check(err)
 	return dat
+}
+
+func mockCurrentMinute() time.Time {
+	d := time.Date(2017, time.November, 10, 23, 19, 5, 1250, time.UTC)
+	return d.UTC().Round(time.Minute)
 }

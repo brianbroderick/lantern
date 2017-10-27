@@ -7,6 +7,7 @@ import (
 	"io"
 	"regexp"
 	"strconv"
+	"time"
 )
 
 type query struct {
@@ -45,13 +46,13 @@ func newQuery(b []byte) (*query, error) {
 	return que, nil
 }
 
-func addToQueries(q *query) {
-	_, ok := queryMap[q.uniqueSha]
+func addToQueries(roundMin time.Time, q *query) {
+	_, ok := batchMap[batch{roundMin, q.uniqueSha}]
 	if ok == true {
-		queryMap[q.uniqueSha].count++
-		queryMap[q.uniqueSha].duration += q.duration
+		batchMap[batch{roundMin, q.uniqueSha}].count++
+		batchMap[batch{roundMin, q.uniqueSha}].duration += q.duration
 	} else {
-		queryMap[q.uniqueSha] = q
+		batchMap[batch{roundMin, q.uniqueSha}] = q
 	}
 }
 
