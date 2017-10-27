@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -38,21 +39,19 @@ func TestLogFlow(t *testing.T) {
 	pgQuery := "select * from servers where id IN (?) and name = ?"
 	assert.Equal(t, pgQuery, query.normalizedQuery)
 
-	// data, err := json.Marshal(query.data)
-	// saveToElastic(data)
-	// assert.NoError(t, err)
+	data, err := json.Marshal(query.data)
+	assert.NoError(t, err)
+	saveToElastic(data)
 
 	// fmt.Println("")
 	// fmt.Println(query.uniqueSha)
 
 	_, ok := queryMap[query.uniqueSha]
 	assert.False(t, ok)
-
 	addToQueries(query)
 	assert.Equal(t, int32(1), queryMap[query.uniqueSha].count)
 
 	addToQueries(query)
-
 	_, ok = queryMap[query.uniqueSha]
 	assert.True(t, ok)
 	assert.Equal(t, int32(2), queryMap[query.uniqueSha].count)
@@ -64,6 +63,7 @@ func TestLogFlow(t *testing.T) {
 	// assert.Equal(t, 1, queryMap["9ac8616b76d626c6b06372f9834cce48f7660c3a"].count)
 
 	conn.Do("DEL", redisKey())
+	defer clients["bulk"].Stop()
 }
 
 func readPayload(filename string) []byte {

@@ -3,14 +3,25 @@ package main
 import (
 	"log"
 	"os"
+	"time"
+
+	elastic "gopkg.in/olivere/elastic.v5"
 
 	"github.com/joho/godotenv"
 )
 
-var queryMap = make(map[string]*query)
+var (
+	// minuteMap = make(map[Time]string)
+	queryMap = make(map[string]*query)
+	clients  = make(map[string]*elastic.Client)
+	bulkProc = make(map[string]*elastic.BulkProcessor)
+)
 
 func main() {
 	initialSetup()
+
+	defer bulkProc["bulk"].Close()
+	defer clients["bulk"].Stop()
 
 	forever := make(chan bool)
 	<-forever
@@ -19,6 +30,7 @@ func main() {
 func initialSetup() {
 	setupEnv()
 	SetupRedis()
+	SetupElastic()
 }
 
 func setupEnv() {
@@ -45,4 +57,8 @@ func redisKey() string {
 	}
 
 	return "postgres_test"
+}
+
+func currentMinute() time.Time {
+	return time.Now().UTC().Round(time.Minute)
 }
