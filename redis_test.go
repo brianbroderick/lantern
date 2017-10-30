@@ -53,27 +53,3 @@ func TestPipeline(t *testing.T) {
 
 	conn.Do("DEL", pipeline)
 }
-
-// func getMultiLog(batchSize int) (*query, error) {
-// 	var data json.RawMessage
-
-// 	conn := pool.Get()
-// 	defer conn.Close()
-
-// 	reply, err := conn.Do("LPOP", redisKey())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	data, err = redis.Bytes(reply, err)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	query, err := newQuery(data)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return query, nil
-// }
