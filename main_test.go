@@ -38,7 +38,7 @@ func TestFlow(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 
-	assert.Equal(t, 0.051, query.duration)
+	assert.Equal(t, 0.051, query.totalDuration)
 	assert.Equal(t, "execute", query.preparedStep)
 	assert.Equal(t, "<unnamed>", query.prepared)
 	assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
@@ -51,13 +51,13 @@ func TestFlow(t *testing.T) {
 	assert.False(t, ok)
 	addToQueries(mockCurrentMinute(), query)
 	assert.Equal(t, 1, len(batchMap))
-	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].count)
+	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
 
 	addToQueries(mockCurrentMinute(), query)
 	_, ok = batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
 	assert.True(t, ok)
 	assert.Equal(t, 1, len(batchMap))
-	assert.Equal(t, int32(2), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].count)
+	assert.Equal(t, int32(2), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
 
 	iterOverQueries()
 	assert.Equal(t, 0, len(batchMap))
@@ -66,7 +66,8 @@ func TestFlow(t *testing.T) {
 	if err != nil {
 		logit.Error("Error flushing messages: %e", err.Error())
 	}
-	getRecord()
+	totalDuration := getRecord()
+	assert.Equal(t, 0.102, totalDuration)
 
 	conn.Do("DEL", redisKey())
 	defer bulkProc["bulk"].Close()
@@ -91,7 +92,7 @@ func mockCurrentMinute() time.Time {
 	return d.UTC().Round(time.Minute)
 }
 
-func getRecord() {
+func getRecord() float64 {
 	termQuery := elastic.NewTermQuery("normalized_sha", "9ac8616b76d626c6b06372f9834cce48f7660c3a")
 	result, err := clients["bulk"].Search().
 		Index(indexName()).
@@ -104,7 +105,7 @@ func getRecord() {
 	}
 
 	if result.Hits.TotalHits > 0 {
-		fmt.Printf("Found a total of %d tweets\n", result.Hits.TotalHits)
+		fmt.Printf("Found a total of %d record(s)\n", result.Hits.TotalHits)
 
 		for _, hit := range result.Hits.Hits {
 			// hit.Index contains the name of the index
@@ -114,19 +115,21 @@ func getRecord() {
 				logit.Error("Error unmarshalling data: %e", err.Error())
 			}
 
-			var duration float64
-			if source, pres := data["duration"]; pres {
-				if err := json.Unmarshal(*source, &duration); err != nil {
-					logit.Error("Error unmarshalling duration: %e", err.Error())
+			var totalDuration float64
+			if source, pres := data["total_duration"]; pres {
+				if err := json.Unmarshal(*source, &totalDuration); err != nil {
+					logit.Error("Error unmarshalling totalDuration: %e", err.Error())
 				}
 			}
 
-			fmt.Printf("First record found has a duration of %f\n", duration)
+			fmt.Printf("First record found has a total duration of %f\n", totalDuration)
+			return totalDuration
 		}
 	} else {
 		// No hits
 		fmt.Print("Found no tweets, waiting 500ms...\n")
 		time.Sleep(500 * time.Millisecond)
-		getRecord()
+		return getRecord()
 	}
+	return -1.0
 }

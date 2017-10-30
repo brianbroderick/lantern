@@ -17,8 +17,8 @@ type query struct {
 	uniqueSha            string
 	query                string
 	normalizedQuery      string
-	duration             float64
-	count                int32
+	totalDuration        float64
+	totalCount           int32
 	message              string
 	preparedStep         string
 	prepared             string
@@ -52,8 +52,8 @@ func newQuery(b []byte) (*query, error) {
 func addToQueries(roundMin time.Time, q *query) {
 	_, ok := batchMap[batch{roundMin, q.uniqueSha}]
 	if ok == true {
-		batchMap[batch{roundMin, q.uniqueSha}].count++
-		batchMap[batch{roundMin, q.uniqueSha}].duration += q.duration
+		batchMap[batch{roundMin, q.uniqueSha}].totalCount++
+		batchMap[batch{roundMin, q.uniqueSha}].totalDuration += q.totalDuration
 	} else {
 		batchMap[batch{roundMin, q.uniqueSha}] = q
 	}
@@ -95,8 +95,8 @@ func parseMessage(q *query) error {
 	if err != nil {
 		return err
 	}
-	q.duration = duration
-	q.count = 1
+	q.totalDuration = duration
+	q.totalCount = 1
 	q.preparedStep = result["preparedStep"]
 	q.prepared = result["prepared"]
 	q.query = result["query"]
@@ -123,20 +123,20 @@ func (q *query) shaUnique() {
 
 func (q *query) marshalAgg() ([]byte, error) {
 	// count
-	b, err := json.Marshal(q.count)
+	b, err := json.Marshal(q.totalCount)
 	if err != nil {
 		return nil, err
 	}
 	rawCount := json.RawMessage(b)
-	q.data["count"] = &rawCount
+	q.data["total_count"] = &rawCount
 
 	// duration
-	b, err = json.Marshal(q.duration)
+	b, err = json.Marshal(q.totalDuration)
 	if err != nil {
 		return nil, err
 	}
 	rawDuration := json.RawMessage(b)
-	q.data["duration"] = &rawDuration
+	q.data["total_duration"] = &rawDuration
 
 	return json.Marshal(q.data)
 }
