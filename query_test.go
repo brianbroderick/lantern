@@ -29,4 +29,13 @@ func TestRegexMessage(t *testing.T) {
 	result, err = regexMessage(message)
 	assert.NoError(t, err)
 	assert.Equal(t, "bind", result["preparedStep"])
+
+	// check multiline
+	message = `duration: 0.066 ms  bind <unnamed>: select * from servers 
+	where name = 'blah:blah'`
+	multiLine := `select * from servers 
+	where name = 'blah:blah'`
+	result, err = regexMessage(message)
+	assert.NoError(t, err)
+	assert.Equal(t, multiLine, result["query"])
 }

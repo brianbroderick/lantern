@@ -7,7 +7,6 @@ import (
 
 	elastic "gopkg.in/olivere/elastic.v5"
 
-	logit "github.com/brettallred/go-logit"
 	"github.com/joho/godotenv"
 )
 
@@ -31,7 +30,6 @@ func main() {
 	ticker := time.NewTicker(time.Second * 15)
 	go func() {
 		for _ = range ticker.C {
-			logit.Info(" Flushing ES Bulk Processor")
 			iterOverQueries()
 		}
 	}()

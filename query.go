@@ -8,6 +8,7 @@ import (
 	"io"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	logit "github.com/brettallred/go-logit"
@@ -60,12 +61,13 @@ func addToQueries(roundMin time.Time, q *query) {
 }
 
 func iterOverQueries() {
+	logit.Info(" Checking if queries are ready for ES Bulk Processor")
 	var duration time.Duration
 	now := currentMinute()
 	for k := range batchMap {
 		duration = now.Sub(k.minute)
-		// send to bulker if it's at least 1 minute old.
 		if duration >= (1 * time.Minute) {
+			logit.Info(" Sending queries to ES Bulk Processor")
 			batchMap[k].marshalAgg()
 			data, err := json.Marshal(batchMap[k].data)
 			if err != nil {
@@ -78,7 +80,7 @@ func iterOverQueries() {
 }
 
 func regexMessage(message string) (map[string]string, error) {
-	r := regexp.MustCompile(`duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>[a-zA-Z0-9]+)\s*?(?P<prepared>.*?)?:\s*(?P<query>.*)`)
+	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<query>.*)`)
 	match := r.FindStringSubmatch(message)
 	result := make(map[string]string)
 
@@ -95,7 +97,7 @@ func regexMessage(message string) (map[string]string, error) {
 }
 
 func parseMessage(q *query) error {
-	logit.Info(" Message: %s\n\n", q.message)
+	// logit.Info(" Message: %s\n\n", q.message)
 
 	result, err := regexMessage(q.message)
 	if err != nil {
@@ -109,7 +111,7 @@ func parseMessage(q *query) error {
 	q.totalDuration = duration
 	q.totalCount = 1
 	q.preparedStep = result["preparedStep"]
-	q.prepared = result["prepared"]
+	q.prepared = strings.TrimSpace(result["prepared"])
 	q.query = result["query"]
 
 	pgQuery, err := normalizeQuery(result["query"])
@@ -147,7 +149,7 @@ func (q *query) marshalAgg() ([]byte, error) {
 		return nil, err
 	}
 	rawDuration := json.RawMessage(b)
-	q.data["total_duration"] = &rawDuration
+	q.data["total_duration_ms"] = &rawDuration
 
 	return json.Marshal(q.data)
 }
@@ -178,7 +180,7 @@ func (q *query) marshal() ([]byte, error) {
 	}
 
 	// uniqueSha
-	err = marshalString(q, q.uniqueSha, "normalized_sha")
+	err = marshalString(q, q.uniqueSha, "normalized_prepared_step_sha")
 	if err != nil {
 		return nil, err
 	}

@@ -23,7 +23,7 @@ func startRedis() {
 		if query != nil {
 			addToQueries(currentMinute(), query)
 		} else {
-			logit.Info(" No queries found. Waiting 5 seconds.")
+			logit.Info(" No new queries found. Waiting 5 seconds.")
 			time.Sleep((time.Second * 5))
 		}
 	}

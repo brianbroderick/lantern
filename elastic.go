@@ -20,7 +20,7 @@ func SetupElastic() {
 	proc, err := clients["bulk"].BulkProcessor().
 		Name("worker_1").
 		Workers(1).
-		FlushInterval(60 * time.Second).
+		FlushInterval(10 * time.Second).
 		Do(context.Background())
 	if err != nil {
 		panic(err)

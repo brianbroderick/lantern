@@ -93,7 +93,7 @@ func mockCurrentMinute() time.Time {
 }
 
 func getRecord() float64 {
-	termQuery := elastic.NewTermQuery("normalized_sha", "9ac8616b76d626c6b06372f9834cce48f7660c3a")
+	termQuery := elastic.NewTermQuery("normalized_prepared_step_sha", "9ac8616b76d626c6b06372f9834cce48f7660c3a")
 	result, err := clients["bulk"].Search().
 		Index(indexName()).
 		Type("pglog").
@@ -116,7 +116,7 @@ func getRecord() float64 {
 			}
 
 			var totalDuration float64
-			if source, pres := data["total_duration"]; pres {
+			if source, pres := data["total_duration_ms"]; pres {
 				if err := json.Unmarshal(*source, &totalDuration); err != nil {
 					logit.Error("Error unmarshalling totalDuration: %e", err.Error())
 				}
