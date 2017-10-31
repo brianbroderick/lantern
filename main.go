@@ -34,7 +34,7 @@ func main() {
 		}
 	}()
 
-	go startRedis()
+	go startRedisBatch()
 
 	forever := make(chan bool)
 	<-forever

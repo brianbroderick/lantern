@@ -14,7 +14,7 @@ var (
 	redisPassword string
 )
 
-func startRedis() {
+func startRedisSingle() {
 	for {
 		query, err := getLog()
 		if err != nil {
@@ -53,6 +53,72 @@ func getLog() (*query, error) {
 		return query, nil
 	}
 	return nil, nil
+}
+
+func startRedisBatch() {
+	for {
+		ok, err := getMultiLog()
+		if err != nil {
+			logit.Error(" Error in getMultiLog: %e", err.Error())
+		}
+		if ok == false {
+			logit.Info(" No new queries found. Waiting 5 seconds.")
+			time.Sleep((time.Second * 5))
+		}
+	}
+}
+
+func getMultiLog() (bool, error) {
+	conn := pool.Get()
+	defer conn.Close()
+
+	// get list length
+	l, err := conn.Do("LLEN", redisKey())
+	if err != nil {
+		return true, err
+	}
+
+	llen, err := redis.Int64(l, err)
+	if err != nil {
+		return true, err
+	}
+
+	// LPOP at most 50 at a time
+	if llen > 50 {
+		llen = 50
+	}
+
+	if llen > 0 {
+		conn.Send("MULTI")
+		var n int64
+		for n = 0; n < llen; n++ {
+			conn.Send("LPOP", redisKey())
+		}
+
+		reply, err := redis.Values(conn.Do("EXEC"))
+		if err != nil {
+			return true, err
+		}
+
+		for _, datum := range reply {
+			if datum != nil {
+				q, err := redis.Bytes(datum, err)
+				if err != nil {
+					return true, err
+				}
+
+				query, err := newQuery(q)
+				if err != nil {
+					logit.Error(" Error in newQuery: %e", err.Error())
+				} else {
+					addToQueries(currentMinute(), query)
+				}
+			}
+		}
+		return true, nil
+	}
+
+	return false, nil
 }
 
 //SetupRedis setup redis
