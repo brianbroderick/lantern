@@ -14,6 +14,21 @@ var (
 	redisPassword string
 )
 
+func startRedis() {
+	for {
+		query, err := getLog()
+		if err != nil {
+			logit.Error(" Error getting log from Redis: %e", err.Error())
+		}
+		if query != nil {
+			addToQueries(currentMinute(), query)
+		} else {
+			logit.Info(" No queries found. Waiting 5 seconds.")
+			time.Sleep((time.Second * 5))
+		}
+	}
+}
+
 func getLog() (*query, error) {
 	var data json.RawMessage
 
@@ -25,17 +40,19 @@ func getLog() (*query, error) {
 		return nil, err
 	}
 
-	data, err = redis.Bytes(reply, err)
-	if err != nil {
-		return nil, err
-	}
+	if reply != nil {
+		data, err = redis.Bytes(reply, err)
+		if err != nil {
+			return nil, err
+		}
 
-	query, err := newQuery(data)
-	if err != nil {
-		return nil, err
+		query, err := newQuery(data)
+		if err != nil {
+			return nil, err
+		}
+		return query, nil
 	}
-
-	return query, nil
+	return nil, nil
 }
 
 //SetupRedis setup redis
@@ -52,12 +69,12 @@ func newPool(server string) *redis.Pool {
 		Dial: func() (redis.Conn, error) {
 			c, err := redis.Dial("tcp", server)
 			if err != nil {
-				logit.Error("Error on connecting to Redis: %e", err.Error())
+				logit.Error(" Error on connecting to Redis: %e", err.Error())
 				return nil, err
 			}
 			if redisPassword != "" {
 				if _, err = c.Do("AUTH", redisPassword); err != nil {
-					logit.Error("Error on authenticating to Redis: %e", err.Error())
+					logit.Error(" Error on authenticating to Redis: %e", err.Error())
 					return nil, err
 				}
 			}

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
 
 	elastic "gopkg.in/olivere/elastic.v5"
 
+	logit "github.com/brettallred/go-logit"
 	"github.com/joho/godotenv"
 )
 
@@ -28,13 +28,15 @@ func main() {
 	defer clients["bulk"].Stop()
 
 	// Flush to bulkProc every 60 seconds
-	ticker := time.NewTicker(time.Second * 60)
+	ticker := time.NewTicker(time.Second * 15)
 	go func() {
-		for t := range ticker.C {
-			fmt.Println("Tick at", t)
+		for _ = range ticker.C {
+			logit.Info(" Flushing ES Bulk Processor")
 			iterOverQueries()
 		}
 	}()
+
+	go startRedis()
 
 	forever := make(chan bool)
 	<-forever

@@ -4,7 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"regexp"
 	"strconv"
@@ -64,31 +64,42 @@ func iterOverQueries() {
 	now := currentMinute()
 	for k := range batchMap {
 		duration = now.Sub(k.minute)
+		// send to bulker if it's at least 1 minute old.
 		if duration >= (1 * time.Minute) {
 			batchMap[k].marshalAgg()
 			data, err := json.Marshal(batchMap[k].data)
 			if err != nil {
-				logit.Error("Error marshalling data: %e", err.Error())
+				logit.Error(" Error marshalling data: %e", err.Error())
 			}
 			sendToBulker(data)
 			delete(batchMap, k)
-		} else {
-			fmt.Printf("\n els[%s]\n", duration)
 		}
-
-		// fmt.Printf("\nkey[%s]\n", k)
-		// fmt.Printf("\nkey[%s] value[%v+]\n", k, batchMap[k])
 	}
 }
 
-func parseMessage(q *query) error {
-	r := regexp.MustCompile(`duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>[a-zA-Z0-9]+)\s+(?P<prepared>.*):\s*(?P<query>.*)`)
-	match := r.FindStringSubmatch(q.message)
+func regexMessage(message string) (map[string]string, error) {
+	r := regexp.MustCompile(`duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>[a-zA-Z0-9]+)\s*?(?P<prepared>.*?)?:\s*(?P<query>.*)`)
+	match := r.FindStringSubmatch(message)
 	result := make(map[string]string)
-	for i, name := range r.SubexpNames() {
-		if i != 0 {
-			result[name] = match[i]
+
+	if len(match) > 0 {
+		for i, name := range r.SubexpNames() {
+			if i != 0 {
+				result[name] = match[i]
+			}
 		}
+		return result, nil
+	}
+	return nil, errors.New("regexMessage: match not found: " + message)
+
+}
+
+func parseMessage(q *query) error {
+	logit.Info(" Message: %s\n\n", q.message)
+
+	result, err := regexMessage(q.message)
+	if err != nil {
+		return err
 	}
 
 	duration, err := strconv.ParseFloat(result["duration"], 64)
