@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	elastic "gopkg.in/olivere/elastic.v5"
@@ -11,7 +12,7 @@ import (
 
 // SetupElastic sets up elastic conn
 func SetupElastic() {
-	client, err := elastic.NewClient()
+	client, err := elastic.NewClient(elastic.SetURL(elasticURL()))
 	if err != nil {
 		panic(err)
 	}
@@ -54,4 +55,12 @@ func indexName() string {
 	buffer.WriteString("pg-")
 	buffer.WriteString(currentDate.Format("2006-01-02"))
 	return buffer.String()
+}
+
+func elasticURL() string {
+	elasticURL := os.Getenv("ELASTIC_URL")
+	if elasticURL == "" {
+		elasticURL = "http://127.0.0.1:9200"
+	}
+	return elasticURL
 }
