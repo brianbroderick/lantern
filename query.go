@@ -98,32 +98,38 @@ func regexMessage(message string) map[string]string {
 }
 
 func parseMessage(q *query) error {
-	// logit.Info(" Message: %s\n\n", q.message)
-
 	result := regexMessage(q.message)
 
-	duration, err := strconv.ParseFloat(result["duration"], 64)
-	if err != nil {
-		return err
-	}
-	q.totalDuration = duration
-	q.totalCount = 1
-	q.preparedStep = result["preparedStep"]
-	q.prepared = strings.TrimSpace(result["prepared"])
-	q.query = result["query"]
-
 	if result["unknownMessage"] != "" {
-		q.unknownMessage = result["unknownMessage"]
+		// unknownMessage
+		err := marshalString(q, result["unknownMessage"], "unknown_message")
+		if err != nil {
+			return err
+		}
+
+	} else {
+		duration, err := strconv.ParseFloat(result["duration"], 64)
+		if err != nil {
+			return err
+		}
+
+		q.totalDuration = duration
+		q.totalCount = 1
+		q.preparedStep = result["preparedStep"]
+		q.prepared = strings.TrimSpace(result["prepared"])
+		q.query = result["query"]
+
+		pgQuery, err := normalizeQuery(result["query"])
+		if err != nil {
+			return err
+		}
+
+		q.normalizedQuery = string(pgQuery)
+		q.shaUnique()
+		q.marshal()
 	}
 
-	pgQuery, err := normalizeQuery(result["query"])
-	if err != nil {
-		return err
-	}
-
-	q.normalizedQuery = string(pgQuery)
-	q.shaUnique()
-	q.marshal()
+	delete(q.data, "message")
 
 	return nil
 }
@@ -186,22 +192,6 @@ func (q *query) marshal() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// uniqueSha
-	err = marshalString(q, q.uniqueSha, "normalized_prepared_step_sha")
-	if err != nil {
-		return nil, err
-	}
-
-	// unknownMessage
-	if q.unknownMessage != "" {
-		err = marshalString(q, q.unknownMessage, "unknown_message")
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	delete(q.data, "message")
 
 	return json.Marshal(q.data)
 }
