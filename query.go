@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"io"
 	"regexp"
 	"strconv"
@@ -24,6 +23,7 @@ type query struct {
 	preparedStep         string
 	prepared             string
 	virtualTransactionID string
+	unknownMessage       string
 	data                 map[string]*json.RawMessage
 }
 
@@ -79,7 +79,7 @@ func iterOverQueries() {
 	}
 }
 
-func regexMessage(message string) (map[string]string, error) {
+func regexMessage(message string) map[string]string {
 	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<query>.*)`)
 	match := r.FindStringSubmatch(message)
 	result := make(map[string]string)
@@ -90,19 +90,17 @@ func regexMessage(message string) (map[string]string, error) {
 				result[name] = match[i]
 			}
 		}
-		return result, nil
+		return result
 	}
-	return nil, errors.New("regexMessage: match not found: " + message)
 
+	result["unknownMessage"] = message
+	return result
 }
 
 func parseMessage(q *query) error {
 	// logit.Info(" Message: %s\n\n", q.message)
 
-	result, err := regexMessage(q.message)
-	if err != nil {
-		return err
-	}
+	result := regexMessage(q.message)
 
 	duration, err := strconv.ParseFloat(result["duration"], 64)
 	if err != nil {
@@ -113,6 +111,10 @@ func parseMessage(q *query) error {
 	q.preparedStep = result["preparedStep"]
 	q.prepared = strings.TrimSpace(result["prepared"])
 	q.query = result["query"]
+
+	if result["unknownMessage"] != "" {
+		q.unknownMessage = result["unknownMessage"]
+	}
 
 	pgQuery, err := normalizeQuery(result["query"])
 	if err != nil {
@@ -183,6 +185,20 @@ func (q *query) marshal() ([]byte, error) {
 	err = marshalString(q, q.uniqueSha, "normalized_prepared_step_sha")
 	if err != nil {
 		return nil, err
+	}
+
+	// uniqueSha
+	err = marshalString(q, q.uniqueSha, "normalized_prepared_step_sha")
+	if err != nil {
+		return nil, err
+	}
+
+	// unknownMessage
+	if q.unknownMessage != "" {
+		err = marshalString(q, q.unknownMessage, "unknown_message")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	delete(q.data, "message")
