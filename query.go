@@ -61,7 +61,6 @@ func addToQueries(roundMin time.Time, q *query) {
 }
 
 func iterOverQueries() {
-	logit.Info(" Checking if queries are ready for ES Bulk Processor")
 	var duration time.Duration
 	now := currentMinute()
 	for k := range batchMap {

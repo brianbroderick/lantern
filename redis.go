@@ -56,14 +56,21 @@ func getLog() (*query, error) {
 }
 
 func startRedisBatch() {
+	nap := 0
+
 	for {
 		ok, err := getMultiLog()
 		if err != nil {
 			logit.Error(" Error in getMultiLog: %e", err.Error())
 		}
 		if ok == false {
-			logit.Info(" No new queries found. Waiting 5 seconds.")
-			time.Sleep((time.Second * 5))
+			nap++
+			time.Sleep((time.Second * 1))
+			if nap%10 == 0 {
+				logit.Info(" Seconds since last Redis log received: %d", nap)
+			}
+		} else {
+			nap = 0
 		}
 	}
 }

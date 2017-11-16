@@ -26,8 +26,8 @@ func main() {
 	defer bulkProc["bulk"].Close()
 	defer clients["bulk"].Stop()
 
-	// Flush to bulkProc every 60 seconds
-	ticker := time.NewTicker(time.Second * 15)
+	// Flush to bulkProc every 30 seconds
+	ticker := time.NewTicker(time.Second * 30)
 	go func() {
 		for _ = range ticker.C {
 			iterOverQueries()
