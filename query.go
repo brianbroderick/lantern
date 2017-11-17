@@ -15,6 +15,7 @@ import (
 
 type query struct {
 	uniqueSha            string
+	logType              string
 	query                string
 	normalizedQuery      string
 	totalDuration        float64
@@ -23,7 +24,6 @@ type query struct {
 	preparedStep         string
 	prepared             string
 	virtualTransactionID string
-	unknownMessage       string
 	data                 map[string]*json.RawMessage
 }
 
@@ -79,6 +79,7 @@ func iterOverQueries() {
 }
 
 func regexMessage(message string) map[string]string {
+	// Query regexp
 	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<query>.*)`)
 	match := r.FindStringSubmatch(message)
 	result := make(map[string]string)
@@ -92,12 +93,40 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
+	// connection received: host=10.0.1.168 port=38634
+	r = regexp.MustCompile(`(?s)connection received:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "connection"
+		return result
+	}
+
+	// checkpoint starting: time
+	r = regexp.MustCompile(`(?s)checkpoint starting:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "checkpoint"
+		return result
+	}
+
+	// replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
+	r = regexp.MustCompile(`(?s)replication connection authorized:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "replication_connection"
+		return result
+	}
+
 	result["unknownMessage"] = message
 	return result
 }
 
 func parseMessage(q *query) error {
 	result := regexMessage(q.message)
+	q.totalCount = 1
 
 	if result["unknownMessage"] != "" {
 		// unknownMessage
@@ -107,23 +136,33 @@ func parseMessage(q *query) error {
 		}
 
 	} else {
-		duration, err := strconv.ParseFloat(result["duration"], 64)
-		if err != nil {
-			return err
+		if result["duration"] != "" {
+			duration, err := strconv.ParseFloat(result["duration"], 64)
+			if err != nil {
+				return err
+			}
+			q.totalDuration = duration
 		}
 
-		q.totalDuration = duration
-		q.totalCount = 1
-		q.preparedStep = result["preparedStep"]
-		q.prepared = strings.TrimSpace(result["prepared"])
-		q.query = result["query"]
+		if result["query"] != "" {
+			q.logType = "query"
+			q.preparedStep = result["preparedStep"]
+			q.prepared = strings.TrimSpace(result["prepared"])
+			q.query = result["query"]
 
-		pgQuery, err := normalizeQuery(result["query"])
-		if err != nil {
-			return err
+			pgQuery, err := normalizeQuery(result["query"])
+			if err != nil {
+				return err
+			}
+
+			q.normalizedQuery = string(pgQuery)
 		}
 
-		q.normalizedQuery = string(pgQuery)
+		if result["logType"] != "" {
+			q.logType = result["logType"]
+			q.normalizedQuery = q.logType
+		}
+
 		q.shaUnique()
 		q.marshal()
 	}
