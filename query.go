@@ -16,15 +16,15 @@ import (
 type query struct {
 	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
 	uniqueStr     string // usually the normalized query
+	errorMessage  string
 	errorSeverity string
-	// commandTag    string
 	message       string
 	totalDuration float64
 	totalCount    int32
 	query         string
 	preparedStep  string
 	prepared      string
-	logType       string // may remove this
+	logType       string
 	data          map[string]*json.RawMessage
 }
 
@@ -48,12 +48,6 @@ func newQuery(b []byte) (*query, error) {
 		}
 	}
 
-	// if source, pres := q.data["command_tag"]; pres {
-	// 	if err := json.Unmarshal(*source, &q.commandTag); err != nil {
-	// 		return nil, err
-	// 	}
-	// }
-
 	// If it's an error, use the error code as the uniqueStr
 	if q.errorSeverity == "ERROR" {
 		if source, pres := q.data["sql_state_code"]; pres {
@@ -61,11 +55,16 @@ func newQuery(b []byte) (*query, error) {
 				return nil, err
 			}
 		}
+		q.errorMessage = q.message
 	} else { // assumed the errorSeverity is "LOG"
 		if err := parseMessage(q); err != nil {
 			return nil, err
 		}
 	}
+
+	q.shaUnique()
+	q.marshal()
+	delete(q.data, "message")
 
 	return q, nil
 }
@@ -121,11 +120,11 @@ func parseMessage(q *query) error {
 
 	if result["unknownMessage"] != "" {
 		// unknownMessage
+		q.uniqueStr = result["unknownMessage"]
 		err := marshalString(q, result["unknownMessage"], "unknown_message")
 		if err != nil {
 			return err
 		}
-
 	} else {
 		if result["duration"] != "" {
 			duration, err := strconv.ParseFloat(result["duration"], 64)
@@ -151,12 +150,7 @@ func parseMessage(q *query) error {
 		if result["logType"] != "" {
 			q.uniqueStr = result["logType"]
 		}
-
-		q.shaUnique()
-		q.marshal()
 	}
-
-	delete(q.data, "message")
 
 	return nil
 }
@@ -220,6 +214,14 @@ func (q *query) marshal() ([]byte, error) {
 	err = marshalString(q, q.uniqueStr, "unique_string")
 	if err != nil {
 		return nil, err
+	}
+
+	// errorMessage
+	if q.errorMessage != "" {
+		err = marshalString(q, q.errorMessage, "error_message")
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return json.Marshal(q.data)
