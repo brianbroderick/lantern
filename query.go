@@ -89,7 +89,16 @@ func regexMessage(message string) map[string]string {
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
-		result["logType"] = "connection"
+		result["logType"] = "connection_received"
+		return result
+	}
+
+	// connection received: host=10.0.1.168 port=38634
+	r = regexp.MustCompile(`(?s)connection authorized:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "connection_authorized"
 		return result
 	}
 
@@ -98,7 +107,7 @@ func regexMessage(message string) map[string]string {
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
-		result["logType"] = "replication_connection"
+		result["logType"] = "connection_replication"
 		return result
 	}
 
@@ -116,7 +125,25 @@ func regexMessage(message string) map[string]string {
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
-		result["logType"] = "checkpoint"
+		result["logType"] = "checkpoint_starting"
+		return result
+	}
+
+	//checkpoint complete: wrote 0 buffers (0.0%); 0 transaction log file(s) added, 0 removed, 0 recycled; write=0.015 s, sync=0.000 s, total=0.019 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=46 kB
+	r = regexp.MustCompile(`(?s)checkpoint complete:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "checkpoint_complete"
+		return result
+	}
+
+	//could not receive data from client: Connection reset by peer
+	r = regexp.MustCompile(`(?s)could not receive data.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "connection_reset"
 		return result
 	}
 
