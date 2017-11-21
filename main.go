@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math"
 	"os"
 	"time"
 
@@ -76,4 +77,28 @@ func currentMinute() time.Time {
 
 func lastMinute() time.Time {
 	return currentMinute().Add(-1 * time.Minute)
+}
+
+func round(val float64, roundOn float64, places int) float64 {
+
+	pow := math.Pow(10, float64(places))
+	digit := pow * val
+	_, div := math.Modf(digit)
+
+	var round float64
+	if val > 0 {
+		if div >= roundOn {
+			round = math.Ceil(digit)
+		} else {
+			round = math.Floor(digit)
+		}
+	} else {
+		if div >= roundOn {
+			round = math.Floor(digit)
+		} else {
+			round = math.Ceil(digit)
+		}
+	}
+
+	return round / pow
 }

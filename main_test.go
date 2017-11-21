@@ -87,6 +87,11 @@ func TestCurrentMinute(t *testing.T) {
 	assert.Equal(t, 0, minute.Second())
 }
 
+func TestRound(t *testing.T) {
+	r := round(0.564627465465, 0.5, 5)
+	assert.Equal(t, 0.56463, r)
+}
+
 func mockCurrentMinute() time.Time {
 	d := time.Date(2017, time.October, 27, 19, 57, 5, 1250, time.UTC)
 	return d.UTC().Round(time.Minute)

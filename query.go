@@ -178,8 +178,8 @@ func (q *query) marshalAgg() ([]byte, error) {
 	rawCount := json.RawMessage(b)
 	q.data["total_count"] = &rawCount
 
-	// duration
-	b, err = json.Marshal(q.totalDuration)
+	// duration rounded to 5 decimal points
+	b, err = json.Marshal(round(q.totalDuration, 0.5, 5))
 	if err != nil {
 		return nil, err
 	}
