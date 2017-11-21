@@ -44,7 +44,7 @@ func TestFlow(t *testing.T) {
 	assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
 
 	pgQuery := "select * from servers where id IN (?) and name = ?"
-	assert.Equal(t, pgQuery, query.normalizedQuery)
+	assert.Equal(t, pgQuery, query.uniqueStr)
 
 	assert.Equal(t, 0, len(batchMap))
 	_, ok := batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
