@@ -17,7 +17,7 @@ type query struct {
 	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
 	uniqueStr     string // usually the normalized query
 	errorSeverity string
-	commandTag    string
+	// commandTag    string
 	message       string
 	totalDuration float64
 	totalCount    int32
@@ -48,11 +48,11 @@ func newQuery(b []byte) (*query, error) {
 		}
 	}
 
-	if source, pres := q.data["command_tag"]; pres {
-		if err := json.Unmarshal(*source, &q.commandTag); err != nil {
-			return nil, err
-		}
-	}
+	// if source, pres := q.data["command_tag"]; pres {
+	// 	if err := json.Unmarshal(*source, &q.commandTag); err != nil {
+	// 		return nil, err
+	// 	}
+	// }
 
 	// If it's an error, use the error code as the uniqueStr
 	if q.errorSeverity == "ERROR" {
@@ -70,30 +70,6 @@ func newQuery(b []byte) (*query, error) {
 	return q, nil
 }
 
-func authRegex(message string) map[string]string {
-	// connection received: host=10.0.1.168 port=38634
-	r := regexp.MustCompile(`(?s)connection received:.*`)
-	match := r.FindStringSubmatch(message)
-	result := make(map[string]string)
-
-	if len(match) > 0 {
-		result["logType"] = "connection"
-		return result
-	}
-
-	// replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
-	r = regexp.MustCompile(`(?s)replication connection authorized:.*`)
-	match = r.FindStringSubmatch(message)
-
-	if len(match) > 0 {
-		result["logType"] = "replication_connection"
-		return result
-	}
-
-	result["unknownMessage"] = message
-	return result
-}
-
 func regexMessage(message string) map[string]string {
 	// Query regexp
 	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<query>.*)`)
@@ -106,6 +82,24 @@ func regexMessage(message string) map[string]string {
 				result[name] = match[i]
 			}
 		}
+		return result
+	}
+
+	// connection received: host=10.0.1.168 port=38634
+	r = regexp.MustCompile(`(?s)connection received:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "connection"
+		return result
+	}
+
+	// replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
+	r = regexp.MustCompile(`(?s)replication connection authorized:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "replication_connection"
 		return result
 	}
 
@@ -123,13 +117,7 @@ func regexMessage(message string) map[string]string {
 }
 
 func parseMessage(q *query) error {
-	result := make(map[string]string)
-
-	if q.commandTag == "authentication" {
-		result = authRegex(q.message)
-	} else {
-		result = regexMessage(q.message)
-	}
+	result := regexMessage(q.message)
 
 	if result["unknownMessage"] != "" {
 		// unknownMessage
@@ -264,7 +252,7 @@ func iterOverQueries() {
 	for k := range batchMap {
 		duration = now.Sub(k.minute)
 		if duration >= (1 * time.Minute) {
-			logit.Info(" *** Sending queries to ES Bulk Processor ***")
+			logit.Info(" Sending %s to ES Bulk Processor", k.sha)
 			batchMap[k].marshalAgg()
 			data, err := json.Marshal(batchMap[k].data)
 			if err != nil {

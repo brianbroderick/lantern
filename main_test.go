@@ -93,7 +93,7 @@ func mockCurrentMinute() time.Time {
 }
 
 func getRecord() float64 {
-	termQuery := elastic.NewTermQuery("normalized_prepared_step_sha", "9ac8616b76d626c6b06372f9834cce48f7660c3a")
+	termQuery := elastic.NewTermQuery("user_name", "samplepayload")
 	result, err := clients["bulk"].Search().
 		Index(indexName()).
 		Type("pglog").
@@ -127,7 +127,7 @@ func getRecord() float64 {
 		}
 	} else {
 		// No hits
-		fmt.Print("Found no tweets, waiting 500ms...\n")
+		fmt.Print("Found no records, waiting 500ms...\n")
 		time.Sleep(500 * time.Millisecond)
 		return getRecord()
 	}
