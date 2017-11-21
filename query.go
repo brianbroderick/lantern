@@ -102,6 +102,15 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
+	// disconnection: session time: 0:00:00.074 user=q55cd17435 database= host=10.0.1.168 port=56544
+	r = regexp.MustCompile(`(?s)disconnection:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "disconnection"
+		return result
+	}
+
 	// checkpoint starting: time
 	r = regexp.MustCompile(`(?s)checkpoint starting:.*`)
 	match = r.FindStringSubmatch(message)
