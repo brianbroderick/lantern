@@ -253,6 +253,9 @@ func iterOverQueries() {
 		duration = now.Sub(k.minute)
 		if duration >= (1 * time.Minute) {
 			logit.Info(" Sending %s to ES Bulk Processor", k.sha)
+			if k.sha == "" {
+				logit.Info("%s", batchMap[k].data)
+			}
 			batchMap[k].marshalAgg()
 			data, err := json.Marshal(batchMap[k].data)
 			if err != nil {
