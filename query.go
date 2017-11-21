@@ -16,7 +16,7 @@ import (
 type query struct {
 	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
 	uniqueStr     string // usually the normalized query
-	errorMessage  string
+	notes         string
 	errorSeverity string
 	message       string
 	totalDuration float64
@@ -55,7 +55,7 @@ func newQuery(b []byte) (*query, error) {
 				return nil, err
 			}
 		}
-		q.errorMessage = q.message
+		q.notes = q.message
 	} else { // assumed the errorSeverity is "LOG"
 		if err := parseMessage(q); err != nil {
 			return nil, err
@@ -157,6 +157,7 @@ func parseMessage(q *query) error {
 		}
 
 		if result["logType"] != "" {
+			q.notes = q.message
 			q.uniqueStr = result["logType"]
 		}
 	}
@@ -226,8 +227,8 @@ func (q *query) marshal() ([]byte, error) {
 	}
 
 	// errorMessage
-	if q.errorMessage != "" {
-		err = marshalString(q, q.errorMessage, "error_message")
+	if q.notes != "" {
+		err = marshalString(q, q.notes, "notes")
 		if err != nil {
 			return nil, err
 		}
