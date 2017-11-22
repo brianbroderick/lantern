@@ -49,7 +49,7 @@ func newQuery(b []byte) (*query, error) {
 	}
 
 	// If it's an error, use the error code as the uniqueStr
-	if q.errorSeverity == "ERROR" {
+	if q.errorSeverity == "ERROR" || q.errorSeverity == "FATAL" {
 		if source, pres := q.data["sql_state_code"]; pres {
 			if err := json.Unmarshal(*source, &q.uniqueStr); err != nil {
 				return nil, err
