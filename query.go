@@ -276,6 +276,7 @@ func marshalString(q *query, strToMarshal string, dataKey string) error {
 }
 
 func addToQueries(roundMin time.Time, q *query) {
+	mutex.Lock()
 	_, ok := batchMap[batch{roundMin, q.uniqueSha}]
 	if ok == true {
 		batchMap[batch{roundMin, q.uniqueSha}].totalCount++
@@ -283,11 +284,13 @@ func addToQueries(roundMin time.Time, q *query) {
 	} else {
 		batchMap[batch{roundMin, q.uniqueSha}] = q
 	}
+	mutex.Unlock()
 }
 
 func iterOverQueries() {
 	var duration time.Duration
 	now := currentMinute()
+	mutex.Lock()
 	for k := range batchMap {
 		duration = now.Sub(k.minute)
 		if duration >= (1 * time.Minute) {
@@ -304,4 +307,5 @@ func iterOverQueries() {
 			delete(batchMap, k)
 		}
 	}
+	mutex.Unlock()
 }

@@ -58,7 +58,7 @@ func indexName() string {
 }
 
 func elasticURL() string {
-	elasticURL := os.Getenv("ELASTIC_URL")
+	elasticURL := os.Getenv("PLS_ELASTIC_URL")
 	if elasticURL == "" {
 		elasticURL = "http://127.0.0.1:9200"
 	}

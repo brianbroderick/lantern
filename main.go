@@ -4,6 +4,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"sync"
 	"time"
 
 	elastic "gopkg.in/olivere/elastic.v5"
@@ -20,6 +21,7 @@ var (
 	batchMap = make(map[batch]*query)
 	clients  = make(map[string]*elastic.Client)
 	bulkProc = make(map[string]*elastic.BulkProcessor)
+	mutex    = &sync.Mutex{}
 )
 
 func main() {

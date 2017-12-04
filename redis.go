@@ -130,8 +130,8 @@ func getMultiLog() (bool, error) {
 
 //SetupRedis setup redis
 func SetupRedis() {
-	pool = newPool(os.Getenv("REDIS_URL"))
-	redisPassword = os.Getenv("REDIS_PASSWORD")
+	pool = newPool(os.Getenv("PLS_REDIS_URL"))
+	redisPassword = os.Getenv("PLS_REDIS_PASSWORD")
 }
 
 func newPool(server string) *redis.Pool {
