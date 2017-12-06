@@ -16,15 +16,16 @@ import (
 type query struct {
 	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
 	uniqueStr     string // usually the normalized query
-	notes         string
 	errorSeverity string
-	message       string
-	totalDuration float64
-	totalCount    int32
-	query         string
-	preparedStep  string
-	prepared      string
 	logType       string
+	notes         string
+	message       string
+	grokQuery     string
+	prepared      string
+	preparedStep  string
+	query         string
+	totalCount    int32
+	totalDuration float64
 	data          map[string]*json.RawMessage
 }
 
@@ -71,7 +72,7 @@ func newQuery(b []byte) (*query, error) {
 
 func regexMessage(message string) map[string]string {
 	// Query regexp
-	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<query>.*)`)
+	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<grokQuery>.*)`)
 	match := r.FindStringSubmatch(message)
 	result := make(map[string]string)
 
@@ -170,12 +171,12 @@ func parseMessage(q *query) error {
 			q.totalDuration = duration
 		}
 
-		if result["query"] != "" {
+		if result["grokQuery"] != "" {
 			q.preparedStep = result["preparedStep"]
 			q.prepared = strings.TrimSpace(result["prepared"])
-			q.query = result["query"]
+			q.query = result["grokQuery"]
 
-			pgQuery, err := normalizeQuery(result["query"])
+			pgQuery, err := normalizeQuery(result["grokQuery"])
 			if err != nil {
 				return err
 			}
@@ -239,9 +240,9 @@ func (q *query) marshal() ([]byte, error) {
 		}
 	}
 
-	// query
-	if q.query != "" {
-		err = marshalString(q, q.query, "query")
+	// grokQuery
+	if q.grokQuery != "" {
+		err = marshalString(q, q.grokQuery, "query")
 		if err != nil {
 			return nil, err
 		}

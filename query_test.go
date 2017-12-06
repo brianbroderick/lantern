@@ -33,5 +33,5 @@ func TestRegexMessage(t *testing.T) {
 	multiLine := `select * from servers
 	where name = 'blah:blah'`
 	result = regexMessage(message)
-	assert.Equal(t, multiLine, result["query"])
+	assert.Equal(t, multiLine, result["grokQuery"])
 }
