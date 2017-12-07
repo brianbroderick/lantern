@@ -118,7 +118,7 @@ func getMultiLog() (bool, error) {
 				if err != nil {
 					logit.Error(" Error in newQuery: %e", err.Error())
 				} else {
-					addToQueries(currentMinute(), query)
+					addToQueries(roundToMinute(query.timestamp), query)
 				}
 			}
 		}

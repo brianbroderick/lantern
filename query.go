@@ -13,6 +13,8 @@ import (
 	logit "github.com/brettallred/go-logit"
 )
 
+const longForm = "2006-12-06T23:13:33.242+0000"
+
 type query struct {
 	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
 	uniqueStr     string // usually the normalized query
@@ -25,6 +27,7 @@ type query struct {
 	preparedStep  string
 	query         string
 	tempTable     int64
+	timestamp     time.Time
 	totalCount    int32
 	totalDuration float64
 	data          map[string]*json.RawMessage
@@ -49,6 +52,14 @@ func newQuery(b []byte) (*query, error) {
 			return nil, err
 		}
 	}
+
+	var tempTime string
+	if source, pres := q.data["@timestamp"]; pres {
+		if err := json.Unmarshal(*source, &tempTime); err != nil {
+			return nil, err
+		}
+	}
+	q.timestamp, _ = time.Parse(longForm, tempTime)
 
 	// If it's an error, use the error code as the uniqueStr
 	if q.errorSeverity == "ERROR" || q.errorSeverity == "FATAL" {

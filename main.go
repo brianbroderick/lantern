@@ -29,8 +29,8 @@ func main() {
 	defer bulkProc["bulk"].Close()
 	defer clients["bulk"].Stop()
 
-	// Flush to bulkProc every 30 seconds
-	ticker := time.NewTicker(time.Second * 30)
+	// Flush to bulkProc every 60 seconds
+	ticker := time.NewTicker(time.Second * 60)
 	go func() {
 		for _ = range ticker.C {
 			iterOverQueries()
@@ -79,6 +79,10 @@ func currentMinute() time.Time {
 
 func lastMinute() time.Time {
 	return currentMinute().Add(-1 * time.Minute)
+}
+
+func roundToMinute(minute time.Time) time.Time {
+	return minute.Add(-1 * time.Minute)
 }
 
 func round(val float64, roundOn float64, places int) float64 {
