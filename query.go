@@ -24,6 +24,7 @@ type query struct {
 	prepared      string
 	preparedStep  string
 	query         string
+	tempTable     int64
 	totalCount    int32
 	totalDuration float64
 	data          map[string]*json.RawMessage
@@ -75,6 +76,20 @@ func regexMessage(message string) map[string]string {
 	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<grokQuery>.*)`)
 	match := r.FindStringSubmatch(message)
 	result := make(map[string]string)
+
+	if len(match) > 0 {
+		for i, name := range r.SubexpNames() {
+			if i != 0 {
+				result[name] = match[i]
+			}
+		}
+		return result
+	}
+
+	//temporary file: path "base/pgsql_tmp/pgsql_tmp14938.66", size 708064
+	r = regexp.MustCompile(`(?s)temporary file: path ".*?", size\s+(?P<tempTable>\d+).*`)
+	match = r.FindStringSubmatch(message)
+	result = make(map[string]string)
 
 	if len(match) > 0 {
 		for i, name := range r.SubexpNames() {
@@ -171,6 +186,23 @@ func parseMessage(q *query) error {
 			q.totalDuration = duration
 		}
 
+		// When there's a temp table, the "query" field is passed
+		if result["tempTable"] != "" {
+			var grokQuery string
+			var err error
+			if source, pres := q.data["query"]; pres {
+				if err := json.Unmarshal(*source, &grokQuery); err != nil {
+					return err
+				}
+			}
+
+			q.tempTable, err = strconv.ParseInt(result["tempTable"], 10, 64)
+			if err != nil {
+				return err
+			}
+			result["grokQuery"] = grokQuery
+		}
+
 		if result["grokQuery"] != "" {
 			q.preparedStep = result["preparedStep"]
 			q.prepared = strings.TrimSpace(result["prepared"])
@@ -260,6 +292,16 @@ func (q *query) marshal() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// tempTable
+	if q.tempTable > 0 {
+		b, err := json.Marshal(q.tempTable)
+		if err != nil {
+			return nil, err
+		}
+		tempTable := json.RawMessage(b)
+		q.data["temp_table_size"] = &tempTable
 	}
 
 	return json.Marshal(q.data)

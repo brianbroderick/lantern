@@ -1,0 +1,16 @@
+{
+  "user_name": "temp_table",
+  "database_name": "review_rocket_prod",
+  "process_id": 73093,
+  "remote_host": "127.0.0.1",
+  "session_id": "5a28799c.11d85",
+  "session_line_num": 26,
+  "command_tag": "SELECT",
+  "session_start_time": "2017-12-06T23:13:32+0000",
+  "virtual_transaction_id": "2/4077",
+  "error_severity": "LOG",
+  "query": "SELECT DISTINCT \"users\".* FROM \"users\" LEFT JOIN location_users ON location_users.employee_id = users.id WHERE \"users\".\"active\" = 't' AND (location_users.location_id = 17511 OR (users.organization_id = 7528 AND users.role = 'Client'))",
+  "application_name": "DataGrip 2017.2.3",
+  "message": "temporary file: path \"base/pgsql_tmp/pgsql_tmp73093.7\", size 2576060",
+  "@timestamp": "2017-12-06T23:13:33.242+0000"
+}
