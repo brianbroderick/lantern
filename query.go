@@ -129,21 +129,30 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
-	// replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
-	r = regexp.MustCompile(`(?s)replication connection authorized:.*`)
-	match = r.FindStringSubmatch(message)
-
-	if len(match) > 0 {
-		result["logType"] = "connection_replication"
-		return result
-	}
-
 	// disconnection: session time: 0:00:00.074 user=q55cd17435 database= host=10.0.1.168 port=56544
 	r = regexp.MustCompile(`(?s)disconnection:.*`)
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
 		result["logType"] = "disconnection"
+		return result
+	}
+
+	//DEALLOCATE a1246
+	r = regexp.MustCompile(`(?s)DEALLOCATE.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "deallocate"
+		return result
+	}
+
+	// replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
+	r = regexp.MustCompile(`(?s)replication connection authorized:.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "connection_replication"
 		return result
 	}
 
