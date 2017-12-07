@@ -292,9 +292,9 @@ func (q *query) marshal() ([]byte, error) {
 		}
 	}
 
-	// grokQuery
-	if q.grokQuery != "" {
-		err = marshalString(q, q.grokQuery, "query")
+	// query
+	if q.query != "" {
+		err = marshalString(q, q.query, "query")
 		if err != nil {
 			return nil, err
 		}
