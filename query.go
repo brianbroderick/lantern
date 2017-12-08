@@ -31,6 +31,7 @@ type query struct {
 	timestamp     time.Time
 	totalCount    int32
 	totalDuration float64
+	vacuumTable   string
 	data          map[string]*json.RawMessage
 }
 
@@ -169,6 +170,21 @@ func regexMessage(message string) map[string]string {
 
 	if len(match) > 0 {
 		result["logType"] = "checkpoint_complete"
+		return result
+	}
+
+	//automatic vacuum of table "app.public.api_clients":.*
+	r = regexp.MustCompile(`(?s)automatic vacuum of table "(?P<vacuumTable>.*?)":.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		for i, name := range r.SubexpNames() {
+			if i != 0 {
+				result[name] = match[i]
+			}
+		}
+		result["notes"] = message
+		result["logType"] = "vacuum_table " + result["vacuumTable"]
 		return result
 	}
 
