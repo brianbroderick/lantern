@@ -18,6 +18,7 @@ const longForm = "2006-12-06T23:13:33.242+0000"
 type query struct {
 	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
 	uniqueStr     string // usually the normalized query
+	commandTag    string
 	errorSeverity string
 	logType       string
 	notes         string
@@ -39,6 +40,12 @@ func newQuery(b []byte) (*query, error) {
 
 	if err := json.Unmarshal(b, &q.data); err != nil {
 		return nil, err
+	}
+
+	if source, pres := q.data["command_tag"]; pres {
+		if err := json.Unmarshal(*source, &q.commandTag); err != nil {
+			return nil, err
+		}
 	}
 
 	if source, pres := q.data["error_severity"]; pres {
@@ -138,15 +145,6 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
-	//DEALLOCATE a1246
-	r = regexp.MustCompile(`(?s)DEALLOCATE.*`)
-	match = r.FindStringSubmatch(message)
-
-	if len(match) > 0 {
-		result["logType"] = "deallocate"
-		return result
-	}
-
 	// replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
 	r = regexp.MustCompile(`(?s)replication connection authorized:.*`)
 	match = r.FindStringSubmatch(message)
@@ -240,6 +238,10 @@ func parseMessage(q *query) error {
 			q.notes = q.message
 			q.uniqueStr = result["logType"]
 		}
+
+		if q.commandTag == "DEALLOCATE" {
+			q.uniqueStr = "deallocate"
+		}
 	}
 
 	return nil
@@ -295,6 +297,14 @@ func (q *query) marshal() ([]byte, error) {
 	// query
 	if q.query != "" {
 		err = marshalString(q, q.query, "query")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// uniqueSha
+	if q.uniqueSha != "" {
+		err = marshalString(q, q.uniqueSha, "unique_sha")
 		if err != nil {
 			return nil, err
 		}
