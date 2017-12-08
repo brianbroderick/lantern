@@ -85,7 +85,8 @@ func newQuery(b []byte) (*query, error) {
 
 	q.shaUnique()
 	q.marshal()
-	delete(q.data, "message")
+	// DELETE message once we've debugged all the messages.
+	// delete(q.data, "message")
 
 	return q, nil
 }
