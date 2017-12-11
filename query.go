@@ -163,7 +163,7 @@ func regexMessage(message string) map[string]string {
 
 	//automatic vacuum of table "app.public.api_clients":.*
 	// or automatic analyze of table "app.public.api_clients" system usage: CPU 0.00s/0.02u sec elapsed 0.15 sec
-	r = regexp.MustCompile(`(?s)automatic (?P<action>vacuum|analyze) of table "(?P<table>.*?)":.*`)
+	r = regexp.MustCompile(`(?s)automatic (?P<action>vacuum|analyze) of table "(?P<table>.*?)".*`)
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
