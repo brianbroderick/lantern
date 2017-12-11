@@ -147,8 +147,8 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
-	// checkpoint starting: time
-	r = regexp.MustCompile(`(?s)checkpoint (?P<actionCheckpoint>starting|complete):.*`)
+	// checkpoint or restartpoint starting or completing
+	r = regexp.MustCompile(`(?s)(?P<actionPoint>checkpoint|restartpoint) (?P<actionCheckpoint>starting|complete):.*`)
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
@@ -157,7 +157,7 @@ func regexMessage(message string) map[string]string {
 				result[name] = match[i]
 			}
 		}
-		result["logType"] = "checkpoint_" + result["actionCheckpoint"]
+		result["logType"] = result["actionPoint"] + "_" + result["actionCheckpoint"]
 		return result
 	}
 
@@ -177,12 +177,30 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
+	//recovery restart point at 645/28313308
+	r = regexp.MustCompile(`(?s)recovery restart point.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "recovery_restart_point"
+		return result
+	}
+
 	//could not receive data from client: Connection reset by peer
 	r = regexp.MustCompile(`(?s)could not receive data.*`)
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
 		result["logType"] = "connection_reset"
+		return result
+	}
+
+	//unexpected EOF on client connection with an open transaction
+	r = regexp.MustCompile(`(?s)unexpected EOF.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "unexpected_eof"
 		return result
 	}
 
