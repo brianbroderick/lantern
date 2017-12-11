@@ -113,6 +113,28 @@ func TestTempTable(t *testing.T) {
 	defer clients["bulk"].Stop()
 }
 
+func TestUpdateWaiting(t *testing.T) {
+	initialSetup()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("update_waiting.json")
+	conn.Do("LPUSH", redisKey(), sample)
+
+	llen, err := conn.Do("LLEN", redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
+
+	notes := "process 11451 acquired ExclusiveLock on page 0 of relation 519373 of database 267504 after 1634.121 ms"
+	query, err := getLog()
+	assert.NoError(t, err)
+	assert.Equal(t, notes, query.notes)
+
+	message := "UPDATE \"review_invitations\" SET \"mms_url\" = $1, \"sms_text\" = $2, \"message_sid\" = $3, \"updated_at\" = $4 WHERE \"review_invitations\".\"id\" = $5"
+	assert.Equal(t, message, query.uniqueStr)
+}
+
 func readPayload(filename string) []byte {
 	dat, err := ioutil.ReadFile("./sample_payloads/" + filename)
 	check(err)

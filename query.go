@@ -203,7 +203,19 @@ func regexMessage(message string) map[string]string {
 }
 
 func parseMessage(q *query) error {
-	result := regexMessage(q.message)
+	result := make(map[string]string)
+
+	if q.commandTag == "UPDATE waiting" {
+		grokQuery, err := unmarshalQuery(q)
+		if err != nil {
+			return err
+		}
+
+		result["grokQuery"] = grokQuery
+		q.notes = q.message
+	} else {
+		result = regexMessage(q.message)
+	}
 
 	if result["unknownMessage"] != "" {
 		// unknownMessage
@@ -223,12 +235,9 @@ func parseMessage(q *query) error {
 
 		// When there's a temp table, the "query" field is passed
 		if result["tempTable"] != "" {
-			var grokQuery string
-			var err error
-			if source, pres := q.data["query"]; pres {
-				if err := json.Unmarshal(*source, &grokQuery); err != nil {
-					return err
-				}
+			grokQuery, err := unmarshalQuery(q)
+			if err != nil {
+				return err
 			}
 
 			q.tempTable, err = strconv.ParseInt(result["tempTable"], 10, 64)
@@ -398,4 +407,15 @@ func iterOverQueries() {
 		}
 	}
 	mutex.Unlock()
+}
+
+func unmarshalQuery(q *query) (string, error) {
+	var grokQuery string
+	// var err error
+	if source, pres := q.data["query"]; pres {
+		if err := json.Unmarshal(*source, &grokQuery); err != nil {
+			return "", err
+		}
+	}
+	return grokQuery, nil
 }
