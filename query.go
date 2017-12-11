@@ -129,14 +129,15 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
-	// connection received: host=10.0.1.168 port=38634
-	r = regexp.MustCompile(`(?s)connection authorized:.*`)
-	match = r.FindStringSubmatch(message)
+	// Moved this to a check against the commangTag
+	// // connection received: host=10.0.1.168 port=38634
+	// r = regexp.MustCompile(`(?s)connection authorized:.*`)
+	// match = r.FindStringSubmatch(message)
 
-	if len(match) > 0 {
-		result["logType"] = "connection_authorized"
-		return result
-	}
+	// if len(match) > 0 {
+	// 	result["logType"] = "connection_authorized"
+	// 	return result
+	// }
 
 	// disconnection: session time: 0:00:00.074 user=q55cd17435 database= host=10.0.1.168 port=56544
 	r = regexp.MustCompile(`(?s)disconnection:.*`)
@@ -205,7 +206,7 @@ func regexMessage(message string) map[string]string {
 func parseMessage(q *query) error {
 	result := make(map[string]string)
 
-	if q.commandTag == "UPDATE waiting" {
+	if q.commandTag == "UPDATE waiting" || q.commandTag == "INSERT waiting" {
 		grokQuery, err := unmarshalQuery(q)
 		if err != nil {
 			return err
@@ -213,6 +214,8 @@ func parseMessage(q *query) error {
 
 		result["grokQuery"] = grokQuery
 		q.notes = q.message
+	} else if q.commandTag == "authentication" {
+		result["logType"] = "connection_authorized"
 	} else {
 		result = regexMessage(q.message)
 	}
