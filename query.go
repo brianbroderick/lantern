@@ -129,16 +129,6 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
-	// Moved this to a check against the commangTag
-	// // connection received: host=10.0.1.168 port=38634
-	// r = regexp.MustCompile(`(?s)connection authorized:.*`)
-	// match = r.FindStringSubmatch(message)
-
-	// if len(match) > 0 {
-	// 	result["logType"] = "connection_authorized"
-	// 	return result
-	// }
-
 	// disconnection: session time: 0:00:00.074 user=q55cd17435 database= host=10.0.1.168 port=56544
 	r = regexp.MustCompile(`(?s)disconnection:.*`)
 	match = r.FindStringSubmatch(message)
@@ -158,25 +148,22 @@ func regexMessage(message string) map[string]string {
 	}
 
 	// checkpoint starting: time
-	r = regexp.MustCompile(`(?s)checkpoint starting:.*`)
+	r = regexp.MustCompile(`(?s)checkpoint (?P<actionCheckpoint>starting|complete):.*`)
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
-		result["logType"] = "checkpoint_starting"
-		return result
-	}
-
-	//checkpoint complete: wrote 0 buffers (0.0%); 0 transaction log file(s) added, 0 removed, 0 recycled; write=0.015 s, sync=0.000 s, total=0.019 s; sync files=0, longest=0.000 s, average=0.000 s; distance=0 kB, estimate=46 kB
-	r = regexp.MustCompile(`(?s)checkpoint complete:.*`)
-	match = r.FindStringSubmatch(message)
-
-	if len(match) > 0 {
-		result["logType"] = "checkpoint_complete"
+		for i, name := range r.SubexpNames() {
+			if i != 0 {
+				result[name] = match[i]
+			}
+		}
+		result["logType"] = "checkpoint_" + result["actionCheckpoint"]
 		return result
 	}
 
 	//automatic vacuum of table "app.public.api_clients":.*
-	r = regexp.MustCompile(`(?s)automatic vacuum of table "(?P<vacuumTable>.*?)":.*`)
+	// or automatic analyze of table "app.public.api_clients" system usage: CPU 0.00s/0.02u sec elapsed 0.15 sec
+	r = regexp.MustCompile(`(?s)automatic (?P<action>vacuum|analyze) of table "(?P<table>.*?)":.*`)
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
@@ -186,7 +173,7 @@ func regexMessage(message string) map[string]string {
 			}
 		}
 		result["notes"] = message
-		result["logType"] = "vacuum_table " + result["vacuumTable"]
+		result["logType"] = result["action"] + "_table " + result["table"]
 		return result
 	}
 

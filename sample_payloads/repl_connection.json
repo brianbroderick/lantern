@@ -1,0 +1,15 @@
+{
+  "user_name": "conn_repl",
+  "database_name": "sampledb",
+  "process_id": 72320,
+  "remote_host": "127.0.0.1",
+  "session_id": "59e4d54b.11a80",
+  "session_line_num": 18,
+  "command_tag": "",
+  "session_start_time": "2017-10-16T15:50:35+0000",
+  "virtual_transaction_id": "2/48859",
+  "error_severity": "LOG",
+  "application_name": "SomeApp",
+  "message": "replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)",
+  "@timestamp": "2017-10-16T15:50:35.840+0000"
+}

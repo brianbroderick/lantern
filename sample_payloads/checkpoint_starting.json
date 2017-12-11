@@ -1,0 +1,15 @@
+{
+  "user_name": "checkpoint",
+  "database_name": "sampledb",
+  "process_id": 72320,
+  "remote_host": "127.0.0.1",
+  "session_id": "59e4d54b.11a80",
+  "session_line_num": 18,
+  "command_tag": "",
+  "session_start_time": "2017-10-16T15:50:35+0000",
+  "virtual_transaction_id": "2/48859",
+  "error_severity": "LOG",
+  "application_name": "SomeApp",
+  "message": "checkpoint starting: time",
+  "@timestamp": "2017-10-16T15:50:35.840+0000"
+}
