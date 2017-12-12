@@ -18,6 +18,6 @@ func normalizeQuery(sql string) ([]byte, error) {
 }
 
 func truncateInLists(str string) string {
-	r := regexp.MustCompile(`(\?, )+`)
+	r := regexp.MustCompile(`(\?,\s*)+`)
 	return r.ReplaceAllString(str, "")
 }
