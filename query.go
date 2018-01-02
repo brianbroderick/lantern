@@ -70,7 +70,7 @@ func newQuery(b []byte) (*query, error) {
 	q.timestamp, _ = time.Parse(longForm, tempTime)
 
 	// If it's an error, use the error code as the uniqueStr
-	if q.errorSeverity == "ERROR" || q.errorSeverity == "FATAL" {
+	if q.errorSeverity == "ERROR" || q.errorSeverity == "FATAL" || q.errorSeverity == "WARNING" {
 		if source, pres := q.data["sql_state_code"]; pres {
 			if err := json.Unmarshal(*source, &q.uniqueStr); err != nil {
 				return nil, err
@@ -187,7 +187,7 @@ func regexMessage(message string) map[string]string {
 	}
 
 	//could not receive data from client: Connection reset by peer
-	r = regexp.MustCompile(`(?s)could not receive data.*`)
+	r = regexp.MustCompile(`(?s).*Connection reset by peer.*`)
 	match = r.FindStringSubmatch(message)
 
 	if len(match) > 0 {
@@ -201,6 +201,60 @@ func regexMessage(message string) map[string]string {
 
 	if len(match) > 0 {
 		result["logType"] = "unexpected_eof"
+		return result
+	}
+
+	//logical decoding found consistent point at 6D9/DEAF7B60
+	r = regexp.MustCompile(`(?s)logical decoding found consistent point at.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "logical_decoding_consistent_point"
+		return result
+	}
+
+	//consistent recovery state reached at 12C/552375D0
+	r = regexp.MustCompile(`(?s)consistent recovery state reached at.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "consistent_recovery_state_reached"
+		return result
+	}
+
+	//starting logical decoding for slot...
+	r = regexp.MustCompile(`(?s)starting logical decoding for slot.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "starting_logical_decoding"
+		return result
+	}
+
+	//autovacuum launcher started
+	r = regexp.MustCompile(`(?s)autovacuum launcher started.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "autovacuum_launcher_started"
+		return result
+	}
+
+	//database system is shut down
+	r = regexp.MustCompile(`(?s)database system (is|was) shut down.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "database_shut_down"
+		return result
+	}
+
+	//database system is ready to accept read only connections
+	r = regexp.MustCompile(`(?s)database system (is|was) shut down.*`)
+	match = r.FindStringSubmatch(message)
+
+	if len(match) > 0 {
+		result["logType"] = "standby_is_up"
 		return result
 	}
 
