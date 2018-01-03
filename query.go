@@ -414,6 +414,14 @@ func (q *query) marshal() ([]byte, error) {
 		}
 	}
 
+	// redisKey
+	if q.redisKey != "" {
+		err = marshalString(q, q.redisKey, "redis_key")
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// tempTable
 	if q.tempTable > 0 {
 		b, err := json.Marshal(q.tempTable)
