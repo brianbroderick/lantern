@@ -31,7 +31,7 @@ func getLog(redisKey string) (*query, error) {
 			return nil, err
 		}
 
-		query, err := newQuery(data)
+		query, err := newQuery(data, redisKey)
 		if err != nil {
 			return nil, err
 		}
@@ -99,7 +99,7 @@ func getMultiLog(redisKey string) (bool, error) {
 					return true, err
 				}
 
-				query, err := newQuery(q)
+				query, err := newQuery(q, redisKey)
 				if err != nil {
 					logit.Error(" Error in newQuery: %e", err.Error())
 				} else {

@@ -27,6 +27,7 @@ type query struct {
 	prepared      string
 	preparedStep  string
 	query         string
+	redisKey      string
 	tempTable     int64
 	timestamp     time.Time
 	totalCount    int32
@@ -35,9 +36,10 @@ type query struct {
 	data          map[string]*json.RawMessage
 }
 
-func newQuery(b []byte) (*query, error) {
+func newQuery(b []byte, redisKey string) (*query, error) {
 	var q = new(query)
 	q.totalCount = 1
+	q.redisKey = redisKey
 
 	if err := json.Unmarshal(b, &q.data); err != nil {
 		return nil, err

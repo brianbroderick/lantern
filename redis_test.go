@@ -42,7 +42,7 @@ func TestPipeline(t *testing.T) {
 			d, err := redis.Bytes(datum, err)
 			assert.NoError(t, err)
 
-			_, err = newQuery(d)
+			_, err = newQuery(d, redisQueues[0])
 			assert.NoError(t, err)
 		}
 	}
