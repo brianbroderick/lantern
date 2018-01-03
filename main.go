@@ -51,7 +51,7 @@ func main() {
 
 func initialSetup() {
 	setupEnv()
-	populateRedisQueues(os.Getenv("REDIS_QUEUES"))
+	populateRedisQueues(os.Getenv("PLS_REDIS_QUEUES"))
 	SetupRedis()
 	SetupElastic()
 }
