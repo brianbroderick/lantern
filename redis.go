@@ -14,28 +14,13 @@ var (
 	redisPassword string
 )
 
-func startRedisSingle() {
-	for {
-		query, err := getLog()
-		if err != nil {
-			logit.Error(" Error getting log from Redis: %e", err.Error())
-		}
-		if query != nil {
-			addToQueries(currentMinute(), query)
-		} else {
-			logit.Info(" No new queries found. Waiting 5 seconds.")
-			time.Sleep((time.Second * 5))
-		}
-	}
-}
-
-func getLog() (*query, error) {
+func getLog(redisKey string) (*query, error) {
 	var data json.RawMessage
 
 	conn := pool.Get()
 	defer conn.Close()
 
-	reply, err := conn.Do("LPOP", redisKey())
+	reply, err := conn.Do("LPOP", redisKey)
 	if err != nil {
 		return nil, err
 	}
@@ -55,11 +40,11 @@ func getLog() (*query, error) {
 	return nil, nil
 }
 
-func startRedisBatch() {
+func startRedisBatch(redisKey string) {
 	nap := 0
 
 	for {
-		ok, err := getMultiLog()
+		ok, err := getMultiLog(redisKey)
 		if err != nil {
 			logit.Error(" Error in getMultiLog: %e", err.Error())
 		}
@@ -67,7 +52,7 @@ func startRedisBatch() {
 			nap++
 			time.Sleep((time.Second * 1))
 			if nap%10 == 0 {
-				logit.Info(" Seconds since last Redis log received: %d", nap)
+				logit.Info(" Seconds since last Redis log received from %s key: %d", redisKey, nap)
 			}
 		} else {
 			nap = 0
@@ -75,12 +60,12 @@ func startRedisBatch() {
 	}
 }
 
-func getMultiLog() (bool, error) {
+func getMultiLog(redisKey string) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
 
 	// get list length
-	l, err := conn.Do("LLEN", redisKey())
+	l, err := conn.Do("LLEN", redisKey)
 	if err != nil {
 		return true, err
 	}
@@ -99,7 +84,7 @@ func getMultiLog() (bool, error) {
 		conn.Send("MULTI")
 		var n int64
 		for n = 0; n < llen; n++ {
-			conn.Send("LPOP", redisKey())
+			conn.Send("LPOP", redisKey)
 		}
 
 		reply, err := redis.Values(conn.Do("EXEC"))
@@ -157,5 +142,20 @@ func newPool(server string) *redis.Pool {
 			_, err := c.Do("PING")
 			return err
 		},
+	}
+}
+
+func startRedisSingle(redisKey string) {
+	for {
+		query, err := getLog(redisKey)
+		if err != nil {
+			logit.Error(" Error getting log from Redis: %e", err.Error())
+		}
+		if query != nil {
+			addToQueries(currentMinute(), query)
+		} else {
+			logit.Info(" No new queries found. Waiting 5 seconds.")
+			time.Sleep((time.Second * 5))
+		}
 	}
 }

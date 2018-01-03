@@ -4,6 +4,8 @@ import (
 	"log"
 	"math"
 	"os"
+	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,10 +20,11 @@ type batch struct {
 }
 
 var (
-	batchMap = make(map[batch]*query)
-	clients  = make(map[string]*elastic.Client)
-	bulkProc = make(map[string]*elastic.BulkProcessor)
-	mutex    = &sync.Mutex{}
+	batchMap    = make(map[batch]*query)
+	clients     = make(map[string]*elastic.Client)
+	bulkProc    = make(map[string]*elastic.BulkProcessor)
+	mutex       = &sync.Mutex{}
+	redisQueues = make([]string, 0)
 )
 
 func main() {
@@ -37,7 +40,10 @@ func main() {
 		}
 	}()
 
-	go startRedisBatch()
+	for _, queue := range redisQueues {
+		go startRedisBatch(queue)
+		time.Sleep(30 * time.Millisecond) // stagger threads hitting Redis
+	}
 
 	forever := make(chan bool)
 	<-forever
@@ -45,6 +51,7 @@ func main() {
 
 func initialSetup() {
 	setupEnv()
+	populateRedisQueues(os.Getenv("REDIS_QUEUES"))
 	SetupRedis()
 	SetupElastic()
 }
@@ -61,6 +68,16 @@ func setupEnv() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Printf("INFO: .env file not found")
+	}
+}
+
+func populateRedisQueues(queues string) {
+	if queues == "" {
+		redisQueues = append(redisQueues, "postgres")
+	} else {
+		r := regexp.MustCompile(" ")
+		queues = r.ReplaceAllString(queues, "")
+		redisQueues = strings.Split(queues, ",")
 	}
 }
 

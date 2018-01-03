@@ -34,7 +34,7 @@ func TestFlow(t *testing.T) {
 	assert.Equal(t, int64(1), llen)
 
 	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 
@@ -85,7 +85,7 @@ func TestTempTable(t *testing.T) {
 
 	message := "temporary file: path \"base/pgsql_tmp/pgsql_tmp73093.7\", size 2576060"
 	grokQuery := "SELECT DISTINCT \"users\".* FROM \"users\" LEFT JOIN location_users ON location_users.employee_id = users.id WHERE \"users\".\"active\" = 't' AND (location_users.location_id = 17511 OR (users.organization_id = 7528 AND users.role = 'Client'))"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 	assert.Equal(t, grokQuery, query.query)
@@ -106,7 +106,7 @@ func TestUpdateWaiting(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "process 11451 acquired ExclusiveLock on page 0 of relation 519373 of database 267504 after 1634.121 ms"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -127,7 +127,7 @@ func TestFatal(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "some fatal error"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -148,7 +148,7 @@ func TestConnReceived(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "connection received: host=10.0.1.168 port=38634"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -169,7 +169,7 @@ func TestDisconnection(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "disconnection: session time: 0:00:00.074 user=q55cd17435 database= host=10.0.1.168 port=56544"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -190,7 +190,7 @@ func TestConnRepl(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -211,7 +211,7 @@ func TestCheckpointStarting(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "checkpoint starting: time"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -232,7 +232,7 @@ func TestCheckpointComplete(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "checkpoint complete: time"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -253,7 +253,7 @@ func TestVacuum(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "automatic vacuum of table \"app.public.api_clients\": blah blah"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -274,7 +274,7 @@ func TestAnalyze(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "automatic analyze of table \"app.public.api_clients\": system usage: CPU 0.00s/0.02u sec elapsed 0.15 sec"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -295,7 +295,7 @@ func TestConnectionReset(t *testing.T) {
 	conn.Do("LPUSH", redisKey(), sample)
 
 	notes := "could not receive data from client: Connection reset by peer"
-	query, err := getLog()
+	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
@@ -413,4 +413,18 @@ func getRecordWithTempTable() int64 {
 		return getRecordWithTempTable()
 	}
 	return -1
+}
+
+func TestPopulateRedisQueues(t *testing.T) {
+	populateRedisQueues("test")
+	expected := []string{"test"}
+	assert.Equal(t, expected, redisQueues)
+
+	populateRedisQueues("bob,bill,jane")
+	expected = []string{"bob", "bill", "jane"}
+	assert.Equal(t, expected, redisQueues)
+
+	populateRedisQueues(" ben,   jimmy, greg   ")
+	expected = []string{"ben", "jimmy", "greg"}
+	assert.Equal(t, expected, redisQueues)
 }
