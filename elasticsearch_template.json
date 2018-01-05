@@ -103,7 +103,12 @@
         },
         "unique_string": {
           "norms": false,
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
         },
         "unknown_message": {
           "norms": false,
