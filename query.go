@@ -88,7 +88,7 @@ func newQuery(b []byte, redisKey string) (*query, error) {
 	q.shaUnique()
 	q.marshal()
 	// DELETE message once we've debugged all the messages.
-	// delete(q.data, "message")
+	delete(q.data, "message")
 
 	return q, nil
 }
