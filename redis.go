@@ -52,10 +52,7 @@ func startRedisBatch(redisKey string) {
 			logit.Error(" Error in getMultiLog: %e", err.Error())
 		}
 		if ok == false {
-			sleepDuration = time.Duration(math.Ceil((float64(nap) + 0.01) / 10.0))
-			if sleepDuration > 15 {
-				sleepDuration = 15
-			}
+			sleepDuration = getDuration(nap)
 
 			nap += int(sleepDuration)
 			time.Sleep((time.Second * sleepDuration))
@@ -169,4 +166,12 @@ func startRedisSingle(redisKey string) {
 			time.Sleep((time.Second * 5))
 		}
 	}
+}
+
+func getDuration(nap int) time.Duration {
+	sleepDuration := time.Duration(math.Ceil((float64(nap) + 0.01) / 10.0))
+	if sleepDuration > 15 {
+		sleepDuration = 15
+	}
+	return sleepDuration
 }

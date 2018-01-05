@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/stretchr/testify/assert"
@@ -52,4 +53,10 @@ func TestPipeline(t *testing.T) {
 	assert.Equal(t, int64(0), llen)
 
 	conn.Do("DEL", pipeline)
+}
+
+func TestGetDuration(t *testing.T) {
+	assert.Equal(t, time.Duration(1), getDuration(0))
+	assert.Equal(t, time.Duration(4), getDuration(35))
+	assert.Equal(t, time.Duration(15), getDuration(300))
 }
