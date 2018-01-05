@@ -1,0 +1,124 @@
+{
+  "order": 0,
+  "template": "pg-*",
+  "settings": {
+    "index": {
+      "mapping": {
+        "total_fields": {
+          "limit": "1000"
+        }
+      },
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "_meta": {
+        "version": "5.6.2"
+      },
+      "date_detection": false,
+      "dynamic_templates": [
+        {
+          "strings_as_keyword": {
+            "mapping": {
+              "ignore_above": 1024,
+              "type": "keyword"
+            },
+            "match_mapping_type": "string"
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "application_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "command_tag": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "database_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "error_severity": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "message": {
+          "norms": false,
+          "type": "text"
+        },
+        "prepared": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "prepared_step": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "process_id": {
+          "type": "integer"
+        },
+        "notes": {
+          "norms": false,
+          "type": "text"
+        },
+        "query": {
+          "norms": false,
+          "type": "text"
+        },
+        "redis_key": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "remote_host": {
+          "type": "ip"
+        },
+        "session_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "session_line_num": {
+          "type": "integer"
+        },
+        "session_start_time": {
+          "type": "date"
+        },
+        "temp_table_size": {
+          "type": "long"
+        },
+        "total_count": {
+          "type": "long"
+        },
+        "total_duration_ms": {
+          "type": "float"
+        },
+        "unique_sha": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "unique_string": {
+          "norms": false,
+          "type": "text"
+        },
+        "unknown_message": {
+          "norms": false,
+          "type": "text"
+        },
+        "user_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+         "virtual_transaction_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        }
+      }
+    }
+  },
+  "aliases": {}
+}

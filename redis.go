@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"time"
 
@@ -42,6 +43,8 @@ func getLog(redisKey string) (*query, error) {
 
 func startRedisBatch(redisKey string) {
 	nap := 0
+	lastLog := 0
+	var sleepDuration time.Duration
 
 	for {
 		ok, err := getMultiLog(redisKey)
@@ -49,13 +52,21 @@ func startRedisBatch(redisKey string) {
 			logit.Error(" Error in getMultiLog: %e", err.Error())
 		}
 		if ok == false {
-			nap++
-			time.Sleep((time.Second * 1))
-			if nap%10 == 0 {
+			sleepDuration = time.Duration(math.Ceil((float64(nap) + 0.01) / 10.0))
+			if sleepDuration > 15 {
+				sleepDuration = 15
+			}
+
+			nap += int(sleepDuration)
+			time.Sleep((time.Second * sleepDuration))
+
+			if nap-lastLog >= 20 {
 				logit.Info(" Seconds since last Redis log received from %s key: %d", redisKey, nap)
+				lastLog = nap
 			}
 		} else {
 			nap = 0
+			lastLog = 0
 		}
 	}
 }
