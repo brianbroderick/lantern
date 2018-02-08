@@ -62,5 +62,6 @@ func elasticURL() string {
 	if elasticURL == "" {
 		elasticURL = "http://127.0.0.1:9200"
 	}
+	fmt.Printf("%s\n", elasticURL)
 	return elasticURL
 }
