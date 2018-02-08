@@ -36,6 +36,9 @@
           "ignore_above": 1024,
           "type": "keyword"
         },
+        "avg_duration_ms": {
+          "type": "float"
+        },
         "command_tag": {
           "ignore_above": 1024,
           "type": "keyword"
