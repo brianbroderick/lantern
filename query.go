@@ -362,6 +362,14 @@ func (q *query) marshalAgg() ([]byte, error) {
 	rawDuration := json.RawMessage(b)
 	q.data["total_duration_ms"] = &rawDuration
 
+	// avg duration rounded to 5 decimal points
+	b, err = json.Marshal(round((q.totalDuration / float64(q.totalCount)), 0.5, 5))
+	if err != nil {
+		return nil, err
+	}
+	rawAvgDuration := json.RawMessage(b)
+	q.data["avg_duration_ms"] = &rawAvgDuration
+
 	return json.Marshal(q.data)
 }
 

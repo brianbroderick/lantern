@@ -43,7 +43,7 @@ func TestFlow(t *testing.T) {
 	assert.Equal(t, "<unnamed>", query.prepared)
 	assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
 
-	pgQuery := "select * from servers where id IN (?) and name = ?"
+	pgQuery := "select * from servers where id in (?) and name = ?"
 	assert.Equal(t, pgQuery, query.uniqueStr)
 
 	assert.Equal(t, 0, len(batchMap))
@@ -110,7 +110,7 @@ func TestUpdateWaiting(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, notes, query.notes)
 
-	message := "UPDATE \"review_invitations\" SET \"mms_url\" = $1, \"sms_text\" = $2, \"message_sid\" = $3, \"updated_at\" = $4 WHERE \"review_invitations\".\"id\" = $5"
+	message := "update \"review_invitations\" set \"mms_url\" = $1, \"sms_text\" = $2, \"message_sid\" = $3, \"updated_at\" = $4 where \"review_invitations\".\"id\" = $5"
 	assert.Equal(t, message, query.uniqueStr)
 
 	defer bulkProc["bulk"].Close()
