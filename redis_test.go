@@ -57,6 +57,30 @@ func TestPipeline(t *testing.T) {
 
 func TestGetDuration(t *testing.T) {
 	assert.Equal(t, time.Duration(1), getDuration(0))
-	assert.Equal(t, time.Duration(4), getDuration(35))
-	assert.Equal(t, time.Duration(15), getDuration(300))
+	assert.Equal(t, time.Duration(9), getDuration(35))
+	assert.Equal(t, time.Duration(20), getDuration(300))
+
+	nap := 0
+	var sleepDuration time.Duration
+
+	// 1 second each
+	for i := 0; i < 4; i++ {
+		sleepDuration = getDuration(nap)
+		nap += int(sleepDuration)
+	}
+	assert.Equal(t, 4, nap)
+
+	// Starting with 4, then +2, +2, +3, +3
+	for i := 0; i < 4; i++ {
+		sleepDuration = getDuration(nap)
+		nap += int(sleepDuration)
+	}
+	assert.Equal(t, 14, nap)
+
+	// Starting with 14, then +4, +5, +6, +8
+	for i := 0; i < 4; i++ {
+		sleepDuration = getDuration(nap)
+		nap += int(sleepDuration)
+	}
+	assert.Equal(t, 37, nap)
 }

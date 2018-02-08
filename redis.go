@@ -57,7 +57,7 @@ func startRedisBatch(redisKey string) {
 			nap += int(sleepDuration)
 			time.Sleep((time.Second * sleepDuration))
 
-			if nap-lastLog >= 20 {
+			if nap-lastLog >= 21 {
 				logit.Info(" %d seconds since received data from %s", nap, redisKey)
 				lastLog = nap
 			}
@@ -169,9 +169,9 @@ func startRedisSingle(redisKey string) {
 }
 
 func getDuration(nap int) time.Duration {
-	sleepDuration := time.Duration(math.Ceil((float64(nap) + 0.01) / 10.0))
-	if sleepDuration > 15 {
-		sleepDuration = 15
+	sleepDuration := time.Duration(math.Ceil((float64(nap) + 0.01) / 4.0))
+	if sleepDuration > 20 {
+		sleepDuration = 20
 	}
 	return sleepDuration
 }
