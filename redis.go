@@ -72,7 +72,7 @@ func startRedisBatch(redisKey string) {
 			lastLog = 0
 			processedMessages += msgCount
 			if processedMessages-lastProcessed >= 1000 {
-				logit.Info(" %d messages have been processed from %s since last idle message.", nap, redisKey)
+				logit.Info(" %d messages processed from %s since last idle", processedMessages, redisKey)
 				lastProcessed = processedMessages
 			}
 		}
