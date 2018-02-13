@@ -27,12 +27,13 @@ var (
 	mutex       = &sync.Mutex{}
 	redisQueues = make([]string, 0)
 
-	blue   = color.New(color.FgBlue).SprintFunc()
-	cyan   = color.New(color.FgCyan).SprintFunc()
-	green  = color.New(color.FgGreen).SprintFunc()
-	red    = color.New(color.FgRed).SprintFunc()
-	yellow = color.New(color.FgYellow).SprintFunc()
-	white  = color.New(color.FgWhite).SprintFunc()
+	blue    = color.New(color.FgBlue).SprintFunc()
+	cyan    = color.New(color.FgCyan).SprintFunc()
+	green   = color.New(color.FgGreen).SprintFunc()
+	magenta = color.New(color.FgMagenta).SprintFunc()
+	red     = color.New(color.FgRed).SprintFunc()
+	yellow  = color.New(color.FgYellow).SprintFunc()
+	white   = color.New(color.FgWhite).SprintFunc()
 )
 
 func main() {
