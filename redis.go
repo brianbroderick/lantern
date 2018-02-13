@@ -51,7 +51,7 @@ func startRedisBatch(redisKey string) {
 	)
 
 	for {
-		ok, msgCount, err := getMultiLog(redisKey)
+		ok, msgCount, queueLength, err := getMultiLog(redisKey)
 		if err != nil {
 			logit.Error(" Error in getMultiLog: %e", err.Error())
 		}
@@ -73,26 +73,29 @@ func startRedisBatch(redisKey string) {
 			processedMessages += msgCount
 			if processedMessages-lastProcessed >= 10000 {
 				logit.Info(" %d messages processed from %s since last reset", processedMessages, redisKey)
+				logit.Info(" Current queue length for %s is %d", redisKey, queueLength)
 				lastProcessed = processedMessages
 			}
 		}
 	}
 }
 
-func getMultiLog(redisKey string) (bool, int64, error) {
+func getMultiLog(redisKey string) (bool, int64, int64, error) {
 	conn := pool.Get()
 	defer conn.Close()
 
 	// get list length
 	l, err := conn.Do("LLEN", redisKey)
 	if err != nil {
-		return true, 0, err
+		return true, 0, 0, err
 	}
 
 	llen, err := redis.Int64(l, err)
 	if err != nil {
-		return true, 0, err
+		return true, 0, 0, err
 	}
+
+	queueLength := llen
 
 	// LPOP at most 100 at a time
 	if llen > 100 {
@@ -108,14 +111,14 @@ func getMultiLog(redisKey string) (bool, int64, error) {
 
 		reply, err := redis.Values(conn.Do("EXEC"))
 		if err != nil {
-			return true, 0, err
+			return true, 0, queueLength, err
 		}
 
 		for _, datum := range reply {
 			if datum != nil {
 				q, err := redis.Bytes(datum, err)
 				if err != nil {
-					return true, 0, err
+					return true, 0, queueLength, err
 				}
 
 				query, err := newQuery(q, redisKey)
@@ -126,10 +129,10 @@ func getMultiLog(redisKey string) (bool, int64, error) {
 				}
 			}
 		}
-		return true, llen, nil
+		return true, llen, queueLength, nil
 	}
 
-	return false, 0, nil
+	return false, 0, queueLength, nil
 }
 
 //SetupRedis setup redis
