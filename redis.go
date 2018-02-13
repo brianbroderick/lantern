@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math"
 	"os"
+	"strconv"
 	"time"
 
 	logit "github.com/brettallred/go-logit"
@@ -46,6 +47,7 @@ func startRedisBatch(redisKey string) {
 		keyLog            string
 		lastLog           int
 		lastProcessed     int64
+		msgLog            string
 		nap               int
 		processedMessages int64
 		sleepDuration     time.Duration
@@ -74,7 +76,8 @@ func startRedisBatch(redisKey string) {
 			processedMessages += msgCount
 			if processedMessages-lastProcessed >= 10000 {
 				keyLog = colorKey(redisKey, processedMessages)
-				logit.Info(" %s messages processed from %s since last reset", green(processedMessages), keyLog)
+				msgLog = colorKey(strconv.FormatInt(processedMessages, 10), processedMessages)
+				logit.Info(" %s messages processed from %s since last reset", msgLog, keyLog)
 				logit.Info(" Current queue length for %s is %s", keyLog, red(queueLength))
 				lastProcessed = processedMessages
 			}
@@ -82,16 +85,16 @@ func startRedisBatch(redisKey string) {
 	}
 }
 
-func colorKey(redisKey string, processedMessages int64) string {
-	var keyLog string
-	if processedMessages > 20000000 {
-		keyLog = green(redisKey)
-	} else if processedMessages > 2000000 {
-		keyLog = cyan(redisKey)
+func colorKey(str string, counter int64) string {
+	var colorString string
+	if counter > 20000000 {
+		colorString = green(str)
+	} else if counter > 2000000 {
+		colorString = cyan(str)
 	} else {
-		keyLog = magenta(redisKey)
+		colorString = magenta(str)
 	}
-	return keyLog
+	return colorString
 }
 
 func getMultiLog(redisKey string) (bool, int64, int64, error) {
