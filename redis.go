@@ -7,7 +7,6 @@ import (
 	"time"
 
 	logit "github.com/brettallred/go-logit"
-	"github.com/fatih/color"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -44,6 +43,7 @@ func getLog(redisKey string) (*query, error) {
 
 func startRedisBatch(redisKey string) {
 	var (
+		keyLog            string
 		lastLog           int
 		lastProcessed     int64
 		nap               int
@@ -64,9 +64,7 @@ func startRedisBatch(redisKey string) {
 
 			// idle for 20 seconds, emit message
 			if nap-lastLog >= 20 {
-				color.Set(color.FgYellow)
-				logit.Info(" %s seconds since received data from %s", magenta(nap), green(redisKey))
-				color.Unset()
+				logit.Info(" %s %s %s", yellow(nap), white(" seconds since received data from "), yellow(redisKey))
 				lastLog = nap
 				processedMessages = 0
 			}
@@ -75,12 +73,25 @@ func startRedisBatch(redisKey string) {
 			lastLog = 0
 			processedMessages += msgCount
 			if processedMessages-lastProcessed >= 10000 {
-				logit.Info(" %s messages processed from %s since last reset", yellow(processedMessages), green(redisKey))
-				logit.Info(" Current queue length for %s is %s", green(redisKey), cyan(queueLength))
+				keyLog = colorKey(redisKey, processedMessages)
+				logit.Info(" %s messages processed from %s since last reset", magenta(processedMessages), keyLog)
+				logit.Info(" Current queue length for %s is %s", keyLog, cyan(queueLength))
 				lastProcessed = processedMessages
 			}
 		}
 	}
+}
+
+func colorKey(redisKey string, processedMessages int64) string {
+	var keyLog string
+	if processedMessages > 5000000 {
+		keyLog = green(redisKey)
+	} else if processedMessages > 1000000 {
+		keyLog = magenta(redisKey)
+	} else {
+		keyLog = cyan(redisKey)
+	}
+	return keyLog
 }
 
 func getMultiLog(redisKey string) (bool, int64, int64, error) {
