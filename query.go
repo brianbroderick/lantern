@@ -467,13 +467,16 @@ func addToQueries(roundMin time.Time, q *query) {
 }
 
 func iterOverQueries() {
-	var duration time.Duration
+	var (
+		duration time.Duration
+		count    int64
+	)
 	now := currentMinute()
 	mutex.Lock()
 	for k := range batchMap {
 		duration = now.Sub(k.minute)
 		if duration >= (1 * time.Minute) {
-			logit.Info(" Sending %s to ES Bulk Processor", k.sha)
+			count++
 			if k.sha == "" {
 				logit.Info("%s", batchMap[k].data)
 			}
@@ -487,6 +490,9 @@ func iterOverQueries() {
 		}
 	}
 	mutex.Unlock()
+	if count > 0 {
+		logit.Info(" Sent %d messages to ES Bulk Processor", count)
+	}
 }
 
 func unmarshalQuery(q *query) (string, error) {
