@@ -74,8 +74,8 @@ func startRedisBatch(redisKey string) {
 			processedMessages += msgCount
 			if processedMessages-lastProcessed >= 10000 {
 				keyLog = colorKey(redisKey, processedMessages)
-				logit.Info(" %s messages processed from %s since last reset", magenta(processedMessages), keyLog)
-				logit.Info(" Current queue length for %s is %s", keyLog, cyan(queueLength))
+				logit.Info(" %s messages processed from %s since last reset", green(processedMessages), keyLog)
+				logit.Info(" Current queue length for %s is %s", keyLog, red(queueLength))
 				lastProcessed = processedMessages
 			}
 		}
@@ -84,12 +84,12 @@ func startRedisBatch(redisKey string) {
 
 func colorKey(redisKey string, processedMessages int64) string {
 	var keyLog string
-	if processedMessages > 5000000 {
+	if processedMessages > 20000000 {
 		keyLog = green(redisKey)
-	} else if processedMessages > 1000000 {
-		keyLog = magenta(redisKey)
-	} else {
+	} else if processedMessages > 2000000 {
 		keyLog = cyan(redisKey)
+	} else {
+		keyLog = magenta(redisKey)
 	}
 	return keyLog
 }
