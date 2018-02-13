@@ -42,12 +42,16 @@ func getLog(redisKey string) (*query, error) {
 }
 
 func startRedisBatch(redisKey string) {
-	nap := 0
-	lastLog := 0
-	var sleepDuration time.Duration
+	var (
+		lastLog           int
+		lastProcessed     int64
+		nap               int
+		processedMessages int64
+		sleepDuration     time.Duration
+	)
 
 	for {
-		ok, err := getMultiLog(redisKey)
+		ok, msgCount, err := getMultiLog(redisKey)
 		if err != nil {
 			logit.Error(" Error in getMultiLog: %e", err.Error())
 		}
@@ -57,35 +61,42 @@ func startRedisBatch(redisKey string) {
 			nap += int(sleepDuration)
 			time.Sleep((time.Second * sleepDuration))
 
+			// idle for 20 seconds, emit message
 			if nap-lastLog >= 20 {
 				logit.Info(" %d seconds since received data from %s", nap, redisKey)
 				lastLog = nap
+				processedMessages = 0
 			}
 		} else {
 			nap = 0
 			lastLog = 0
+			processedMessages += msgCount
+			if processedMessages-lastProcessed >= 1000 {
+				logit.Info(" %d messages have been processed from %s since last idle message.", nap, redisKey)
+				lastProcessed = processedMessages
+			}
 		}
 	}
 }
 
-func getMultiLog(redisKey string) (bool, error) {
+func getMultiLog(redisKey string) (bool, int64, error) {
 	conn := pool.Get()
 	defer conn.Close()
 
 	// get list length
 	l, err := conn.Do("LLEN", redisKey)
 	if err != nil {
-		return true, err
+		return true, 0, err
 	}
 
 	llen, err := redis.Int64(l, err)
 	if err != nil {
-		return true, err
+		return true, 0, err
 	}
 
-	// LPOP at most 50 at a time
-	if llen > 50 {
-		llen = 50
+	// LPOP at most 100 at a time
+	if llen > 100 {
+		llen = 100
 	}
 
 	if llen > 0 {
@@ -97,14 +108,14 @@ func getMultiLog(redisKey string) (bool, error) {
 
 		reply, err := redis.Values(conn.Do("EXEC"))
 		if err != nil {
-			return true, err
+			return true, 0, err
 		}
 
 		for _, datum := range reply {
 			if datum != nil {
 				q, err := redis.Bytes(datum, err)
 				if err != nil {
-					return true, err
+					return true, 0, err
 				}
 
 				query, err := newQuery(q, redisKey)
@@ -115,10 +126,10 @@ func getMultiLog(redisKey string) (bool, error) {
 				}
 			}
 		}
-		return true, nil
+		return true, llen, nil
 	}
 
-	return false, nil
+	return false, 0, nil
 }
 
 //SetupRedis setup redis
@@ -129,7 +140,8 @@ func SetupRedis() {
 
 func newPool(server string) *redis.Pool {
 	return &redis.Pool{
-		MaxIdle:     3,
+		MaxIdle:     10,
+		MaxActive:   0,
 		IdleTimeout: 240 * time.Second,
 		Wait:        true,
 		Dial: func() (redis.Conn, error) {
