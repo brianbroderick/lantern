@@ -87,7 +87,9 @@ func startRedisBatch(redisKey string) {
 
 func colorKey(str string, counter int64) string {
 	var colorString string
-	if counter > 20000000 {
+	if counter > 100000000 {
+		colorString = blue(str)
+	} else if counter > 20000000 {
 		colorString = green(str)
 	} else if counter > 2000000 {
 		colorString = cyan(str)
