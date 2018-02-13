@@ -13,6 +13,11 @@
 			"Rev": "adab96458c51a58dc1783b3335dcce5461522e75"
 		},
 		{
+			"ImportPath": "github.com/fatih/color",
+			"Comment": "v1.6.0",
+			"Rev": "507f6050b8568533fb3f5504de8e5205fa62a114"
+		},
+		{
 			"ImportPath": "github.com/garyburd/redigo/internal",
 			"Comment": "v1.1.0-17-g34a326d",
 			"Rev": "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
@@ -40,6 +45,16 @@
 			"Rev": "1779d157416dad8c2a0ad84e855ee54fda742638"
 		},
 		{
+			"ImportPath": "github.com/mattn/go-colorable",
+			"Comment": "v0.0.9-13-g7dc3415",
+			"Rev": "7dc3415be66d7cc68bf0182f35c8d31f8d2ad8a7"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-isatty",
+			"Comment": "v0.0.3-7-g6ca4dbf",
+			"Rev": "6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c"
+		},
+		{
 			"ImportPath": "github.com/pkg/errors",
 			"Comment": "v0.8.0-6-g2b3a18b",
 			"Rev": "2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb"
@@ -53,6 +68,10 @@
 			"ImportPath": "github.com/stretchr/testify/assert",
 			"Comment": "v1.1.4-66-gf6abca5",
 			"Rev": "f6abca593680b2315d2075e0f5e2a9751e3f431a"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "37707fdb30a5b38865cfb95e5aab41707daec7fd"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v5",

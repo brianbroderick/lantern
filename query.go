@@ -11,6 +11,7 @@ import (
 	"time"
 
 	logit "github.com/brettallred/go-logit"
+	"github.com/fatih/color"
 )
 
 const longForm = "2006-12-06T23:13:33.242+0000"
@@ -491,7 +492,9 @@ func iterOverQueries() {
 	}
 	mutex.Unlock()
 	if count > 0 {
+		color.Set(color.FgCyan)
 		logit.Info(" Sent %d messages to ES Bulk Processor", count)
+		color.Unset()
 	}
 }
 

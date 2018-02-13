@@ -11,6 +11,7 @@ import (
 
 	elastic "gopkg.in/olivere/elastic.v5"
 
+	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 )
 
@@ -25,6 +26,13 @@ var (
 	bulkProc    = make(map[string]*elastic.BulkProcessor)
 	mutex       = &sync.Mutex{}
 	redisQueues = make([]string, 0)
+
+	blue   = color.New(color.FgBlue).SprintFunc()
+	cyan   = color.New(color.FgCyan).SprintFunc()
+	green  = color.New(color.FgGreen).SprintFunc()
+	red    = color.New(color.FgRed).SprintFunc()
+	yellow = color.New(color.FgYellow).SprintFunc()
+	white  = color.New(color.FgWhite).SprintFunc()
 )
 
 func main() {

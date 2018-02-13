@@ -7,6 +7,7 @@ import (
 	"time"
 
 	logit "github.com/brettallred/go-logit"
+	"github.com/fatih/color"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -63,7 +64,9 @@ func startRedisBatch(redisKey string) {
 
 			// idle for 20 seconds, emit message
 			if nap-lastLog >= 20 {
-				logit.Info(" %d seconds since received data from %s", nap, redisKey)
+				color.Set(color.FgYellow)
+				logit.Info(" %d seconds since received data from %s", white(nap), green(redisKey))
+				color.Unset()
 				lastLog = nap
 				processedMessages = 0
 			}
@@ -72,8 +75,8 @@ func startRedisBatch(redisKey string) {
 			lastLog = 0
 			processedMessages += msgCount
 			if processedMessages-lastProcessed >= 10000 {
-				logit.Info(" %d messages processed from %s since last reset", processedMessages, redisKey)
-				logit.Info(" Current queue length for %s is %d", redisKey, queueLength)
+				logit.Info(" %s messages processed from %s since last reset", yellow(processedMessages), green(redisKey))
+				logit.Info(" Current queue length for %s is %s", green(redisKey), red(queueLength))
 				lastProcessed = processedMessages
 			}
 		}
