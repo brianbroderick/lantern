@@ -431,6 +431,14 @@ func (q *query) marshal() ([]byte, error) {
 		}
 	}
 
+	// add value if commandTag is blank
+	if q.commandTag == "" {
+		err = marshalString(q, "UNKNOWN", "command_tag")
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// tempTable
 	if q.tempTable > 0 {
 		b, err := json.Marshal(q.tempTable)
