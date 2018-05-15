@@ -43,8 +43,14 @@ func TestPipeline(t *testing.T) {
 			d, err := redis.Bytes(datum, err)
 			assert.NoError(t, err)
 
-			_, err = newQuery(d, redisQueues[0])
+			q, suppressed, err := newQuery(d, redisQueues[0])
 			assert.NoError(t, err)
+
+			if suppressedCommandTag[q.commandTag] {
+				assert.Equal(t, suppressed, true)
+			} else {
+				assert.Equal(t, suppressed, false)
+			}
 		}
 	}
 

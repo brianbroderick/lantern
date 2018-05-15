@@ -33,9 +33,12 @@ func getLog(redisKey string) (*query, error) {
 			return nil, err
 		}
 
-		query, err := newQuery(data, redisKey)
+		query, suppressed, err := newQuery(data, redisKey)
 		if err != nil {
 			return nil, err
+		}
+		if suppressed {
+			return nil, nil
 		}
 		return query, nil
 	}
@@ -140,9 +143,11 @@ func getMultiLog(redisKey string) (bool, int64, int64, error) {
 					return true, 0, queueLength, err
 				}
 
-				query, err := newQuery(q, redisKey)
+				query, suppressed, err := newQuery(q, redisKey)
 				if err != nil {
 					logit.Error(" Error in newQuery: %e", err.Error())
+				} else if suppressed {
+					// no-op
 				} else {
 					addToQueries(roundToMinute(query.timestamp), query)
 				}

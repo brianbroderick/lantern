@@ -34,6 +34,13 @@ var (
 	red     = color.New(color.FgRed).SprintFunc()
 	yellow  = color.New(color.FgYellow).SprintFunc()
 	white   = color.New(color.FgWhite).SprintFunc()
+
+	suppressedCommandTag = map[string]bool{
+		"BIND":   true,
+		"PARSE":  true,
+		"BEGIN":  true,
+		"COMMIT": true,
+	}
 )
 
 func main() {

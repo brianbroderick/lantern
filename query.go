@@ -37,37 +37,42 @@ type query struct {
 	data          map[string]*json.RawMessage
 }
 
-func newQuery(b []byte, redisKey string) (*query, error) {
+func newQuery(b []byte, redisKey string) (*query, bool, error) {
 	var q = new(query)
 	q.totalCount = 1
 	q.redisKey = redisKey
 
 	if err := json.Unmarshal(b, &q.data); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if source, pres := q.data["command_tag"]; pres {
 		if err := json.Unmarshal(*source, &q.commandTag); err != nil {
-			return nil, err
+			return nil, false, err
 		}
+	}
+
+	// suppress import under certain conditions like unneccessary command_tags
+	if suppressedCommandTag[q.commandTag] {
+		return q, true, nil
 	}
 
 	if source, pres := q.data["error_severity"]; pres {
 		if err := json.Unmarshal(*source, &q.errorSeverity); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
 	if source, pres := q.data["message"]; pres {
 		if err := json.Unmarshal(*source, &q.message); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
 	var tempTime string
 	if source, pres := q.data["@timestamp"]; pres {
 		if err := json.Unmarshal(*source, &tempTime); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 	q.timestamp, _ = time.Parse(longForm, tempTime)
@@ -76,13 +81,13 @@ func newQuery(b []byte, redisKey string) (*query, error) {
 	if q.errorSeverity == "ERROR" || q.errorSeverity == "FATAL" || q.errorSeverity == "WARNING" {
 		if source, pres := q.data["sql_state_code"]; pres {
 			if err := json.Unmarshal(*source, &q.uniqueStr); err != nil {
-				return nil, err
+				return nil, false, err
 			}
 		}
 		q.notes = q.message
 	} else { // assumed the errorSeverity is "LOG"
 		if err := parseMessage(q); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 	}
 
@@ -91,7 +96,7 @@ func newQuery(b []byte, redisKey string) (*query, error) {
 	// DELETE message once we've debugged all the messages.
 	delete(q.data, "message")
 
-	return q, nil
+	return q, false, nil
 }
 
 func regexMessage(message string) map[string]string {
