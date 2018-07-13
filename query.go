@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"regexp"
 	"strconv"
@@ -14,38 +15,39 @@ import (
 	"github.com/fatih/color"
 )
 
-const longForm = "2006-12-06T23:13:33.242+0000"
+const longForm = "2006-01-02T15:04:05.999+0000"
 
 type query struct {
-	uniqueSha      string // sha of uniqueStr and preparedStep (if available)
-	uniqueStr      string // usually the normalized query
-	comments       []string
-	commandTag     string
-	errorSeverity  string
-	logType        string
-	notes          string
-	minDuration    float64
-	maxDuration    float64
-	message        string
-	mvcAction      string
-	mvcApplication string
-	mvcCodeLine    string
-	mvcController  string
-	grokQuery      string
-	prepared       string
-	preparedStep   string
-	query          string
-	redisKey       string
-	tempTable      int64
-	timestamp      time.Time
-	totalCount     int32
-	totalDuration  float64
-	vacuumTable    string
-	data           map[string]*json.RawMessage
+	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
+	uniqueStr     string // usually the normalized query
+	codeSource    []map[string]string
+	codeSourceMap map[string]map[string]string
+	comments      []string
+	commandTag    string
+	weekday       string
+	weekdayInt    int64
+	errorSeverity string
+	logType       string
+	notes         string
+	minDuration   float64
+	maxDuration   float64
+	message       string
+	grokQuery     string
+	prepared      string
+	preparedStep  string
+	query         string
+	redisKey      string
+	tempTable     int64
+	timestamp     time.Time
+	totalCount    int32
+	totalDuration float64
+	vacuumTable   string
+	data          map[string]*json.RawMessage
 }
 
 func newQuery(b []byte, redisKey string) (*query, bool, error) {
 	var q = new(query)
+	q.codeSourceMap = make(map[string]map[string]string)
 	q.totalCount = 1
 	q.redisKey = redisKey
 
@@ -128,11 +130,16 @@ func extractComments(q *query) {
 
 func enumComments(q *query) {
 	for _, comments := range q.comments {
-		parseComments(q, comments)
+		q.codeSourceMap = parseComments(q, comments, q.codeSourceMap)
 	}
 }
 
-func parseComments(q *query, comment string) {
+// extract code location from comments, return as a map for uniqueness
+func parseComments(q *query, comment string, uniqMap map[string]map[string]string) map[string]map[string]string {
+	h := sha1.New()
+	io.WriteString(h, comment)
+	mapSha := hex.EncodeToString(h.Sum(nil))
+
 	r := regexp.MustCompile(`(/\*|\*/)`)
 	re := regexp.MustCompile(`(?P<key>.*?):(?P<value>.*)`)
 	result := make(map[string]string)
@@ -140,31 +147,23 @@ func parseComments(q *query, comment string) {
 	comment = r.ReplaceAllString(comment, "")
 
 	parts := strings.Split(comment, ",")
+	codeSource := make(map[string]string)
 	for _, item := range parts {
 		match := re.FindStringSubmatch(item)
 
 		if len(match) > 0 {
+
 			for i, name := range re.SubexpNames() {
 				if i != 0 {
 					result[name] = match[i]
-					// fmt.Printf("%s == %s \n", result["key"], result["value"])
-					if result["key"] == "action" {
-						q.mvcAction = result["value"]
-					}
-					if result["key"] == "application" {
-						q.mvcApplication = result["value"]
-					}
-					if result["key"] == "line" {
-						q.mvcCodeLine = result["value"]
-					}
-					if result["key"] == "controller" {
-						q.mvcController = result["value"]
-					}
 				}
 			}
 
+			codeSource[result["key"]] = result["value"]
 		}
 	}
+	uniqMap[mapSha] = codeSource
+	return uniqMap
 }
 
 func regexMessage(message string) map[string]string {
@@ -369,12 +368,8 @@ func parseMessage(q *query) error {
 				return err
 			}
 			q.totalDuration = duration
-			if q.minDuration > duration {
-				q.minDuration = duration
-			}
-			if q.maxDuration < duration {
-				q.maxDuration = duration
-			}
+			q.minDuration = duration
+			q.maxDuration = duration
 		}
 
 		// When there's a temp table, the "query" field is passed
@@ -426,13 +421,46 @@ func (q *query) shaUnique() {
 }
 
 func (q *query) marshalAgg() ([]byte, error) {
+	// weekday
+	weekday := q.timestamp.Weekday()
+	b, err := json.Marshal(fmt.Sprintf("%s", weekday))
+	if err != nil {
+		return nil, err
+	}
+
+	weekdayStr := json.RawMessage(b)
+	q.data["day_of_week"] = &weekdayStr
+
+	bInt, err := json.Marshal(int(weekday))
+	if err != nil {
+		return nil, err
+	}
+	weekdayInt := json.RawMessage(bInt)
+	q.data["day_of_week_int"] = &weekdayInt
+
 	// count
-	b, err := json.Marshal(q.totalCount)
+	b, err = json.Marshal(q.totalCount)
 	if err != nil {
 		return nil, err
 	}
 	rawCount := json.RawMessage(b)
 	q.data["total_count"] = &rawCount
+
+	// minDuration
+	b, err = json.Marshal(q.minDuration)
+	if err != nil {
+		return nil, err
+	}
+	minDuration := json.RawMessage(b)
+	q.data["min_duration_ms"] = &minDuration
+
+	// maxDuration
+	b, err = json.Marshal(q.maxDuration)
+	if err != nil {
+		return nil, err
+	}
+	maxDuration := json.RawMessage(b)
+	q.data["max_duration_ms"] = &maxDuration
 
 	// duration rounded to 5 decimal points
 	b, err = json.Marshal(round(q.totalDuration, 0.5, 5))
@@ -449,6 +477,18 @@ func (q *query) marshalAgg() ([]byte, error) {
 	}
 	rawAvgDuration := json.RawMessage(b)
 	q.data["avg_duration_ms"] = &rawAvgDuration
+
+	// codeSourceMap to unique slice
+	for _, v := range q.codeSourceMap {
+		q.codeSource = append(q.codeSource, v)
+	}
+
+	b, err = json.Marshal(q.codeSource)
+	if err != nil {
+		return nil, err
+	}
+	codeSource := json.RawMessage(b)
+	q.data["code_source"] = &codeSource
 
 	return json.Marshal(q.data)
 }
@@ -548,6 +588,16 @@ func addToQueries(roundMin time.Time, q *query) {
 	if ok == true {
 		batchMap[batch{roundMin, q.uniqueSha}].totalCount++
 		batchMap[batch{roundMin, q.uniqueSha}].totalDuration += q.totalDuration
+
+		batchMap[batch{roundMin, q.uniqueSha}].codeSource = append(batchMap[batch{roundMin, q.uniqueSha}].codeSource, q.codeSource...)
+
+		// caclulate min/max duration
+		if batchMap[batch{roundMin, q.uniqueSha}].minDuration > q.minDuration {
+			batchMap[batch{roundMin, q.uniqueSha}].minDuration = q.minDuration
+		}
+		if batchMap[batch{roundMin, q.uniqueSha}].maxDuration < q.maxDuration {
+			batchMap[batch{roundMin, q.uniqueSha}].maxDuration = q.maxDuration
+		}
 	} else {
 		batchMap[batch{roundMin, q.uniqueSha}] = q
 	}
@@ -573,6 +623,7 @@ func iterOverQueries() {
 			if err != nil {
 				logit.Error(" Error marshalling data: %e", err.Error())
 			}
+			fmt.Printf("-- %s \n", data)
 			sendToBulker(data)
 			delete(batchMap, k)
 		}

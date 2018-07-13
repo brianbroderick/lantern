@@ -39,10 +39,6 @@ func TestFlow(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 	assert.Equal(t, comments, query.comments)
-	assert.Equal(t, "Rails", query.mvcApplication)
-	assert.Equal(t, "users", query.mvcController)
-	assert.Equal(t, "search", query.mvcAction)
-	assert.Equal(t, "/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in `mon_synchronize'", query.mvcCodeLine)
 
 	assert.Equal(t, 0.051, query.totalDuration)
 	assert.Equal(t, "execute", query.preparedStep)
@@ -99,10 +95,6 @@ func TestFlowWithoutComment(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 	assert.Equal(t, comments, query.comments)
-	assert.Equal(t, "", query.mvcApplication)
-	assert.Equal(t, "", query.mvcController)
-	assert.Equal(t, "", query.mvcAction)
-	assert.Equal(t, "", query.mvcCodeLine)
 }
 
 func TestTempTable(t *testing.T) {
@@ -361,7 +353,7 @@ func mockCurrentMinute() time.Time {
 }
 
 func getRecord() float64 {
-	termQuery := elastic.NewTermQuery("user_name", "samplepayload")
+	termQuery := elastic.NewTermQuery("user_name", "new_samplepayload")
 	result, err := clients["bulk"].Search().
 		Index(indexName()).
 		Type("pglog").
@@ -459,3 +451,24 @@ func TestPopulateRedisQueues(t *testing.T) {
 	expected = []string{"ben", "jimmy", "greg"}
 	assert.Equal(t, expected, redisQueues)
 }
+
+func TestParseTime(t *testing.T) {
+	tempTime := "2017-10-16T15:50:35.840+0000"
+	parsedTime, err := time.Parse(longForm, tempTime)
+	if err != nil {
+		fmt.Printf("%e \n\n", err)
+	}
+	expected := "2017-10-16 15:50:35.84 +0000 UTC"
+	actual := fmt.Sprint(parsedTime)
+	assert.Equal(t, expected, actual)
+}
+
+// func TestDayOfWeek(t *testing.T) {
+// 	weekday := time.Now().Weekday()
+// 	fmt.Println(weekday)      // "Tuesday"
+// 	fmt.Println(int(weekday)) // "2"
+// }
+
+// h := sha1.New()
+// 	io.WriteString(h, comment)
+// 	mapSha = hex.EncodeToString(h.Sum(nil))
