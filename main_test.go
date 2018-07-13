@@ -80,6 +80,31 @@ func TestFlow(t *testing.T) {
 	defer clients["bulk"].Stop()
 }
 
+func TestFlowWithoutComment(t *testing.T) {
+	initialSetup()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("execute_without_comment.json")
+	conn.Do("LPUSH", redisKey(), sample)
+
+	llen, err := conn.Do("LLEN", redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
+
+	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
+	comments := []string{}
+	query, err := getLog(redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, message, query.message)
+	assert.Equal(t, comments, query.comments)
+	assert.Equal(t, "", query.mvcApplication)
+	assert.Equal(t, "", query.mvcController)
+	assert.Equal(t, "", query.mvcAction)
+	assert.Equal(t, "", query.mvcCodeLine)
+}
+
 func TestTempTable(t *testing.T) {
 	initialSetup()
 
