@@ -34,9 +34,15 @@ func TestFlow(t *testing.T) {
 	assert.Equal(t, int64(1), llen)
 
 	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
+	comments := []string{"/*application:Rails,controller:users,action:search,line:/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in `mon_synchronize'*/"}
 	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
+	assert.Equal(t, comments, query.comments)
+	assert.Equal(t, "Rails", query.mvcApplication)
+	assert.Equal(t, "users", query.mvcController)
+	assert.Equal(t, "search", query.mvcAction)
+	assert.Equal(t, "/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in `mon_synchronize'", query.mvcCodeLine)
 
 	assert.Equal(t, 0.051, query.totalDuration)
 	assert.Equal(t, "execute", query.preparedStep)

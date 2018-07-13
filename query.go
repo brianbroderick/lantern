@@ -17,24 +17,31 @@ import (
 const longForm = "2006-12-06T23:13:33.242+0000"
 
 type query struct {
-	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
-	uniqueStr     string // usually the normalized query
-	commandTag    string
-	errorSeverity string
-	logType       string
-	notes         string
-	message       string
-	grokQuery     string
-	prepared      string
-	preparedStep  string
-	query         string
-	redisKey      string
-	tempTable     int64
-	timestamp     time.Time
-	totalCount    int32
-	totalDuration float64
-	vacuumTable   string
-	data          map[string]*json.RawMessage
+	uniqueSha      string // sha of uniqueStr and preparedStep (if available)
+	uniqueStr      string // usually the normalized query
+	comments       []string
+	commandTag     string
+	errorSeverity  string
+	logType        string
+	notes          string
+	minDuration    float64
+	maxDuration    float64
+	message        string
+	mvcAction      string
+	mvcApplication string
+	mvcCodeLine    string
+	mvcController  string
+	grokQuery      string
+	prepared       string
+	preparedStep   string
+	query          string
+	redisKey       string
+	tempTable      int64
+	timestamp      time.Time
+	totalCount     int32
+	totalDuration  float64
+	vacuumTable    string
+	data           map[string]*json.RawMessage
 }
 
 func newQuery(b []byte, redisKey string) (*query, bool, error) {
@@ -86,6 +93,9 @@ func newQuery(b []byte, redisKey string) (*query, bool, error) {
 		}
 		q.notes = q.message
 	} else { // assumed the errorSeverity is "LOG"
+		extractComments(q)
+		enumComments(q)
+
 		if err := parseMessage(q); err != nil {
 			return nil, false, err
 		}
@@ -99,11 +109,70 @@ func newQuery(b []byte, redisKey string) (*query, bool, error) {
 	return q, false, nil
 }
 
+func extractComments(q *query) {
+	// find comments
+	r := regexp.MustCompile(`(/\*.*?\*/)`)
+	match := r.FindAllStringSubmatch(q.message, -1)
+
+	// put comments in their own slice
+	comments := make([]string, len(match))
+	for i, matches := range match {
+		comments[i] = matches[i]
+	}
+	q.comments = comments
+
+	// remove comments from message
+	re := regexp.MustCompile(`(\s*/\*.*?\*/\s*)`)
+	q.message = re.ReplaceAllString(q.message, "")
+}
+
+func enumComments(q *query) {
+	for _, comments := range q.comments {
+		parseComments(q, comments)
+	}
+}
+
+func parseComments(q *query, comment string) {
+	r := regexp.MustCompile(`(/\*|\*/)`)
+	re := regexp.MustCompile(`(?P<key>.*?):(?P<value>.*)`)
+	result := make(map[string]string)
+
+	comment = r.ReplaceAllString(comment, "")
+
+	parts := strings.Split(comment, ",")
+	for _, item := range parts {
+		match := re.FindStringSubmatch(item)
+
+		if len(match) > 0 {
+			for i, name := range re.SubexpNames() {
+				if i != 0 {
+					result[name] = match[i]
+					// fmt.Printf("%s == %s \n", result["key"], result["value"])
+					if result["key"] == "action" {
+						q.mvcAction = result["value"]
+					}
+					if result["key"] == "application" {
+						q.mvcApplication = result["value"]
+					}
+					if result["key"] == "line" {
+						q.mvcCodeLine = result["value"]
+					}
+					if result["key"] == "controller" {
+						q.mvcController = result["value"]
+					}
+				}
+			}
+
+		}
+	}
+}
+
 func regexMessage(message string) map[string]string {
+	result := make(map[string]string)
+
 	// Query regexp
 	r := regexp.MustCompile(`(?s)duration: (?P<duration>\d+\.\d+) ms\s+(?P<preparedStep>\w+)\s*?(?P<prepared>.*?)?:\s*(?P<grokQuery>.*)`)
 	match := r.FindStringSubmatch(message)
-	result := make(map[string]string)
 
 	if len(match) > 0 {
 		for i, name := range r.SubexpNames() {
@@ -117,7 +186,6 @@ func regexMessage(message string) map[string]string {
 	//temporary file: path "base/pgsql_tmp/pgsql_tmp14938.66", size 708064
 	r = regexp.MustCompile(`(?s)temporary file: path ".*?", size\s+(?P<tempTable>\d+).*`)
 	match = r.FindStringSubmatch(message)
-	result = make(map[string]string)
 
 	if len(match) > 0 {
 		for i, name := range r.SubexpNames() {
@@ -301,6 +369,12 @@ func parseMessage(q *query) error {
 				return err
 			}
 			q.totalDuration = duration
+			if q.minDuration > duration {
+				q.minDuration = duration
+			}
+			if q.maxDuration < duration {
+				q.maxDuration = duration
+			}
 		}
 
 		// When there's a temp table, the "query" field is passed

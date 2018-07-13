@@ -55,6 +55,22 @@
           "norms": false,
           "type": "text"
         },
+        "mvc_action": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "mvc_application": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "mvc_code_line": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "mvc_controller": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
         "prepared": {
           "ignore_above": 1024,
           "type": "keyword"
