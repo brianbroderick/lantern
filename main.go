@@ -115,7 +115,7 @@ func lastMinute() time.Time {
 }
 
 func roundToMinute(minute time.Time) time.Time {
-	return minute.Add(-1 * time.Minute)
+	return minute.Add(-1 * time.Minute).Round(time.Minute)
 }
 
 func round(val float64, roundOn float64, places int) float64 {

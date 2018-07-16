@@ -463,6 +463,17 @@ func TestParseTime(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestRoundToMinute(t *testing.T) {
+	tempTime := "2017-10-16T15:50:35.840+0000"
+	parsedTime, err := time.Parse(longForm, tempTime)
+	if err != nil {
+		fmt.Printf("%e \n\n", err)
+	}
+
+	rounded := roundToMinute(parsedTime)
+	fmt.Printf("%v", rounded)
+}
+
 // func TestDayOfWeek(t *testing.T) {
 // 	weekday := time.Now().Weekday()
 // 	fmt.Println(weekday)      // "Tuesday"
