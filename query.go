@@ -117,15 +117,17 @@ func extractComments(q *query) {
 	match := r.FindAllStringSubmatch(q.message, -1)
 
 	// put comments in their own slice
-	comments := make([]string, len(match))
-	for i, matches := range match {
-		comments[i] = matches[i]
-	}
-	q.comments = comments
+	if len(match) > 0 {
+		comments := make([]string, len(match))
+		for i, matches := range match {
+			comments[i] = matches[i]
+		}
+		q.comments = comments
 
-	// remove comments from message
-	re := regexp.MustCompile(`(\s*/\*.*?\*/\s*)`)
-	q.message = re.ReplaceAllString(q.message, "")
+		// remove comments from message
+		re := regexp.MustCompile(`(\s*/\*.*?\*/\s*)`)
+		q.message = re.ReplaceAllString(q.message, "")
+	}
 }
 
 func enumComments(q *query) {
