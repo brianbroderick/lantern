@@ -623,7 +623,7 @@ func iterOverQueries() {
 			if err != nil {
 				logit.Error(" Error marshalling data: %e", err.Error())
 			}
-			fmt.Printf("-- %s \n", data)
+
 			sendToBulker(data)
 			delete(batchMap, k)
 		}
