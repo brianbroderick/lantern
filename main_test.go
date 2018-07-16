@@ -464,7 +464,7 @@ func TestParseTime(t *testing.T) {
 }
 
 func TestRoundToMinute(t *testing.T) {
-	tempTime := "2017-10-16T15:50:35.840+0000"
+	tempTime := "2017-10-16T15:50:15.840+0000"
 	parsedTime, err := time.Parse(longForm, tempTime)
 	if err != nil {
 		fmt.Printf("%e \n\n", err)
