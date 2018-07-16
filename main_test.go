@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"testing"
 	"time"
 
@@ -472,6 +473,15 @@ func TestRoundToMinute(t *testing.T) {
 
 	rounded := roundToMinute(parsedTime)
 	fmt.Printf("%v", rounded)
+}
+
+func TestFindAllStringSubmatch(t *testing.T) {
+	str := "hello /* foobar */ /* blahboo */"
+	r := regexp.MustCompile(`(/\*.*?:.*?\*/)`)
+	match := r.FindAllStringSubmatch(str, -1)
+
+	fmt.Printf("%d \n", len(match))
+
 }
 
 // func TestDayOfWeek(t *testing.T) {
