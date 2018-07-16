@@ -117,7 +117,7 @@ func extractComments(q *query) {
 	match := r.FindAllStringSubmatch(q.message, -1)
 
 	// put comments in their own slice
-	if len(match) > 0 {
+	if len(match) > 1 {
 		comments := make([]string, len(match))
 		for i, matches := range match {
 			comments[i] = matches[i]
