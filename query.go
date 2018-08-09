@@ -20,11 +20,11 @@ const longForm = "2006-01-02T15:04:05.999+0000"
 type query struct {
 	uniqueSha       string // sha of uniqueStr and preparedStep (if available)
 	uniqueStr       string // usually the normalized query
-	codeAction      string
-	codeApplication string
-	codeController  string
-	codeJob         string
-	codeLine        string
+	codeAction      []byte
+	codeApplication []byte
+	codeController  []byte
+	codeJob         []byte
+	codeLine        []byte
 	codeSource      []map[string]string
 	codeSourceMap   map[string]map[string]string
 	comments        []string
@@ -499,64 +499,49 @@ func (q *query) marshalAgg() ([]byte, error) {
 
 	if len(q.codeSource) > 0 {
 		if q.codeSource[0]["application"] != "" {
-			q.codeApplication = q.codeSource[0]["application"]
+			q.codeApplication, err = json.Marshal(q.codeSource[0]["application"])
+			if err != nil {
+				return nil, err
+			}
+			codeApplication := json.RawMessage(q.codeApplication)
+			q.data["code_application"] = &codeApplication
 		}
 
 		if q.codeSource[0]["controller"] != "" {
-			q.codeController = q.codeSource[0]["controller"]
+			q.codeController, err = json.Marshal(q.codeSource[0]["controller"])
+			if err != nil {
+				return nil, err
+			}
+			codeController := json.RawMessage(q.codeController)
+			q.data["code_controller"] = &codeController
 		}
 
 		if q.codeSource[0]["action"] != "" {
-			q.codeAction = q.codeSource[0]["action"]
+			q.codeAction, err = json.Marshal(q.codeSource[0]["action"])
+			if err != nil {
+				return nil, err
+			}
+			codeAction := json.RawMessage(q.codeAction)
+			q.data["code_action"] = &codeAction
 		}
 
 		if q.codeSource[0]["line"] != "" {
-			q.codeLine = q.codeSource[0]["line"]
+			q.codeLine, err = json.Marshal(q.codeSource[0]["line"])
+			if err != nil {
+				return nil, err
+			}
+			codeLine := json.RawMessage(q.codeLine)
+			q.data["code_line"] = &codeLine
 		}
 
 		if q.codeSource[0]["job"] != "" {
-			q.codeJob = q.codeSource[0]["job"]
+			q.codeJob, err = json.Marshal(q.codeSource[0]["job"])
+			if err != nil {
+				return nil, err
+			}
+			codeJob := json.RawMessage(q.codeJob)
+			q.data["code_job"] = &codeJob
 		}
-	}
-
-	// code application from comments
-	if q.codeApplication != "" {
-		b, err = json.Marshal(q.codeApplication)
-		if err != nil {
-			return nil, err
-		}
-		codeApplication := json.RawMessage(b)
-		q.data["code_application"] = &codeApplication
-	}
-
-	// code controller from comments
-	if q.codeController != "" {
-		b, err = json.Marshal(q.codeController)
-		if err != nil {
-			return nil, err
-		}
-		codeController := json.RawMessage(b)
-		q.data["code_controller"] = &codeController
-	}
-
-	// code job from comments
-	if q.codeJob != "" {
-		b, err = json.Marshal(q.codeJob)
-		if err != nil {
-			return nil, err
-		}
-		codeJob := json.RawMessage(b)
-		q.data["code_job"] = &codeJob
-	}
-
-	// code line from comments
-	if q.codeLine != "" {
-		b, err = json.Marshal(q.codeLine)
-		if err != nil {
-			return nil, err
-		}
-		codeLine := json.RawMessage(b)
-		q.data["code_line"] = &codeLine
 	}
 
 	return json.Marshal(q.data)
