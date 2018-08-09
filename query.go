@@ -167,19 +167,6 @@ func parseComments(q *query, comment string, uniqMap map[string]map[string]strin
 			}
 
 			codeSource[result["key"]] = result["value"]
-
-			switch result["key"] {
-			case "application":
-				q.codeApplication = result["value"]
-			case "controller":
-				q.codeController = result["value"]
-			case "action":
-				q.codeAction = result["value"]
-			case "line":
-				q.codeLine = result["value"]
-			case "job":
-				q.codeJob = result["value"]
-			}
 		}
 	}
 	uniqMap[mapSha] = codeSource
@@ -509,6 +496,28 @@ func (q *query) marshalAgg() ([]byte, error) {
 	}
 	codeSource := json.RawMessage(b)
 	q.data["code_source"] = &codeSource
+
+	if len(q.codeSource) > 0 {
+		if q.codeSource[0]["application"] != "" {
+			q.codeApplication = q.codeSource[0]["application"]
+		}
+
+		if q.codeSource[0]["controller"] != "" {
+			q.codeController = q.codeSource[0]["controller"]
+		}
+
+		if q.codeSource[0]["action"] != "" {
+			q.codeAction = q.codeSource[0]["action"]
+		}
+
+		if q.codeSource[0]["line"] != "" {
+			q.codeLine = q.codeSource[0]["line"]
+		}
+
+		if q.codeSource[0]["job"] != "" {
+			q.codeJob = q.codeSource[0]["job"]
+		}
+	}
 
 	// code application from comments
 	if q.codeApplication != "" {
