@@ -91,8 +91,9 @@ func TestFlowWithoutComment(t *testing.T) {
 	assert.Equal(t, int64(1), llen)
 
 	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
-	comments := []string{}
+	comments := []string(nil)
 	query, err := getLog(redisKey())
+
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
 	assert.Equal(t, comments, query.comments)

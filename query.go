@@ -18,31 +18,36 @@ import (
 const longForm = "2006-01-02T15:04:05.999+0000"
 
 type query struct {
-	uniqueSha     string // sha of uniqueStr and preparedStep (if available)
-	uniqueStr     string // usually the normalized query
-	codeSource    []map[string]string
-	codeSourceMap map[string]map[string]string
-	comments      []string
-	commandTag    string
-	weekday       string
-	weekdayInt    int64
-	errorSeverity string
-	logType       string
-	notes         string
-	minDuration   float64
-	maxDuration   float64
-	message       string
-	grokQuery     string
-	prepared      string
-	preparedStep  string
-	query         string
-	redisKey      string
-	tempTable     int64
-	timestamp     time.Time
-	totalCount    int32
-	totalDuration float64
-	vacuumTable   string
-	data          map[string]*json.RawMessage
+	uniqueSha       string // sha of uniqueStr and preparedStep (if available)
+	uniqueStr       string // usually the normalized query
+	codeAction      string
+	codeApplication string
+	codeController  string
+	codeJob         string
+	codeLine        string
+	codeSource      []map[string]string
+	codeSourceMap   map[string]map[string]string
+	comments        []string
+	commandTag      string
+	weekday         string
+	weekdayInt      int64
+	errorSeverity   string
+	logType         string
+	notes           string
+	minDuration     float64
+	maxDuration     float64
+	message         string
+	grokQuery       string
+	prepared        string
+	preparedStep    string
+	query           string
+	redisKey        string
+	tempTable       int64
+	timestamp       time.Time
+	totalCount      int32
+	totalDuration   float64
+	vacuumTable     string
+	data            map[string]*json.RawMessage
 }
 
 func newQuery(b []byte, redisKey string) (*query, bool, error) {
@@ -162,6 +167,19 @@ func parseComments(q *query, comment string, uniqMap map[string]map[string]strin
 			}
 
 			codeSource[result["key"]] = result["value"]
+
+			switch result["key"] {
+			case "application":
+				q.codeApplication = result["value"]
+			case "controller":
+				q.codeController = result["value"]
+			case "action":
+				q.codeAction = result["value"]
+			case "line":
+				q.codeLine = result["value"]
+			case "job":
+				q.codeJob = result["value"]
+			}
 		}
 	}
 	uniqMap[mapSha] = codeSource
@@ -491,6 +509,46 @@ func (q *query) marshalAgg() ([]byte, error) {
 	}
 	codeSource := json.RawMessage(b)
 	q.data["code_source"] = &codeSource
+
+	// code application from comments
+	if q.codeApplication != "" {
+		b, err = json.Marshal(q.codeApplication)
+		if err != nil {
+			return nil, err
+		}
+		codeApplication := json.RawMessage(b)
+		q.data["code_application"] = &codeApplication
+	}
+
+	// code controller from comments
+	if q.codeController != "" {
+		b, err = json.Marshal(q.codeController)
+		if err != nil {
+			return nil, err
+		}
+		codeController := json.RawMessage(b)
+		q.data["code_controller"] = &codeController
+	}
+
+	// code job from comments
+	if q.codeJob != "" {
+		b, err = json.Marshal(q.codeJob)
+		if err != nil {
+			return nil, err
+		}
+		codeJob := json.RawMessage(b)
+		q.data["code_job"] = &codeJob
+	}
+
+	// code line from comments
+	if q.codeLine != "" {
+		b, err = json.Marshal(q.codeLine)
+		if err != nil {
+			return nil, err
+		}
+		codeLine := json.RawMessage(b)
+		q.data["code_line"] = &codeLine
+	}
 
 	return json.Marshal(q.data)
 }
