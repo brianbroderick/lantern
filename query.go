@@ -123,9 +123,9 @@ func extractComments(q *query) {
 
 	// put comments in their own slice
 	if len(match) > 0 {
-		comments := make([]string, len(match))
+		var comments []string
 		for i, matches := range match {
-			comments[i] = matches[i]
+			comments = append(comments, matches[i])
 		}
 		q.comments = comments
 

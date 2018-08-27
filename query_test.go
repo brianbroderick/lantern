@@ -35,3 +35,40 @@ func TestRegexMessage(t *testing.T) {
 	result = regexMessage(message)
 	assert.Equal(t, multiLine, result["grokQuery"])
 }
+
+func TestComments(t *testing.T) {
+	var q = new(query)
+	// No comment
+	q.message = "duration: 0.066 ms  bind <unnamed>: select * from servers where name = 'blah:blah'"
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	// Legit comment
+	q.message = "duration: 0.066 ms  bind <unnamed>: select * from servers where name = 'blah:blah' /*application:Rails,controller:users,action:search,line:monitor.rb:214:in '::Weekly::Digest/mon_synchronize'*/"
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	// not complete comment
+	q.message = "duration: 0.066 ms  bind <unnamed>: select * from servers where name = 'blah:blah' /*application:Rails*/"
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	// Empty comment
+	q.message = "duration: 0.066 ms  bind <unnamed>: select * from servers where name = 'blah:blah' /**/"
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	// illegit comment with colon
+	q.message = "duration: 0.066 ms  bind <unnamed>: select * from servers where name = 'blah:blah' /*ask:yourmom*/"
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	q.message = "/*ask:you:*/"
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	q.message = "/*:*/"
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	q.message = `duration: 0.066 ms  bind <unnamed>: select * from multiline /*
+	: blah */`
+	assert.NotPanics(t, func() { extractComments(q) })
+
+	// Multiples
+	q.message = "duration: 0.066 ms  bind <unnamed>: select * from servers where name = 'blah:blah' /*application:Rails*/ /*application:Sidekiq*/"
+	assert.NotPanics(t, func() { extractComments(q) })
+}
