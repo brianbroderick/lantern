@@ -64,7 +64,7 @@ func TestPipeline(t *testing.T) {
 func TestGetDuration(t *testing.T) {
 	assert.Equal(t, time.Duration(1), getDuration(0))
 	assert.Equal(t, time.Duration(9), getDuration(35))
-	assert.Equal(t, time.Duration(20), getDuration(300))
+	assert.Equal(t, time.Duration(60), getDuration(300))
 
 	nap := 0
 	var sleepDuration time.Duration

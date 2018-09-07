@@ -68,7 +68,7 @@ func startRedisBatch(redisKey string) {
 			time.Sleep((time.Second * sleepDuration))
 
 			// idle for 20 seconds, emit message
-			if nap-lastLog >= 20 {
+			if (nap < 120 && nap-lastLog >= 20) || (nap >= 120 && nap-lastLog >= 60) {
 				logit.Info(" %s %s %s", yellow(nap), white(" seconds since received data from "), yellow(redisKey))
 				lastLog = nap
 				processedMessages = 0
@@ -77,7 +77,8 @@ func startRedisBatch(redisKey string) {
 			nap = 0
 			lastLog = 0
 			processedMessages += msgCount
-			if processedMessages-lastProcessed >= 10000 {
+			if (processedMessages < 1000000 && processedMessages-lastProcessed >= 10000) ||
+				(processedMessages >= 1000000 && processedMessages-lastProcessed >= 100000) {
 				keyLog = colorKey(redisKey, processedMessages)
 				msgLog = colorKey(strconv.FormatInt(processedMessages, 10), processedMessages)
 				logit.Info(" %s messages processed from %s since last reset", msgLog, keyLog)
@@ -209,8 +210,8 @@ func startRedisSingle(redisKey string) {
 
 func getDuration(nap int) time.Duration {
 	sleepDuration := time.Duration(math.Ceil((float64(nap) + 0.01) / 4.0))
-	if sleepDuration > 20 {
-		sleepDuration = 20
+	if sleepDuration > 60 {
+		sleepDuration = 60
 	}
 	return sleepDuration
 }
