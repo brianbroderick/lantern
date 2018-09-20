@@ -117,6 +117,12 @@ func newQuery(b []byte, redisKey string) (*query, bool, error) {
 }
 
 func extractComments(q *query) {
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("Recovered in f", r)
+			fmt.Println(q.message)
+		}
+	}()
 	// find comments
 	r := regexp.MustCompile(`(/\*.*?:.*?\*/)`)
 	match := r.FindAllStringSubmatch(q.message, -1)
