@@ -23,7 +23,7 @@ It ships PG query logs to Redis using the Redislog extension. PG log shipper tak
 
 ## Config
 
-It's easy to config. You will need the [Redislog extension](github.com/2ndquadrant-it/redislog) compiled into your PG install. Assuming that's the case, you'll add these lines to the postgresql.conf:
+It's easy to config. You will need the [Redislog extension](https://github.com/2ndquadrant-it/redislog) compiled into your PG install. Assuming that's the case, you'll add these lines to the postgresql.conf:
 
 ```
 shared_preload_libraries = 'redislog'
