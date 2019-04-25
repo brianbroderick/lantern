@@ -7,9 +7,23 @@ The normalization function is from the excellent [pg_query_go](https://github.co
 Assuming that your Go workspace is set up, run `go build`. If not, first visit [Golang](https://golang.org/) to set it up.
 Building the file may take a couple of minutes because it's compiling parts of the PG lib.
 
+## You'll be able to see
+
+* Frequently run queries
+* Slowest queries
+* Line of code that ran the query
+* Which client ran the query
+* Filter/Group by day of week
+
+## How it works
+
+It ships PG query logs to Redis using the Redislog extension. PG log shipper takes these messages from Redis, aggregates them to a 1 minute grain, and then bulk inserts them into Elasticsearch. You can then build whatever visualisations and dashboards that you want using Kibana or anther tool that can query ES.
+
+
+
 ## Config
 
-It's easy to config. You will need the redislog extension compiled into your PG install. Assuming that's the case, you'll add these lines to the postgresql.conf:
+It's easy to config. You will need the [Redislog extension](github.com/2ndquadrant-it/redislog) compiled into your PG install. Assuming that's the case, you'll add these lines to the postgresql.conf:
 
 ```
 shared_preload_libraries = 'redislog'
