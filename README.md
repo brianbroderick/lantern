@@ -47,6 +47,15 @@ PLS_ELASTIC_URL="your.es.server"
 
 What I've done is set the Redis queue to whatever the server is. For example, we have a lot of servers based on planets, so I have them set like this saturn-master, saturn-follower, pluto-master, pluto-follower, etc.  The queue name is sent with the payload, so you can use it to filter or group your data.
 
+## 1 minute grain
+
+pg_log_shipper aggregates queries to a 1 minute interval. This
+
+* Limits ES' storage requirements
+* Speeds up ES' queries
+
+* Only the first params are stored per query, per minute
+* Up to 2 minute latency
 
 ## Authors
 
