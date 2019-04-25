@@ -11,15 +11,19 @@ Building the file may take a couple of minutes because it's compiling parts of t
 
 It's easy to config. You will need the redislog extension compiled into your PG install. Assuming that's the case, you'll add these lines to the postgresql.conf:
 
+```
 shared_preload_libraries = 'redislog'
 redislog.hosts = 'your.redis.host'
 redislog.key = 'your-app-master'
+```
 
 For the pg_log_shipper app, you'll need these 3 env vars set:
 
+```
 PLS_REDIS_URL='your.redis.host'
 PLS_REDIS_QUEUES="your-app-master"
 PLS_ELASTIC_URL="your.es.server"
+```
 
 What I've done is set the Redis queue to whatever the server is. For example, we have a lot of servers based on planets, so I have them set like this saturn-master, saturn-follower, pluto-master, pluto-follower, etc.  The queue name is sent with the payload, so you can use it to filter or group your data.
 
