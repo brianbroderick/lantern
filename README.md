@@ -19,7 +19,13 @@ Building the file may take a couple of minutes because it's compiling parts of t
 
 It ships PG query logs to Redis using the Redislog extension. PG log shipper takes these messages from Redis, aggregates them to a 1 minute grain, and then bulk inserts them into Elasticsearch. You can then build whatever visualisations and dashboards that you want using Kibana or anther tool that can query ES.
 
+## Not compatible with
 
+* AWS' RDS
+* AWS' Aurora
+* Most other managed PG services
+
+You must be able to compile and install the Redislog extension. As of this writing, it's not available on AWS' managed services.
 
 ## Config
 
