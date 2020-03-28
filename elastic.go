@@ -27,11 +27,38 @@ func SetupElastic() {
 		Name("worker_1").
 		Workers(1).
 		FlushInterval(10 * time.Second).
+		After(afterBulkCommit).
 		Do(context.Background())
 	if err != nil {
 		panic(err)
 	}
 	bulkProc["bulk"] = proc
+}
+
+func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
+	if response.Errors {
+		log.Printf("ERROR: executionId: %d response has errors\n", executionId)
+		logErrorDetails(executionId, response.Took, response.Items, requests)
+	}
+	if err != nil {
+		log.Printf("ERROR: executionId: %d encountered an error\n", executionId)
+		logErrorDetails(executionId, response.Took, response.Items, requests)
+		log.Fatal(err)
+	}
+}
+
+func logErrorDetails(executionId int64, took int, items []map[string]*elastic.BulkResponseItem, requests []elastic.BulkableRequest) {
+	log.Printf("ERROR: executionId: %d, time: %d ms", executionId, took)
+	for _, item := range items {
+		for _, itemResponse := range item {
+			log.Printf("ERROR: executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
+			log.Printf("ERROR: executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
+
+		}
+	}
+	for _, request := range requests {
+		log.Printf("executionId: %d, request: %+v\n", executionId, request)
+	}
 }
 
 func sendToBulker(message []byte) {

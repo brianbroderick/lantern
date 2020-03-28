@@ -137,11 +137,44 @@ func TestElixirFlow(t *testing.T) {
 		logit.Error("Error flushing messages: %e", err.Error())
 	}
 
-	time.Sleep(5000 * time.Millisecond)
-	bulkStats()
-
 	totalDuration := getRecord(t,1000 )
-	assert.Equal(t, 0.102, totalDuration)
+	assert.Equal(t, 35.292, totalDuration)
+
+	conn.Do("DEL", redisKey())
+	defer bulkProc["bulk"].Close()
+	defer clients["bulk"].Stop()
+}
+
+func TestESArrays(t *testing.T) {
+	initialSetup()
+	truncateElasticSearch()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("bad_array.json")
+	conn.Do("LPUSH", redisKey(), sample)
+
+	llen, err := conn.Do("LLEN", redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
+
+	query, err := getLog(redisKey())
+	addToQueries(mockCurrentMinute(), query)
+
+	iterOverQueries()
+	assert.Equal(t, 0, len(batchMap))
+
+	err = bulkProc["bulk"].Flush()
+	if err != nil {
+		logit.Error("Error flushing messages: %e", err.Error())
+	}
+
+	// There is no record, on ES because an array of different types can not be published
+	// to elastic search. We need to log out these failed publish attempts.
+	//getRecord(t,1000 )
+
+	// We should see logs from the afterBulkCommit function
 
 	conn.Do("DEL", redisKey())
 	defer bulkProc["bulk"].Close()
