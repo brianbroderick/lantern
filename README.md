@@ -60,6 +60,9 @@ pg_log_shipper aggregates queries to a 1 minute interval. This
 ## Local Dependencies
 * `docker-compose up -d`
 
+## Testing
+`curl http://localhost:9200/pg-$(date +"%Y-%m-%d")/_search # search elasticsearch`
+`curl -XDELETE localhost:9200/pg-$(date +"%Y-%m-%d") # delete data in elasticsearch`
 
 ## Authors
 

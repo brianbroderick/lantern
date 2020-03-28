@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -115,6 +116,7 @@ func lastMinute() time.Time {
 }
 
 func roundToMinute(minute time.Time) time.Time {
+	fmt.Printf("time: %+v", minute)
 	return minute.Round(time.Minute)
 }
 

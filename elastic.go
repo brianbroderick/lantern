@@ -58,6 +58,10 @@ func indexName() string {
 	return buffer.String()
 }
 
+func bulkStats() elastic.BulkProcessorStats {
+	return bulkProc["bulk"].Stats()
+}
+
 func elasticURL() string {
 	if value, ok := os.LookupEnv("PLS_ELASTIC_URL"); ok {
 		return value

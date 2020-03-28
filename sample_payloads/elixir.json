@@ -1,8 +1,8 @@
 {
-  "@timestamp": "2020-03-28T08:18:35.816567Z",
-  "application_name": "animal_farm",
-  "command_tag": "EXECUTE",
+  "user_name": "new_samplepayload",
   "database_name": "winston",
+  "remote_host": "localhost",
+  "command_tag": "EXECUTE",
   "detail": [
     {
       "action": "open",
@@ -33,9 +33,9 @@
     "2020-03-28T08:18:35",
     "2020-03-28T08:18:35"
   ],
-  "error_severity": "LOG",
-  "message": "duration: 17.646 ms execute N/A: INSERT INTO \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") VALUES ($1,$2,$3,$4) RETURNING \"id\"",
   "metadata": {},
-  "remote_host": "localhost",
-  "user_name": "postgres"
+  "error_severity": "LOG",
+  "application_name": "animal_farm",
+  "message": "duration: 17.646 ms execute N/A: INSERT INTO \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") VALUES ($1,$2,$3,$4) RETURNING \"id\"",
+  "@timestamp": "2020-03-28T08:18:35.816567Z"
 }

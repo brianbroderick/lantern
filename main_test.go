@@ -122,6 +122,12 @@ func TestElixirFlow(t *testing.T) {
 	assert.Equal(t, 0, len(batchMap))
 
 	err = bulkProc["bulk"].Flush()
+	stats := bulkProc["bulk"].Stats()
+	fmt.Printf("stats %+v\n", stats)
+	for _, w := range stats.Workers {
+		fmt.Printf("worker: %+v\n", w)
+	}
+
 	if err != nil {
 		logit.Error("Error flushing messages: %e", err.Error())
 	}
