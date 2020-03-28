@@ -160,9 +160,16 @@ func getMultiLog(redisKey string) (bool, int64, int64, error) {
 	return false, 0, queueLength, nil
 }
 
+func redisURL() string {
+    if value, ok := os.LookupEnv("PLS_REDIS_URL"); ok {
+        return value
+    }
+    return "127.0.0.1:6379"
+}
+
 //SetupRedis setup redis
 func SetupRedis() {
-	pool = newPool(os.Getenv("PLS_REDIS_URL"))
+	pool = newPool(redisURL())
 	redisPassword = os.Getenv("PLS_REDIS_PASSWORD")
 }
 
