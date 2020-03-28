@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -19,15 +20,45 @@ func SetupElastic() {
 	}
 	clients["bulk"] = client
 
+	cat := elastic.NewCatIndicesService(client)
+	catIndices["catIndices"] = cat
+
 	proc, err := clients["bulk"].BulkProcessor().
 		Name("worker_1").
 		Workers(1).
 		FlushInterval(10 * time.Second).
+		After(afterBulkCommit).
 		Do(context.Background())
 	if err != nil {
 		panic(err)
 	}
 	bulkProc["bulk"] = proc
+}
+
+func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
+	if response.Errors {
+		log.Printf("ERROR: executionId: %d response has errors\n", executionId)
+		logErrorDetails(executionId, response.Took, response.Items, requests)
+	}
+	if err != nil {
+		log.Printf("ERROR: executionId: %d encountered an error\n", executionId)
+		logErrorDetails(executionId, response.Took, response.Items, requests)
+		log.Fatal(err)
+	}
+}
+
+func logErrorDetails(executionId int64, took int, items []map[string]*elastic.BulkResponseItem, requests []elastic.BulkableRequest) {
+	log.Printf("ERROR: executionId: %d, time: %d ms", executionId, took)
+	for _, item := range items {
+		for _, itemResponse := range item {
+			log.Printf("ERROR: executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
+			log.Printf("ERROR: executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
+
+		}
+	}
+	for _, request := range requests {
+		log.Printf("executionId: %d, request: %+v\n", executionId, request)
+	}
 }
 
 func sendToBulker(message []byte) {
@@ -56,6 +87,31 @@ func indexName() string {
 	buffer.WriteString("pg-")
 	buffer.WriteString(currentDate.Format("2006-01-02"))
 	return buffer.String()
+}
+
+func bulkStats() elastic.BulkProcessorStats {
+	stats := bulkProc["bulk"].Stats()
+	fmt.Printf("BulkProcessorStats: %+v\n", stats)
+	for i, w := range stats.Workers {
+		fmt.Printf("\tBulkProcessorWorkerStats[%d]: %+v\n", i, w)
+	}
+
+	return stats
+}
+
+func indices() []string {
+	indices := make([]string, 0)
+	response, err := catIndices["catIndices"].Do(context.Background())
+
+	if err != nil {
+		log.Printf("ERROR: could not list indices")
+		return indices
+	}
+
+	for _, index := range response {
+		indices = append(indices, index.Index)
+	}
+	return indices
 }
 
 func elasticURL() string {
