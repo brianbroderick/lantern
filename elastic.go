@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	elastic "gopkg.in/olivere/elastic.v5"
@@ -12,7 +13,7 @@ import (
 
 // SetupElastic sets up elastic conn
 func SetupElastic() {
-	client, err := elastic.NewClient(elastic.SetURL(elasticURL()))
+	client, err := elastic.NewClient(elastic.SetURL(elasticURL()), elastic.SetSniff(sniff()))
 	if err != nil {
 		panic(err)
 	}
@@ -58,9 +59,24 @@ func indexName() string {
 }
 
 func elasticURL() string {
-	elasticURL := os.Getenv("PLS_ELASTIC_URL")
-	if elasticURL == "" {
-		elasticURL = "http://127.0.0.1:9200"
+	if value, ok := os.LookupEnv("PLS_ELASTIC_URL"); ok {
+		return value
 	}
-	return elasticURL
+	return "http://127.0.0.1:9200"
+}
+
+func sniff() bool {
+	if env, ok := os.LookupEnv("PLATFORM_ENV"); ok {
+		if env == "test" {
+			return false
+		}
+	}
+
+	if value, ok := os.LookupEnv("PLS_ELASTIC_SNIFF"); ok {
+		b, err := strconv.ParseBool(value)
+		if err == nil {
+			return b
+		}
+	}
+	return true
 }

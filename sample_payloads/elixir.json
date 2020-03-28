@@ -1,0 +1,41 @@
+{
+  "@timestamp": "2020-03-28T08:18:35.816567Z",
+  "application_name": "animal_farm",
+  "command_tag": "EXECUTE",
+  "database_name": "winston",
+  "detail": [
+    {
+      "action": "open",
+      "anonymous_user": null,
+      "appName": "Web App",
+      "context": "messenger",
+      "event": "messenger.conversation",
+      "feature": "conversation",
+      "meta": {
+        "afSyncUID": "b5388e64-03d7-4f00-bbce-c5ced48e17d8"
+      },
+      "published_at": "2020-03-28T08:18:35.781384Z",
+      "session": {
+        "ip": "",
+        "libraryName": "@podiumhq/podium-analytica",
+        "libraryVersion": "0.1.7",
+        "pagePath": null,
+        "pageReferrer": "",
+        "pageSearch": null,
+        "pageTitle": "(4) Podium | Inbox",
+        "pageUrl": "",
+        "userAgent": "insomnia/7.1.1"
+      },
+      "user_id": null,
+      "user_uid": null
+    },
+    "2020-03-28T08:18:35Z",
+    "2020-03-28T08:18:35",
+    "2020-03-28T08:18:35"
+  ],
+  "error_severity": "LOG",
+  "message": "duration: 17.646 ms execute N/A: INSERT INTO \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") VALUES ($1,$2,$3,$4) RETURNING \"id\"",
+  "metadata": {},
+  "remote_host": "localhost",
+  "user_name": "postgres"
+}

@@ -46,7 +46,63 @@ func TestFlow(t *testing.T) {
 	assert.Equal(t, "<unnamed>", query.prepared)
 	assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
 
-	pgQuery := "select * from servers where id in (?) and name = ?"
+	pgQuery := "select * from servers where id in ($1, $2, $3) and name = $4"
+	assert.Equal(t, pgQuery, query.uniqueStr)
+
+	assert.Equal(t, 0, len(batchMap))
+	_, ok := batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
+	assert.False(t, ok)
+	addToQueries(mockCurrentMinute(), query)
+	assert.Equal(t, 1, len(batchMap))
+	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
+
+	addToQueries(mockCurrentMinute(), query)
+	_, ok = batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
+	assert.True(t, ok)
+	assert.Equal(t, 1, len(batchMap))
+	assert.Equal(t, int32(2), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
+
+	iterOverQueries()
+	assert.Equal(t, 0, len(batchMap))
+
+	err = bulkProc["bulk"].Flush()
+	if err != nil {
+		logit.Error("Error flushing messages: %e", err.Error())
+	}
+	totalDuration := getRecord()
+	assert.Equal(t, 0.102, totalDuration)
+
+	conn.Do("DEL", redisKey())
+	defer bulkProc["bulk"].Close()
+	defer clients["bulk"].Stop()
+}
+
+func TestElixirFlow(t *testing.T) {
+	initialSetup()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("elixir.json")
+	conn.Do("LPUSH", redisKey(), sample)
+
+	llen, err := conn.Do("LLEN", redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
+
+	message := "duration: 17.646 ms execute N/A: INSERT INTO \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") VALUES ($1,$2,$3,$4) RETURNING \"id\""
+	comments := []string(nil)
+	query, err := getLog(redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, message, query.message)
+	assert.Equal(t, comments, query.comments)
+
+	assert.Equal(t, 17.646, query.totalDuration)
+	assert.Equal(t, "execute", query.preparedStep)
+	assert.Equal(t, "N/A", query.prepared)
+	assert.Equal(t, "INSERT INTO \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") VALUES ($1,$2,$3,$4) RETURNING \"id\"", query.query)
+
+	pgQuery := "insert into \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") values ($1,$2,$3,$4) returning \"id\""
 	assert.Equal(t, pgQuery, query.uniqueStr)
 
 	assert.Equal(t, 0, len(batchMap))

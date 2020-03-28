@@ -57,6 +57,10 @@ pg_log_shipper aggregates queries to a 1 minute interval. This
 * Only the first params are stored per query, per minute
 * Up to 2 minute latency
 
+## Local Dependencies
+* `docker-compose up -d`
+
+
 ## Authors
 
 - [Brian Broderick](https://github.com/brianbroderick)
