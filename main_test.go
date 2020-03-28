@@ -122,15 +122,17 @@ func TestElixirFlow(t *testing.T) {
 	assert.Equal(t, 0, len(batchMap))
 
 	err = bulkProc["bulk"].Flush()
+	if err != nil {
+		logit.Error("Error flushing messages: %e", err.Error())
+	}
+
+	time.Sleep(5000 * time.Millisecond)
 	stats := bulkProc["bulk"].Stats()
 	fmt.Printf("stats %+v\n", stats)
 	for _, w := range stats.Workers {
 		fmt.Printf("worker: %+v\n", w)
 	}
 
-	if err != nil {
-		logit.Error("Error flushing messages: %e", err.Error())
-	}
 	totalDuration := getRecord()
 	assert.Equal(t, 0.102, totalDuration)
 
