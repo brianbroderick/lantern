@@ -643,13 +643,8 @@ func marshalString(q *query, strToMarshal string, dataKey string) error {
 }
 
 func addToQueries(roundMin time.Time, q *query) {
-	fmt.Printf("AddToQueries %+v\n",  q)
-	fmt.Printf("roundMin %+v\n",  roundMin)
 	mutex.Lock()
-	fmt.Printf("q.uniqueSha %s\n",  q.uniqueSha)
-	res, ok := batchMap[batch{roundMin, q.uniqueSha}]
-	fmt.Printf("res %+v\n", res)
-	fmt.Printf("ok %+v\n", ok)
+	_, ok := batchMap[batch{roundMin, q.uniqueSha}]
 	if ok == true {
 		batchMap[batch{roundMin, q.uniqueSha}].totalCount++
 		batchMap[batch{roundMin, q.uniqueSha}].totalDuration += q.totalDuration
@@ -688,7 +683,6 @@ func iterOverQueries() {
 			if err != nil {
 				logit.Error(" Error marshalling data: %e", err.Error())
 			}
-			fmt.Printf("data: %s\n", data)
 			sendToBulker(data)
 			delete(batchMap, k)
 		}

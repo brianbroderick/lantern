@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -18,6 +19,9 @@ func SetupElastic() {
 		panic(err)
 	}
 	clients["bulk"] = client
+
+	cat := elastic.NewCatIndicesService(client)
+	catIndices["catIndices"] = cat
 
 	proc, err := clients["bulk"].BulkProcessor().
 		Name("worker_1").
@@ -59,7 +63,28 @@ func indexName() string {
 }
 
 func bulkStats() elastic.BulkProcessorStats {
-	return bulkProc["bulk"].Stats()
+	stats := bulkProc["bulk"].Stats()
+	fmt.Printf("BulkProcessorStats: %+v\n", stats)
+	for i, w := range stats.Workers {
+		fmt.Printf("\tBulkProcessorWorkerStats[%d]: %+v\n", i, w)
+	}
+
+	return stats
+}
+
+func indices() []string {
+	indices := make([]string, 0)
+	response, err := catIndices["catIndices"].Do(context.Background())
+
+	if err != nil {
+		log.Printf("ERROR: could not list indices")
+		return indices
+	}
+
+	for _, index := range response {
+		indices = append(indices, index.Index)
+	}
+	return indices
 }
 
 func elasticURL() string {

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math"
 	"os"
@@ -25,6 +24,7 @@ var (
 	batchMap    = make(map[batch]*query)
 	clients     = make(map[string]*elastic.Client)
 	bulkProc    = make(map[string]*elastic.BulkProcessor)
+	catIndices  = make(map[string]*elastic.CatIndicesService)
 	mutex       = &sync.Mutex{}
 	redisQueues = make([]string, 0)
 
@@ -116,7 +116,6 @@ func lastMinute() time.Time {
 }
 
 func roundToMinute(minute time.Time) time.Time {
-	fmt.Printf("time: %+v", minute)
 	return minute.Round(time.Minute)
 }
 

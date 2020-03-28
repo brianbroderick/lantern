@@ -20,9 +20,19 @@ func init() {
 	os.Setenv("PLATFORM_ENV", "test")
 }
 
+func truncateElasticSearch() {
+	for _, index := range indices() {
+		_, error := clients["bulk"].DeleteIndex(index).Do(context.Background())
+		if error != nil {
+			panic(error)
+		}
+	}
+}
+
 // TestFlow is basically an end to end integration test
 func TestFlow(t *testing.T) {
 	initialSetup()
+	truncateElasticSearch()
 
 	conn := pool.Get()
 	defer conn.Close()
@@ -69,7 +79,7 @@ func TestFlow(t *testing.T) {
 	if err != nil {
 		logit.Error("Error flushing messages: %e", err.Error())
 	}
-	totalDuration := getRecord()
+	totalDuration := getRecord(t, 1000 )
 	assert.Equal(t, 0.102, totalDuration)
 
 	conn.Do("DEL", redisKey())
@@ -79,6 +89,7 @@ func TestFlow(t *testing.T) {
 
 func TestElixirFlow(t *testing.T) {
 	initialSetup()
+	truncateElasticSearch()
 
 	conn := pool.Get()
 	defer conn.Close()
@@ -127,13 +138,9 @@ func TestElixirFlow(t *testing.T) {
 	}
 
 	time.Sleep(5000 * time.Millisecond)
-	stats := bulkProc["bulk"].Stats()
-	fmt.Printf("stats %+v\n", stats)
-	for _, w := range stats.Workers {
-		fmt.Printf("worker: %+v\n", w)
-	}
+	bulkStats()
 
-	totalDuration := getRecord()
+	totalDuration := getRecord(t,1000 )
 	assert.Equal(t, 0.102, totalDuration)
 
 	conn.Do("DEL", redisKey())
@@ -143,6 +150,7 @@ func TestElixirFlow(t *testing.T) {
 
 func TestFlowWithoutComment(t *testing.T) {
 	initialSetup()
+	truncateElasticSearch()
 
 	conn := pool.Get()
 	defer conn.Close()
@@ -418,7 +426,7 @@ func mockCurrentMinute() time.Time {
 	return d.UTC().Round(time.Minute)
 }
 
-func getRecord() float64 {
+func getRecord(t *testing.T, wait time.Duration) float64 {
 	termQuery := elastic.NewTermQuery("user_name", "new_samplepayload")
 	result, err := clients["bulk"].Search().
 		Index(indexName()).
@@ -453,9 +461,12 @@ func getRecord() float64 {
 		}
 	} else {
 		// No hits
-		fmt.Print("Found no records, waiting 500ms...\n")
-		time.Sleep(500 * time.Millisecond)
-		return getRecord()
+		fmt.Printf("Found no records, waiting %d ms...\n", wait)
+		time.Sleep(wait * time.Millisecond)
+		if wait + wait > 4000 {
+			t.Fatalf("Max timeout while attmpting to get elastic search results.")
+		}
+		return getRecord(t, wait + wait)
 	}
 	return -1.0
 }
