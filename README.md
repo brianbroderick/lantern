@@ -1,4 +1,4 @@
-## pg_log_shipper
+## lantern
 
 This reads Postgres logs from Redis, normalizes the query, and then pushes it into Elasticsearch.
 
