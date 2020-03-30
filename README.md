@@ -53,7 +53,7 @@ What I've done is set the Redis queue to whatever the server is. For example, we
 
 ## 1 minute grain
 
-pg_log_shipper aggregates queries to a 1 minute interval. This
+Lantern aggregates queries to a 1 minute interval. This
 
 * Limits ES' storage requirements
 * Speeds up ES' queries

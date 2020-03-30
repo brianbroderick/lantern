@@ -1,4 +1,4 @@
-module github.com/brianbroderick/pg_log_shipper
+module github.com/brianbroderick/lantern
 
 go 1.14
 
