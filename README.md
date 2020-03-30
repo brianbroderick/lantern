@@ -1,5 +1,7 @@
 # Lantern
 
+## Shipping Postgres query logs to Elasticsearch for near realtime query analysis.
+
 ![Lantern](https://github.com/brianbroderick/lantern/blob/master/assets/images/lantern.jpg)
 
 This reads Postgres logs from Redis, normalizes the query, and then pushes it into Elasticsearch.
