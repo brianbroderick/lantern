@@ -1,4 +1,6 @@
-## Lantern
+# Lantern
+
+![Lantern](https://github.com/brianbroderick/lantern/blob/master/assets/images/lantern.jpg)
 
 This reads Postgres logs from Redis, normalizes the query, and then pushes it into Elasticsearch.
 
@@ -68,6 +70,9 @@ pg_log_shipper aggregates queries to a 1 minute interval. This
 
 - [Brian Broderick](https://github.com/brianbroderick)
 
+## Why name it Lantern?
+
+Lanterns light up dark places, and PG query logs are dark places indeed. Hopefully with the help of this tool, you'll be able to shine a light on your database performance problems.
 
 ## License
 
