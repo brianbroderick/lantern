@@ -39,7 +39,7 @@ redislog.hosts = 'your.redis.host'
 redislog.key = 'your-app-master'
 ```
 
-For the pg_log_shipper app, you'll need these 3 env vars set:
+For the Lantern app, you'll need these 3 env vars set:
 
 ```
 PLS_REDIS_URL='your.redis.host'
@@ -77,7 +77,7 @@ Lanterns light up dark places, and PG query logs are dark places indeed. Hopeful
 ## License
 
 Copyright (c) 2017, [Brian Broderick](https://github.com/brianbroderick)<br>
-pg_log_shipper is licensed under the 3-clause BSD license, see LICENSE file for details.
+Lantern is licensed under the 3-clause BSD license, see LICENSE file for details.
 
 This project includes code derived from the [PostgreSQL project](http://www.postgresql.org/) and [pg_query_go](https://github.com/brianbroderick/pg_query_cli/tree/master/vendor/github.com/lfittl/pg_query_go)
 see LICENSE.POSTGRESQL and LICENSE.PG_QUERY_GO respectively for details. 
