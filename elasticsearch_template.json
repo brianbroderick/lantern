@@ -95,7 +95,7 @@
           "type": "keyword"
         },
         "remote_host": {
-          "type": "ip"
+          "type": "keyword"
         },
         "session_id": {
           "ignore_above": 1024,
@@ -137,7 +137,7 @@
           "ignore_above": 1024,
           "type": "keyword"
         },
-         "virtual_transaction_id": {
+        "virtual_transaction_id": {
           "ignore_above": 1024,
           "type": "keyword"
         }
