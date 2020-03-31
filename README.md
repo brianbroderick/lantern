@@ -68,6 +68,15 @@ Lantern aggregates queries to a 1 minute interval. This
 `curl http://localhost:9200/pg-$(date +"%Y-%m-%d")/_search # search elasticsearch`
 `curl -XDELETE localhost:9200/pg-$(date +"%Y-%m-%d") # delete data in elasticsearch`
 
+## Kibana
+
+Once the data is in Elasticsearch, you can create all the charts you'd like such as queries by total duration or total count.
+
+![Total Duration](https://github.com/brianbroderick/lantern/blob/master/assets/images/total_duration.png)
+
+![Total Count](https://github.com/brianbroderick/lantern/blob/master/assets/images/total_count.png)
+
+
 ## Authors
 
 - [Brian Broderick](https://github.com/brianbroderick)
