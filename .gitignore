@@ -2,7 +2,7 @@
 *.o
 *.a
 *.so
-pg_log_shipper
+lantern
 
 automated_payloads*
 
