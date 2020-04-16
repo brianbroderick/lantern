@@ -152,6 +152,7 @@ func TestESArrays(t *testing.T) {
 	conn := pool.Get()
 	defer conn.Close()
 
+	// This payload is sending a blank array in the "detail" key. ES doesn't like that.
 	sample := readPayload("bad_array.json")
 	conn.Do("LPUSH", redisKey(), sample)
 
