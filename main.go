@@ -73,7 +73,7 @@ func main() {
 
 func initialSetup() {
 	setupEnv()
-	populateRedisQueues()
+	populateRedisQueues(os.Getenv("PLS_REDIS_QUEUES"))
 	SetupRedis()
 	SetupElastic()
 }
@@ -88,17 +88,16 @@ func setupEnv() {
 		filename := ".env_" + platformEnv
 		err := godotenv.Load(filename)
 		if err != nil {
-			logit.Info("%s file not found", filename)
+			// logit.Error("%s file not found", filename)
 		}
 	}
 	err := godotenv.Load(".env")
 	if err != nil {
-		logit.Info(".env file not found")
+		// logit.Error(".env file not found")
 	}
 }
 
-func populateRedisQueues() {
-	queues := os.Getenv("PLS_REDIS_QUEUES")
+func populateRedisQueues(queues string) {
 	// Override with a flag, if exists
 	if queuePtr != "" {
 		queues = queuePtr
@@ -110,7 +109,20 @@ func populateRedisQueues() {
 		queues = r.ReplaceAllString(queues, "")
 		redisQueues = strings.Split(queues, ",")
 	}
+	uniqueRedisQueues()
 	logit.Info("Redis Queues: %v", redisQueues)
+}
+
+func uniqueRedisQueues() {
+	keys := make(map[string]bool)
+	list := []string{}
+	for _, entry := range redisQueues {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	redisQueues = list
 }
 
 func redisKey() string {
