@@ -110,7 +110,9 @@ func populateRedisQueues(queues string) {
 		redisQueues = strings.Split(queues, ",")
 	}
 	uniqueRedisQueues()
-	logit.Info("Redis Queues: %v", redisQueues)
+	if os.Getenv("PLATFORM_ENV") != "test" {
+		logit.Info("Redis Queues: %v", redisQueues)
+	}
 }
 
 func uniqueRedisQueues() {
