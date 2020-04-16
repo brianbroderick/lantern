@@ -4,7 +4,7 @@ services:
     build: .  
     environment:
       PLS_REDIS_URL: redis:6379
-      PLS_ELASTIC_URL: elasticsearch:9200  
+      PLS_ELASTIC_URL: http://elasticsearch:9200  
   redis:
     image: redis:latest
     restart: unless-stopped

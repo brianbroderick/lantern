@@ -14,9 +14,16 @@ import (
 
 // SetupElastic sets up elastic conn
 func SetupElastic() {
+	// Coming from Docker, sleep a few seconds to make sure ES is running
+	if elasticURL() == "http://elasticsearch:9200" {
+		log.Printf("Using docker, waiting for ES to spin up")
+		time.Sleep(10 * time.Second)
+	}
 	client, err := elastic.NewClient(elastic.SetURL(elasticURL()), elastic.SetSniff(sniff()))
 	if err != nil {
 		panic(err)
+	} else {
+		log.Printf("ES Client established")
 	}
 	clients["bulk"] = client
 
