@@ -23,7 +23,6 @@ func SetupElastic() {
 	if err != nil {
 		panic(err)
 	}
-	// TODO: do health check for ES
 
 	clients["bulk"] = client
 
@@ -48,7 +47,7 @@ func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, resp
 		logErrorDetails(executionId, response.Took, response.Items, requests)
 	}
 	if err != nil {
-		logit.Error("ERROR: executionId: %d encountered an error\n", executionId)
+		logit.Error("executionId: %d encountered an error\n", executionId)
 		logErrorDetails(executionId, response.Took, response.Items, requests)
 		logit.Fatal("%v", err)
 	}
