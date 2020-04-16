@@ -12,7 +12,7 @@ import (
 
 	elastic "gopkg.in/olivere/elastic.v5"
 
-	logit "github.com/brettallred/go-logit"
+	"github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -79,7 +79,7 @@ func TestFlow(t *testing.T) {
 	if err != nil {
 		logit.Error("Error flushing messages: %e", err.Error())
 	}
-	totalDuration := getRecord(t, 1000 )
+	totalDuration := getRecord(t, 1000)
 	assert.Equal(t, 0.102, totalDuration)
 
 	conn.Do("DEL", redisKey())
@@ -137,7 +137,7 @@ func TestElixirFlow(t *testing.T) {
 		logit.Error("Error flushing messages: %e", err.Error())
 	}
 
-	totalDuration := getRecord(t,1000 )
+	totalDuration := getRecord(t, 1000)
 	assert.Equal(t, 35.292, totalDuration)
 
 	conn.Do("DEL", redisKey())
@@ -496,10 +496,10 @@ func getRecord(t *testing.T, wait time.Duration) float64 {
 		// No hits
 		fmt.Printf("Found no records, waiting %d ms...\n", wait)
 		time.Sleep(wait * time.Millisecond)
-		if wait + wait > 4000 {
+		if wait+wait > 4000 {
 			t.Fatalf("Max timeout while attmpting to get elastic search results.")
 		}
-		return getRecord(t, wait + wait)
+		return getRecord(t, wait+wait)
 	}
 	return -1.0
 }

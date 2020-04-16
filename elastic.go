@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
 
+	logit "github.com/brianbroderick/logit"
 	elastic "gopkg.in/olivere/elastic.v5"
 )
 
@@ -16,15 +16,15 @@ import (
 func SetupElastic() {
 	// Coming from Docker, sleep a few seconds to make sure ES is running
 	if elasticURL() == "http://elasticsearch:9200" {
-		log.Printf("Using docker, waiting for ES to spin up")
+		logit.Info("Using docker, waiting for ES to spin up")
 		time.Sleep(10 * time.Second)
 	}
 	client, err := elastic.NewClient(elastic.SetURL(elasticURL()), elastic.SetSniff(sniff()))
 	if err != nil {
 		panic(err)
-	} else {
-		log.Printf("ES Client established")
 	}
+	// TODO: do health check for ES
+
 	clients["bulk"] = client
 
 	cat := elastic.NewCatIndicesService(client)
@@ -44,27 +44,27 @@ func SetupElastic() {
 
 func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
 	if response.Errors {
-		log.Printf("ERROR: executionId: %d response has errors\n", executionId)
+		logit.Error("executionId: %d response has errors\n", executionId)
 		logErrorDetails(executionId, response.Took, response.Items, requests)
 	}
 	if err != nil {
-		log.Printf("ERROR: executionId: %d encountered an error\n", executionId)
+		logit.Error("ERROR: executionId: %d encountered an error\n", executionId)
 		logErrorDetails(executionId, response.Took, response.Items, requests)
-		log.Fatal(err)
+		logit.Fatal("%v", err)
 	}
 }
 
 func logErrorDetails(executionId int64, took int, items []map[string]*elastic.BulkResponseItem, requests []elastic.BulkableRequest) {
-	log.Printf("ERROR: executionId: %d, time: %d ms", executionId, took)
+	logit.Error("executionId: %d, time: %d ms", executionId, took)
 	for _, item := range items {
 		for _, itemResponse := range item {
-			log.Printf("ERROR: executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
-			log.Printf("ERROR: executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
+			logit.Error("executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
+			logit.Error("executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
 
 		}
 	}
 	for _, request := range requests {
-		log.Printf("executionId: %d, request: %+v\n", executionId, request)
+		logit.Info("executionId: %d, request: %+v\n", executionId, request)
 	}
 }
 
@@ -111,7 +111,7 @@ func indices() []string {
 	response, err := catIndices["catIndices"].Do(context.Background())
 
 	if err != nil {
-		log.Printf("ERROR: could not list indices")
+		logit.Error("could not list indices")
 		return indices
 	}
 

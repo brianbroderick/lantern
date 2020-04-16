@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	logit "github.com/brettallred/go-logit"
+	"github.com/brianbroderick/logit"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -161,10 +161,10 @@ func getMultiLog(redisKey string) (bool, int64, int64, error) {
 }
 
 func redisURL() string {
-    if value, ok := os.LookupEnv("PLS_REDIS_URL"); ok {
-        return value
-    }
-    return "127.0.0.1:6379"
+	if value, ok := os.LookupEnv("PLS_REDIS_URL"); ok {
+		return value
+	}
+	return "127.0.0.1:6379"
 }
 
 //SetupRedis setup redis

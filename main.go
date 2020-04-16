@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"flag"
 	"math"
 	"os"
 	"regexp"
@@ -11,6 +11,7 @@ import (
 
 	elastic "gopkg.in/olivere/elastic.v5"
 
+	"github.com/brianbroderick/logit"
 	"github.com/fatih/color"
 	"github.com/joho/godotenv"
 )
@@ -27,6 +28,7 @@ var (
 	catIndices  = make(map[string]*elastic.CatIndicesService)
 	mutex       = &sync.Mutex{}
 	redisQueues = make([]string, 0)
+	queuePtr    string
 
 	blue    = color.New(color.FgBlue).SprintFunc()
 	cyan    = color.New(color.FgCyan).SprintFunc()
@@ -45,6 +47,9 @@ var (
 )
 
 func main() {
+	flag.StringVar(&queuePtr, "queues", "", "comma separated list of queues that overrides env vars")
+	flag.Parse()
+
 	initialSetup()
 	defer bulkProc["bulk"].Close()
 	defer clients["bulk"].Stop()
@@ -68,27 +73,36 @@ func main() {
 
 func initialSetup() {
 	setupEnv()
-	populateRedisQueues(os.Getenv("PLS_REDIS_QUEUES"))
+	populateRedisQueues()
 	SetupRedis()
 	SetupElastic()
 }
 
 func setupEnv() {
+	if os.Getenv("PLATFORM_ENV") == "" {
+		os.Setenv("PLATFORM_ENV", "prod")
+	}
+
 	platformEnv := os.Getenv("PLATFORM_ENV")
 	if platformEnv != "prod" && platformEnv != "stage" {
 		filename := ".env_" + platformEnv
 		err := godotenv.Load(filename)
 		if err != nil {
-			log.Printf("INFO: %s file not found", filename)
+			logit.Info("%s file not found", filename)
 		}
 	}
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Printf("INFO: .env file not found")
+		logit.Info(".env file not found")
 	}
 }
 
-func populateRedisQueues(queues string) {
+func populateRedisQueues() {
+	queues := os.Getenv("PLS_REDIS_QUEUES")
+	// Override with a flag, if exists
+	if queuePtr != "" {
+		queues = queuePtr
+	}
 	if queues == "" {
 		redisQueues = append(redisQueues, "postgres")
 	} else {
@@ -96,6 +110,7 @@ func populateRedisQueues(queues string) {
 		queues = r.ReplaceAllString(queues, "")
 		redisQueues = strings.Split(queues, ",")
 	}
+	logit.Info("Redis Queues: %v", redisQueues)
 }
 
 func redisKey() string {

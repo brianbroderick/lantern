@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	logit "github.com/brettallred/go-logit"
+	"github.com/brianbroderick/logit"
 	"github.com/fatih/color"
 )
 
