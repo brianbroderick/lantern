@@ -44,9 +44,10 @@ redislog.key = 'your-app-master'
 For the Lantern app, you'll need these 3 env vars set:
 
 ```
-PLS_REDIS_URL='your.redis.host'
-PLS_REDIS_QUEUES="your-app-master"
-PLS_ELASTIC_URL="your.es.server"
+PLS_REDIS_URL="your.redis.host"    # Default: "127.0.0.1:6379"
+PLS_REDIS_QUEUES="your-app-master" # comma separated whitelist of redis keys being published to
+PLS_ELASTIC_URL="your.es.server"   # Default: "http://127.0.0.1:9200"
+PLS_REDIS_PASSWORD="your.password" # (Optional)
 ```
 
 What I've done is set the Redis queue to whatever the server is. For example, we have a lot of servers based on planets, so I have them set like this saturn-master, saturn-follower, pluto-master, pluto-follower, etc.  The queue name is sent with the payload, so you can use it to filter or group your data.
