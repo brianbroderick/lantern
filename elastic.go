@@ -63,7 +63,7 @@ func logErrorDetails(executionId int64, took int, items []map[string]*elastic.Bu
 		}
 	}
 	for _, request := range requests {
-		logit.Info("executionId: %d, request: %+v\n", executionId, request)
+		logit.Info("executionId: %d, request: %+v\n---\n", executionId, request)
 	}
 }
 
