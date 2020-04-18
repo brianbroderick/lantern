@@ -1,0 +1,18 @@
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "term": {
+            "user_name": {
+                "value": "new_samplepayload",
+                "boost": 1.0
+            }
+        }
+    }
+}
+'
+
+
+curl -X GET "localhost:9200/pg*/_count"
+
+
+curl -X GET "localhost:9200/_cat/indices"

@@ -39,6 +39,31 @@ func SetupElastic() {
 		panic(err)
 	}
 	bulkProc["bulk"] = proc
+
+	// putTemplate(client)
+}
+
+func putTemplate(client *elastic.Client) {
+	// dat, err := ioutil.ReadFile("./elasticsearch_template.json")
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	client.IndexDeleteTemplate("pg-*").Do(context.Background())
+	// resp, err := client.IndexPutTemplate("pg-*").BodyString(string(dat)).Do(context.Background()) //.Body(dat).Do(context.Background())
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Printf("Template set: %v\n", resp.Acknowledged)
+
+	// // Get template stored under "my-search-template"
+	// resp, err := client.IndexGetTemplate("pg-*").Do(context.Background())
+	// if err != nil {
+	// 	logit.Error("HERE")
+	// 	panic(err)
+	// }
+	// logit.Info("%v", resp)
+	// fmt.Printf("search template is: %v\n", resp)
 }
 
 func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
