@@ -77,9 +77,11 @@ func logErrorDetails(executionId int64, took int, items []map[string]*elastic.Bu
 			}
 		}
 	}
-	// for _, request := range requests {
-	// 	logit.Info("logErrorDetails:4 executionId: %d, request: %+v\n---\n", executionId, request)
-	// }
+	for _, request := range requests {
+		if executionId == 1 {
+			logit.Info("logErrorDetails:4 executionId: %d, request: %+v\n---\n", executionId, request)
+		}
+	}
 }
 
 func sendToBulker(message []byte) {
