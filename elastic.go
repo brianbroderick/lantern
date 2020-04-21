@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"time"
@@ -24,8 +25,6 @@ func SetupElastic() {
 		panic(err)
 	}
 
-	putTemplate(client)
-
 	clients["bulk"] = client
 
 	cat := elastic.NewCatIndicesService(client)
@@ -44,16 +43,16 @@ func SetupElastic() {
 }
 
 func putTemplate(client *elastic.Client) {
-	// dat, err := ioutil.ReadFile("./elasticsearch_template.json")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	dat, err := ioutil.ReadFile("./elasticsearch_template.json")
+	if err != nil {
+		panic(err)
+	}
 
 	client.IndexDeleteTemplate("pglog").Do(context.Background())
-	// _, err = client.IndexPutTemplate("pglog").BodyString(string(dat)).Do(context.Background()) //.Body(dat).Do(context.Background())
-	// if err != nil {
-	// 	panic(err)
-	// }
+	_, err = client.IndexPutTemplate("pglog").BodyString(string(dat)).Do(context.Background()) //.Body(dat).Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
 }
 
 func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
