@@ -1,0 +1,74 @@
+# Match All
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "match_all": {}
+    }
+}'
+
+# Term Query
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "term": {
+            "user_name": {
+                "value": "execute_user",
+                "boost": 1.0
+            }
+        }
+    }
+}
+'
+
+# Count
+curl -X GET "localhost:9200/pg*/_count"
+
+# Get index & templates
+curl -X GET "localhost:9200/_cat/indices?pretty"
+curl -X GET "localhost:9200/_cat/templates?pretty"
+
+# Delete index & templates
+curl -X DELETE "localhost:9200/pg-*?pretty"
+curl -X DELETE "localhost:9200/_template/pglog?pretty"
+
+# Insert a document
+curl -X POST "localhost:9200/pg-2020-04-20/pglog?pretty" -H 'Content-Type: application/json' -d'
+{
+  "@timestamp": "2020-04-21T16:52:01.480+0000",
+  "application_name": "puma: cluster worker 2: 6 [code]",
+  "avg_duration_ms": 2.9735,
+  "code_action": "execute",
+  "code_application": "Rails",
+  "code_controller": "graphql",
+  "code_line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in `mon_synchronize'\''",
+  "code_source": [
+    {
+      "action": "execute",
+      "application": "Rails",
+      "controller": "graphql",
+      "line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in `mon_synchronize'\''"
+    }
+  ],
+  "command_tag": "SELECT",
+  "database_name": "app",
+  "day_of_week": "Tuesday",
+  "day_of_week_int": 2,
+  "error_severity": "LOG",
+  "max_duration_ms": 4.948,
+  "min_duration_ms": 0.999,
+  "prepared": "\u003cunnamed\u003e",
+  "prepared_step": "execute",
+  "process_id": 20235,
+  "query": "SELECT * FROM users",
+  "redis_key": "my-app",
+  "remote_host": "10.2.4.255",
+  "session_id": "5e9f1bcb.4f0b",
+  "session_line_num": 46794,
+  "session_start_time": "2020-04-21T16:14:03+0000",
+  "total_count": 2,
+  "total_duration_ms": 5.947,
+  "unique_sha": "bb5ed2d47fc43c51f15e9ab1c0bea9aebb6a4d5d",
+  "unique_string": "select * from users",
+  "user_name": "i14a559996",
+  "virtual_transaction_id": "439/22885633"
+}'

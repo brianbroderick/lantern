@@ -61,7 +61,8 @@
           "type": "keyword"
         },
         "detail": {
-          "type": "nested"
+          "norms": false,
+          "type": "text"
         },
         "error_severity": {
           "ignore_above": 1024,

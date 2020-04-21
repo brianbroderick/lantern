@@ -10,6 +10,6 @@
   "virtual_transaction_id": "2/48859",
   "error_severity": "LOG",
   "application_name": "SomeApp",
-  "message": "automatic analyze of table \"app.public.api_clients\": system usage: CPU 0.00s/0.02u sec elapsed 0.15 sec",
+  "message": "automatic analyze of table \"app.public.some_table\": system usage: CPU 0.00s/0.02u sec elapsed 0.15 sec",
   "@timestamp": "2017-10-16T15:50:35.840+0000"
 }

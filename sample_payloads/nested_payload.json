@@ -24,8 +24,8 @@
   "prepared": "\u003cunnamed\u003e",
   "prepared_step": "execute",
   "process_id": 6516,
-  "query": "SELECT  \"users\".* FROM \"users\" WHERE (\"users\".\"id\" IS NOT NULL) AND \"users\".\"id\" IN (2537409, 2408658) AND \"users\".\"active\" = 't' ORDER BY \"users\".\"first_name\" ASC, \"users\".\"last_name\" ASC LIMIT 10 OFFSET 0",
-  "redis_key": "review-rocket-master-new",
+  "query": "SELECT  users.* FROM users WHERE (users.id IS NOT NULL) AND users.id IN (123, 456) AND users.active = 't' ORDER BY users.first_name ASC, users.last_name ASC LIMIT 10 OFFSET 0",
+  "redis_key": "my-awesome-server",
   "remote_host": "10.2.8.91",
   "session_id": "5e9a299a.1974",
   "session_line_num": 4678,
@@ -33,7 +33,7 @@
   "total_count": 83,
   "total_duration_ms": 5.435,
   "unique_sha": "f295b64cbe27b40f482f2ebf8cd4b1c39a8c6740",
-  "unique_string": "select  \"users\".* from \"users\" where (\"users\".\"id\" is not null) and \"users\".\"id\" in ($1, $2) and \"users\".\"active\" = $3 order by \"users\".\"first_name\" asc, \"users\".\"last_name\" asc limit $4 offset $5",
-  "user_name": "i14a559996",
+  "unique_string": "select  users.* from users where (users.id is not null) and users.id in ($1, $2) and users.active = $3 order by users.first_name asc, users.last_name asc limit $4 offset $5",
+  "user_name": "nested_payload",
   "virtual_transaction_id": "356/39568237"
 }

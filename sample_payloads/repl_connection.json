@@ -10,6 +10,6 @@
   "virtual_transaction_id": "2/48859",
   "error_severity": "LOG",
   "application_name": "SomeApp",
-  "message": "replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)",
+  "message": "replication connection authorized: user=root SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)",
   "@timestamp": "2017-10-16T15:50:35.840+0000"
 }

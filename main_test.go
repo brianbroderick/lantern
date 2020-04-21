@@ -25,12 +25,16 @@ func TestFlow(t *testing.T) {
 	conn := pool.Get()
 	defer conn.Close()
 
+	// Test if code_source is nested
+	bp := readPayload("nested_payload.json")
+	conn.Do("LPUSH", redisKey(), bp)
+
 	sample := readPayload("execute.json")
 	conn.Do("LPUSH", redisKey(), sample)
 
 	llen, err := conn.Do("LLEN", redisKey())
 	assert.NoError(t, err)
-	assert.Equal(t, int64(1), llen)
+	assert.Equal(t, int64(2), llen)
 
 	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
 	comments := []string{"/*application:Rails,controller:users,action:search,line:/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in mon_synchronize*/"}
