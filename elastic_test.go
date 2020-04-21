@@ -145,6 +145,59 @@ func TestElixirFlow(t *testing.T) {
 	defer clients["bulk"].Stop()
 }
 
+func TestErrorFlow(t *testing.T) {
+	initialSetup()
+	SetupElastic()
+	truncateElasticSearch()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("error_payload.json")
+	conn.Do("LPUSH", redisKey(), sample)
+
+	llen, err := conn.Do("LLEN", redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
+
+	// message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
+
+	query, err := getLog(redisKey())
+	assert.NoError(t, err)
+	// assert.Equal(t, message, query.message)
+
+	assert.Equal(t, 5.947, query.totalDuration)
+	assert.Equal(t, "execute", query.preparedStep)
+	assert.Equal(t, "<unnamed>", query.prepared)
+	// assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
+
+	// pgQuery := "select * from servers where id in ($1, $2, $3) and name = $4"
+	// assert.Equal(t, pgQuery, query.uniqueStr)
+
+	assert.Equal(t, 0, len(batchMap))
+	_, ok := batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
+	assert.False(t, ok)
+
+	addToQueries(mockCurrentMinute(), query)
+	assert.Equal(t, 1, len(batchMap))
+	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
+
+	iterOverQueries()
+	assert.Equal(t, 0, len(batchMap))
+
+	err = bulkProc["bulk"].Flush()
+	if err != nil {
+		logit.Error("Error flushing messages: %e", err.Error())
+	}
+
+	totalDuration := getRecord(t, 1000, "error_payload")
+	assert.Equal(t, 5.947, totalDuration)
+
+	conn.Do("DEL", redisKey())
+	defer bulkProc["bulk"].Close()
+	defer clients["bulk"].Stop()
+}
+
 // func TestESArrays(t *testing.T) {
 // 	initialSetup()
 // 	SetupElastic()
@@ -191,7 +244,6 @@ func TestBadPayload(t *testing.T) {
 	conn := pool.Get()
 	defer conn.Close()
 
-	// This payload is sending a blank array in the "detail" key. ES doesn't like that.
 	sample := readPayload("bad_payload.json")
 	conn.Do("LPUSH", redisKey(), sample)
 

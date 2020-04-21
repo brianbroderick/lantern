@@ -68,16 +68,16 @@ func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, resp
 }
 
 func logErrorDetails(executionId int64, took int, items []map[string]*elastic.BulkResponseItem, requests []elastic.BulkableRequest) {
-	logit.Error("executionId: %d, time: %d ms", executionId, took)
+	logit.Error("logErrorDetails:1 executionId: %d, time: %d ms", executionId, took)
 	for _, item := range items {
 		for _, itemResponse := range item {
-			logit.Error("executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
-			logit.Error("executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
+			logit.Error("logErrorDetails:2 executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
+			logit.Error("logErrorDetails:3 executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
 
 		}
 	}
 	for _, request := range requests {
-		logit.Info("executionId: %d, request: %+v\n---\n", executionId, request)
+		logit.Info("logErrorDetails:4 executionId: %d, request: %+v\n---\n", executionId, request)
 	}
 }
 
