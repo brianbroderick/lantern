@@ -69,6 +69,6 @@ curl -X POST "localhost:9200/pg-2020-04-20/pglog?pretty" -H 'Content-Type: appli
   "total_duration_ms": 5.947,
   "unique_sha": "bb5ed2d47fc43c51f15e9ab1c0bea9aebb6a4d5d",
   "unique_string": "select * from users",
-  "user_name": "i14a559996",
+  "user_name": "some_user",
   "virtual_transaction_id": "439/22885633"
 }'

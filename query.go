@@ -217,7 +217,7 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
-	// disconnection: session time: 0:00:00.074 user=q55cd17435 database= host=10.0.1.168 port=56544
+	// disconnection: session time: 0:00:00.074 user=root database= host=10.0.1.168 port=56544
 	r = regexp.MustCompile(`(?s)disconnection:.*`)
 	match = r.FindStringSubmatch(message)
 
@@ -226,7 +226,7 @@ func regexMessage(message string) map[string]string {
 		return result
 	}
 
-	// replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
+	// replication connection authorized: user=root SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)
 	r = regexp.MustCompile(`(?s)replication connection authorized:.*`)
 	match = r.FindStringSubmatch(message)
 
