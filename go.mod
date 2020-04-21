@@ -10,4 +10,6 @@ require (
 	github.com/lfittl/pg_query_go v1.0.0
 	github.com/stretchr/testify v1.5.1
 	gopkg.in/olivere/elastic.v5 v5.0.85
+	// gopkg.in/olivere/elastic.v5 v5.0.85
+	gopkg.in/olivere/elastic.v6 v6.2.30 // indirect
 )
