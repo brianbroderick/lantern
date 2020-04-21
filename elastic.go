@@ -70,13 +70,11 @@ func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, resp
 func logErrorDetails(executionId int64, took int, items []map[string]*elastic.BulkResponseItem, requests []elastic.BulkableRequest) {
 
 	for _, item := range items {
-		for i, itemResponse := range item {
-			if itemResponse != nil {
-				logit.Error("logErrorDetails:1 executionId: %d, i: %s", executionId, i)
+		for _, itemResponse := range item {
+			if itemResponse.Error != nil {
 				logit.Error("logErrorDetails:2 executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
 				logit.Error("logErrorDetails:3 executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
 			}
-
 		}
 	}
 	// for _, request := range requests {
