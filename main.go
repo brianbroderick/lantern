@@ -51,6 +51,7 @@ func main() {
 	flag.Parse()
 
 	initialSetup()
+	SetupElastic()
 	defer bulkProc["bulk"].Close()
 	defer clients["bulk"].Stop()
 
@@ -75,7 +76,6 @@ func initialSetup() {
 	setupEnv()
 	populateRedisQueues(os.Getenv("PLS_REDIS_QUEUES"))
 	SetupRedis()
-	SetupElastic()
 }
 
 func setupEnv() {

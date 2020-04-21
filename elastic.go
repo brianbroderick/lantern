@@ -24,6 +24,8 @@ func SetupElastic() {
 		panic(err)
 	}
 
+	putTemplate(client)
+
 	clients["bulk"] = client
 
 	cat := elastic.NewCatIndicesService(client)
@@ -39,8 +41,6 @@ func SetupElastic() {
 		panic(err)
 	}
 	bulkProc["bulk"] = proc
-
-	// putTemplate(client)
 }
 
 func putTemplate(client *elastic.Client) {
@@ -49,21 +49,11 @@ func putTemplate(client *elastic.Client) {
 	// 	panic(err)
 	// }
 
-	client.IndexDeleteTemplate("pg-*").Do(context.Background())
-	// resp, err := client.IndexPutTemplate("pg-*").BodyString(string(dat)).Do(context.Background()) //.Body(dat).Do(context.Background())
+	client.IndexDeleteTemplate("pglog").Do(context.Background())
+	// _, err = client.IndexPutTemplate("pglog").BodyString(string(dat)).Do(context.Background()) //.Body(dat).Do(context.Background())
 	// if err != nil {
 	// 	panic(err)
 	// }
-	// fmt.Printf("Template set: %v\n", resp.Acknowledged)
-
-	// // Get template stored under "my-search-template"
-	// resp, err := client.IndexGetTemplate("pg-*").Do(context.Background())
-	// if err != nil {
-	// 	logit.Error("HERE")
-	// 	panic(err)
-	// }
-	// logit.Info("%v", resp)
-	// fmt.Printf("search template is: %v\n", resp)
 }
 
 func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {

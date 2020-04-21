@@ -5,13 +5,13 @@
   "code_action": "index",
   "code_application": "Rails",
   "code_controller": "users",
-  "code_line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in `mon_synchronize'",
+  "code_line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in mon_synchronize",
   "code_source": [
     {
       "action": "index",
       "application": "Rails",
       "controller": "users",
-      "line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in `mon_synchronize'"
+      "line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in mon_synchronize"
     }
   ],
   "command_tag": "SELECT",

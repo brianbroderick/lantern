@@ -3,7 +3,7 @@ curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' 
     "query": {
         "term": {
             "user_name": {
-                "value": "new_samplepayload",
+                "value": "execute_user",
                 "boost": 1.0
             }
         }
@@ -14,5 +14,228 @@ curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' 
 
 curl -X GET "localhost:9200/pg*/_count"
 
+curl -X GET "localhost:9200/_search?pretty" -H 'Content-Type: application/json' -d'
+{
+    "query": {
+        "match_all": {}
+    }
+}'
 
-curl -X GET "localhost:9200/_cat/indices"
+GET /_cat/templates
+
+
+curl -X GET "localhost:9200/_cat/indices?pretty"
+
+curl -X GET "localhost:9200/_cat/templates?pretty"
+
+curl -X DELETE "localhost:9200/pg-*?pretty"
+curl -X DELETE "localhost:9200/_template/pglog?pretty"
+
+
+curl -X POST "localhost:9200/pg-2020-04-20/pglog?pretty" -H 'Content-Type: application/json' -d'
+{
+  "@timestamp": "2020-04-17T22:19:31.762+0000",
+  "application_name": "puma: cluster worker 1: 6 [code]",
+  "avg_duration_ms": 0.06548,
+  "code_action": "index",
+  "code_application": "Rails",
+  "code_controller": "users",
+  "code_line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in mon_synchronize",
+  "code_source": [
+    {
+      "action": "index",
+      "application": "Rails",
+      "controller": "users",
+      "line": "/usr/local/lib/ruby/2.5.0/monitor.rb:235:in mon_synchronize"
+    }
+  ],
+  "command_tag": "SELECT",
+  "database_name": "app",
+  "day_of_week": "Friday",
+  "day_of_week_int": 5,
+  "error_severity": "LOG",
+  "max_duration_ms": 0.089,
+  "min_duration_ms": 0.052,
+  "prepared": "\u003cunnamed\u003e",
+  "prepared_step": "execute",
+  "process_id": 6516,
+  "query": "SELECT  \"users\".* FROM \"users\" WHERE (\"users\".\"id\" IS NOT NULL) AND \"users\".\"id\" IN (2537409, 2408658) AND \"users\".\"active\" = 't' ORDER BY \"users\".\"first_name\" ASC, \"users\".\"last_name\" ASC LIMIT 10 OFFSET 0",
+  "redis_key": "review-rocket-master-new",
+  "remote_host": "10.2.8.91",
+  "session_id": "5e9a299a.1974",
+  "session_line_num": 4678,
+  "session_start_time": "2020-04-17T22:11:38+0000",
+  "total_count": 83,
+  "total_duration_ms": 5.435,
+  "unique_sha": "f295b64cbe27b40f482f2ebf8cd4b1c39a8c6740",
+  "unique_string": "select  \"users\".* from \"users\" where (\"users\".\"id\" is not null) and \"users\".\"id\" in ($1, $2) and \"users\".\"active\" = $3 order by \"users\".\"first_name\" asc, \"users\".\"last_name\" asc limit $4 offset $5",
+  "user_name": "i14a559996",
+  "virtual_transaction_id": "356/39568237"
+}'
+
+
+curl -X GET "localhost:9200/_template/pglog?pretty"
+
+
+curl -X PUT "localhost:9200/_template/pglog" -H 'Content-Type: application/json' -d'
+{
+  "order": 0,
+  "index_patterns": "pg-*",
+  "settings": {
+    "index": {
+      "mapping": {
+        "total_fields": {
+          "limit": "1000"
+        }
+      },
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "pglog": {
+      "_meta": {
+        "version": "5.6.2"
+      },
+      "date_detection": false,
+      "dynamic_templates": [
+        {
+          "strings_as_keyword": {
+            "mapping": {
+              "ignore_above": 1024,
+              "type": "keyword"
+            },
+            "match_mapping_type": "string"
+          }
+        }
+      ],
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "application_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "avg_duration_ms": {
+          "type": "float"
+        },
+        "code_module": {
+          "type": "keyword"
+        },
+        "code_repo": {
+          "type": "keyword"
+        },
+        "code_source": {
+          "type": "nested"
+        },
+        "code_tags": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "command_tag": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "database_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "error_severity": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "message": {
+          "norms": false,
+          "type": "text"
+        },
+        "mvc_action": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "mvc_application": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "mvc_code_line": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "mvc_controller": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "prepared": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "prepared_step": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "process_id": {
+          "type": "integer"
+        },
+        "notes": {
+          "norms": false,
+          "type": "text"
+        },
+        "query": {
+          "norms": false,
+          "type": "text"
+        },
+        "redis_key": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "remote_host": {
+          "type": "keyword"
+        },
+        "session_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "session_line_num": {
+          "type": "integer"
+        },
+        "session_start_time": {
+          "type": "date"
+        },
+        "temp_table_size": {
+          "type": "long"
+        },
+        "total_count": {
+          "type": "long"
+        },
+        "total_duration_ms": {
+          "type": "float"
+        },
+        "unique_sha": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "unique_string": {
+          "norms": false,
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "keyword"
+            }
+          }
+        },
+        "unknown_message": {
+          "norms": false,
+          "type": "text"
+        },
+        "user_name": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "virtual_transaction_id": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        }
+      }
+    }
+  },
+  "aliases": {}
+}'

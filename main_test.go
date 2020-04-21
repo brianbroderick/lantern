@@ -1,16 +1,12 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
 	"time"
-
-	elastic "gopkg.in/olivere/elastic.v5"
 
 	"github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
@@ -20,18 +16,10 @@ func init() {
 	os.Setenv("PLATFORM_ENV", "test")
 }
 
-func truncateElasticSearch() {
-	for _, index := range indices() {
-		_, error := clients["bulk"].DeleteIndex(index).Do(context.Background())
-		if error != nil {
-			panic(error)
-		}
-	}
-}
-
 // TestFlow is basically an end to end integration test
 func TestFlow(t *testing.T) {
 	initialSetup()
+	SetupElastic()
 	truncateElasticSearch()
 
 	conn := pool.Get()
@@ -45,7 +33,7 @@ func TestFlow(t *testing.T) {
 	assert.Equal(t, int64(1), llen)
 
 	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
-	comments := []string{"/*application:Rails,controller:users,action:search,line:/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in `mon_synchronize'*/"}
+	comments := []string{"/*application:Rails,controller:users,action:search,line:/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in mon_synchronize*/"}
 	query, err := getLog(redisKey())
 	assert.NoError(t, err)
 	assert.Equal(t, message, query.message)
@@ -79,397 +67,11 @@ func TestFlow(t *testing.T) {
 	if err != nil {
 		logit.Error("Error flushing messages: %e", err.Error())
 	}
-	totalDuration := getRecord(t, 1000)
+
+	totalDuration := getRecord(t, 1000, "execute_user")
 	assert.Equal(t, 0.102, totalDuration)
 
 	conn.Do("DEL", redisKey())
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestElixirFlow(t *testing.T) {
-	initialSetup()
-	truncateElasticSearch()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("elixir.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	llen, err := conn.Do("LLEN", redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, int64(1), llen)
-
-	message := "duration: 17.646 ms execute N/A: INSERT INTO \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") VALUES ($1,$2,$3,$4) RETURNING \"id\""
-	comments := []string(nil)
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, message, query.message)
-	assert.Equal(t, comments, query.comments)
-
-	assert.Equal(t, 17.646, query.totalDuration)
-	assert.Equal(t, "execute", query.preparedStep)
-	assert.Equal(t, "N/A", query.prepared)
-	assert.Equal(t, "INSERT INTO \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") VALUES ($1,$2,$3,$4) RETURNING \"id\"", query.query)
-
-	pgQuery := "insert into \"raw\".\"raw_events\" (\"data\",\"published_at\",\"inserted_at\",\"updated_at\") values ($1,$2,$3,$4) returning \"id\""
-	assert.Equal(t, pgQuery, query.uniqueStr)
-
-	assert.Equal(t, 0, len(batchMap))
-	_, ok := batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
-	assert.False(t, ok)
-	addToQueries(mockCurrentMinute(), query)
-	assert.Equal(t, 1, len(batchMap))
-	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
-
-	addToQueries(mockCurrentMinute(), query)
-	_, ok = batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
-	assert.True(t, ok)
-	assert.Equal(t, 1, len(batchMap))
-	assert.Equal(t, int32(2), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
-
-	iterOverQueries()
-	assert.Equal(t, 0, len(batchMap))
-
-	err = bulkProc["bulk"].Flush()
-	if err != nil {
-		logit.Error("Error flushing messages: %e", err.Error())
-	}
-
-	totalDuration := getRecord(t, 1000)
-	assert.Equal(t, 35.292, totalDuration)
-
-	conn.Do("DEL", redisKey())
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-// func TestESArrays(t *testing.T) {
-// 	initialSetup()
-// 	truncateElasticSearch()
-
-// 	conn := pool.Get()
-// 	defer conn.Close()
-
-// 	// This payload is sending a blank array in the "detail" key. ES doesn't like that.
-// 	sample := readPayload("bad_array.json")
-// 	conn.Do("LPUSH", redisKey(), sample)
-
-// 	llen, err := conn.Do("LLEN", redisKey())
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, int64(1), llen)
-
-// 	query, err := getLog(redisKey())
-// 	addToQueries(mockCurrentMinute(), query)
-
-// 	iterOverQueries()
-// 	assert.Equal(t, 0, len(batchMap))
-
-// 	err = bulkProc["bulk"].Flush()
-// 	if err != nil {
-// 		logit.Error("Error flushing messages: %e", err.Error())
-// 	}
-
-// 	// There is no record, on ES because an array of different types can not be published
-// 	// to elastic search. We need to log out these failed publish attempts.
-// 	//getRecord(t,1000 )
-
-// 	// We should see logs from the afterBulkCommit function
-
-// 	conn.Do("DEL", redisKey())
-// 	defer bulkProc["bulk"].Close()
-// 	defer clients["bulk"].Stop()
-// }
-
-// func TestBadPayload(t *testing.T) {
-// 	initialSetup()
-// 	truncateElasticSearch()
-
-// 	conn := pool.Get()
-// 	defer conn.Close()
-
-// 	// This payload is sending a blank array in the "detail" key. ES doesn't like that.
-// 	sample := readPayload("bad_payload.json")
-// 	conn.Do("LPUSH", redisKey(), sample)
-
-// 	llen, err := conn.Do("LLEN", redisKey())
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, int64(1), llen)
-
-// 	query, err := getLog(redisKey())
-// 	addToQueries(mockCurrentMinute(), query)
-
-// 	iterOverQueries()
-// 	assert.Equal(t, 0, len(batchMap))
-
-// 	err = bulkProc["bulk"].Flush()
-// 	if err != nil {
-// 		logit.Error("Error flushing messages: %e", err.Error())
-// 	}
-
-// 	// There is no record, on ES because an array of different types can not be published
-// 	// to elastic search. We need to log out these failed publish attempts.
-// 	//getRecord(t,1000 )
-
-// 	// We should see logs from the afterBulkCommit function
-
-// 	conn.Do("DEL", redisKey())
-// 	defer bulkProc["bulk"].Close()
-// 	defer clients["bulk"].Stop()
-// }
-
-func TestFlowWithoutComment(t *testing.T) {
-	initialSetup()
-	truncateElasticSearch()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("execute_without_comment.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	llen, err := conn.Do("LLEN", redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, int64(1), llen)
-
-	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
-	comments := []string(nil)
-	query, err := getLog(redisKey())
-
-	assert.NoError(t, err)
-	assert.Equal(t, message, query.message)
-	assert.Equal(t, comments, query.comments)
-}
-
-func TestTempTable(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("temp_table.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	message := "temporary file: path \"base/pgsql_tmp/pgsql_tmp73093.7\", size 2576060"
-	grokQuery := "SELECT DISTINCT \"users\".* FROM \"users\" LEFT JOIN location_users ON location_users.employee_id = users.id WHERE \"users\".\"active\" = 't' AND (location_users.location_id = 17511 OR (users.organization_id = 7528 AND users.role = 'Client'))"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, message, query.message)
-	assert.Equal(t, grokQuery, query.query)
-	assert.Equal(t, int64(2576060), query.tempTable)
-
-	conn.Do("DEL", redisKey())
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestUpdateWaiting(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("update_waiting.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "process 11451 acquired ExclusiveLock on page 0 of relation 519373 of database 267504 after 1634.121 ms"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	message := "update \"review_invitations\" set \"mms_url\" = $1, \"sms_text\" = $2, \"message_sid\" = $3, \"updated_at\" = $4 where \"review_invitations\".\"id\" = $5"
-	assert.Equal(t, message, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestFatal(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("fatal.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "some fatal error"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	message := "1234"
-	assert.Equal(t, message, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestConnReceived(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("connection_received.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "connection received: host=10.0.1.168 port=38634"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "connection_received"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestDisconnection(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("disconnection.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "disconnection: session time: 0:00:00.074 user=q55cd17435 database= host=10.0.1.168 port=56544"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "disconnection"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestConnRepl(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("repl_connection.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "replication connection authorized: user=q55cd17435 SSL enabled (protocol=TLSv1.2, cipher=ECDHE-RSA-AES256-GCM-SHA384, compression=off)"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "connection_replication"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestCheckpointStarting(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("checkpoint_starting.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "checkpoint starting: time"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "checkpoint_starting"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestCheckpointComplete(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("checkpoint_complete.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "checkpoint complete: time"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "checkpoint_complete"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestVacuum(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("vacuum.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "automatic vacuum of table \"app.public.api_clients\": blah blah"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "vacuum_table app.public.api_clients"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestAnalyze(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("analyze.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "automatic analyze of table \"app.public.api_clients\": system usage: CPU 0.00s/0.02u sec elapsed 0.15 sec"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "analyze_table app.public.api_clients"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
-
-func TestConnectionReset(t *testing.T) {
-	initialSetup()
-
-	conn := pool.Get()
-	defer conn.Close()
-
-	sample := readPayload("connection_reset.json")
-	conn.Do("LPUSH", redisKey(), sample)
-
-	notes := "could not receive data from client: Connection reset by peer"
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, notes, query.notes)
-
-	uniqueStr := "connection_reset"
-	assert.Equal(t, uniqueStr, query.uniqueStr)
-
 	defer bulkProc["bulk"].Close()
 	defer clients["bulk"].Stop()
 }
@@ -497,95 +99,6 @@ func mockCurrentMinute() time.Time {
 	return d.UTC().Round(time.Minute)
 }
 
-func getRecord(t *testing.T, wait time.Duration) float64 {
-	termQuery := elastic.NewTermQuery("user_name", "new_samplepayload")
-	result, err := clients["bulk"].Search().
-		Index(indexName()).
-		Type("pglog").
-		Query(termQuery).
-		From(0).Size(1).
-		Do(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	if result.Hits.TotalHits > 0 {
-		fmt.Printf("Found a total of %d record(s)\n", result.Hits.TotalHits)
-
-		for _, hit := range result.Hits.Hits {
-			// hit.Index contains the name of the index
-
-			var data map[string]*json.RawMessage
-			if err := json.Unmarshal(*hit.Source, &data); err != nil {
-				logit.Error("Error unmarshalling data: %e", err.Error())
-			}
-
-			var totalDuration float64
-			if source, pres := data["total_duration_ms"]; pres {
-				if err := json.Unmarshal(*source, &totalDuration); err != nil {
-					logit.Error("Error unmarshalling totalDuration: %e", err.Error())
-				}
-			}
-
-			fmt.Printf("First record found has a total duration of %f\n", totalDuration)
-			return totalDuration
-		}
-	} else {
-		// No hits
-		fmt.Printf("Found no records, waiting %d ms...\n", wait)
-		time.Sleep(wait * time.Millisecond)
-		if wait+wait > 4000 {
-			t.Fatalf("Max timeout while attmpting to get elastic search results.")
-		}
-		return getRecord(t, wait+wait)
-	}
-	return -1.0
-}
-
-func getRecordWithTempTable() int64 {
-	fmt.Println("getRecordWithTempTable")
-
-	termQuery := elastic.NewTermQuery("user_name", "temp_table")
-	result, err := clients["bulk"].Search().
-		Index(indexName()).
-		Type("pglog").
-		Query(termQuery).
-		From(0).Size(1).
-		Do(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	if result.Hits.TotalHits > 0 {
-		fmt.Printf("Found a total of %d record(s)\n", result.Hits.TotalHits)
-
-		for _, hit := range result.Hits.Hits {
-			// hit.Index contains the name of the index
-
-			var data map[string]*json.RawMessage
-			if err := json.Unmarshal(*hit.Source, &data); err != nil {
-				logit.Error("Error unmarshalling data: %e", err.Error())
-			}
-
-			var tempTable int64
-			if source, pres := data["temp_table_size"]; pres {
-				if err := json.Unmarshal(*source, &tempTable); err != nil {
-					logit.Error("Error unmarshalling tempTable: %e", err.Error())
-				}
-			}
-
-			fmt.Printf("First record found has a total temp table size of %d\n", tempTable)
-			return tempTable
-		}
-	} else {
-		// No hits
-		fmt.Print("Found no records, waiting 500ms...\n")
-		time.Sleep(500 * time.Millisecond)
-		return getRecordWithTempTable()
-	}
-	return -1
-}
-
 func TestPopulateRedisQueues(t *testing.T) {
 	populateRedisQueues("test")
 	expected := []string{"test"}
@@ -601,25 +114,26 @@ func TestPopulateRedisQueues(t *testing.T) {
 }
 
 func TestParseTime(t *testing.T) {
-	tempTime := "2017-10-16T15:50:35.840+0000"
+	tempTime := "2014-10-16T15:50:35.840+0000"
 	parsedTime, err := time.Parse(longForm, tempTime)
 	if err != nil {
 		fmt.Printf("%e \n\n", err)
 	}
-	expected := "2017-10-16 15:50:35.84 +0000 UTC"
+	expected := "2014-10-16 15:50:35.84 +0000 UTC"
 	actual := fmt.Sprint(parsedTime)
 	assert.Equal(t, expected, actual)
 }
 
 func TestRoundToMinute(t *testing.T) {
-	tempTime := "2017-10-16T15:50:15.840+0000"
+	tempTime := "2011-10-16T15:50:15.840+0000"
 	parsedTime, err := time.Parse(longForm, tempTime)
 	if err != nil {
 		fmt.Printf("%e \n\n", err)
 	}
 
 	rounded := roundToMinute(parsedTime)
-	fmt.Printf("%v", rounded)
+	expected := "2011-10-16 15:50:00 +0000 UTC"
+	assert.Equal(t, expected, rounded.String())
 }
 
 func TestFindAllStringSubmatch(t *testing.T) {
@@ -627,16 +141,5 @@ func TestFindAllStringSubmatch(t *testing.T) {
 	r := regexp.MustCompile(`(/\*.*?:.*?\*/)`)
 	match := r.FindAllStringSubmatch(str, -1)
 
-	fmt.Printf("%d \n", len(match))
-
+	assert.Equal(t, 0, len(match))
 }
-
-// func TestDayOfWeek(t *testing.T) {
-// 	weekday := time.Now().Weekday()
-// 	fmt.Println(weekday)      // "Tuesday"
-// 	fmt.Println(int(weekday)) // "2"
-// }
-
-// h := sha1.New()
-// 	io.WriteString(h, comment)
-// 	mapSha = hex.EncodeToString(h.Sum(nil))
