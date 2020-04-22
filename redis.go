@@ -160,6 +160,15 @@ func getMultiLog(redisKey string) (bool, int64, int64, error) {
 	return false, 0, queueLength, nil
 }
 
+//SetupRedis setup redis
+func SetupRedis() {
+	if os.Getenv("PLATFORM_ENV") != "test" {
+		logit.Info("Redis URL: %s\n", redisURL())
+	}
+	pool = newPool(redisURL())
+	redisPassword = redisPW()
+}
+
 func redisURL() string {
 	// If flag is set, use that.
 	if redisPtr != "" {
@@ -171,15 +180,6 @@ func redisURL() string {
 	}
 	// Lastly return default
 	return "127.0.0.1:6379"
-}
-
-//SetupRedis setup redis
-func SetupRedis() {
-	if os.Getenv("PLATFORM_ENV") != "test" {
-		logit.Info("Redis URL: %s\n", redisURL())
-	}
-	pool = newPool(redisURL())
-	redisPassword = redisPW()
 }
 
 func redisPW() string {
