@@ -29,6 +29,8 @@ var (
 	mutex       = &sync.Mutex{}
 	redisQueues = make([]string, 0)
 	queuePtr    string
+	redisPtr    string
+	redisPwPtr  string
 
 	blue    = color.New(color.FgBlue).SprintFunc()
 	cyan    = color.New(color.FgCyan).SprintFunc()
@@ -47,7 +49,10 @@ var (
 )
 
 func main() {
-	flag.StringVar(&queuePtr, "queues", "", "comma separated list of queues that overrides env vars")
+	flag.StringVar(&queuePtr, "queues", "postgres", "comma separated list of queues that overrides env vars. Can also be set via PLS_REDIS_QUEUES env var")
+	flag.StringVar(&redisPtr, "redisUrl", "127.0.0.1:6379", "Redis URL. Can also set via PLS_REDIS_URL env var")
+	flag.StringVar(&redisPwPtr, "redisPassword", "", "Redis password (optional). Can also set via PLS_REDIS_PASSWORD env var")
+
 	flag.Parse()
 
 	initialSetup()
