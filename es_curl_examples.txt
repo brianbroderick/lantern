@@ -26,6 +26,7 @@ curl -X GET "localhost:9200/pg*/_count"
 # Get index & templates
 curl -X GET "localhost:9200/_cat/indices?pretty"
 curl -X GET "localhost:9200/_cat/templates?pretty"
+curl -X GET "localhost:9200/_template/pglog"
 
 # Delete index & templates
 curl -X DELETE "localhost:9200/pg-*?pretty"
