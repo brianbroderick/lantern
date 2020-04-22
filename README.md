@@ -2,7 +2,7 @@
 
 ## Shipping Postgres query logs to Elasticsearch for near realtime query analysis.
 
-![Lantern](https://github.com/brianbroderick/lantern/blob/master/assets/images/lantern.jpg)
+![Lantern](https://user-images.githubusercontent.com/7585181/80007270-43b8fb00-8483-11ea-996f-275529aa3863.png)
 
 This reads Postgres logs from Redis, normalizes the query, and then pushes it into Elasticsearch.
 
@@ -88,9 +88,9 @@ Lantern aggregates queries to a 1 minute interval. This
 
 Once the data is in Elasticsearch, you can create all the charts you'd like such as queries by total duration or total count.
 
-![Total Duration](https://github.com/brianbroderick/lantern/blob/master/assets/images/total_duration.png)
+![Total Duration](https://user-images.githubusercontent.com/7585181/80007253-3d2a8380-8483-11ea-9f77-93e2813c3b70.png)
 
-![Total Count](https://github.com/brianbroderick/lantern/blob/master/assets/images/total_count.png)
+![Total Count](https://user-images.githubusercontent.com/7585181/80007228-36037580-8483-11ea-8225-29507c9b32db.png)
 
 
 ## Authors
