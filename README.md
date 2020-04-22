@@ -41,13 +41,28 @@ redislog.hosts = 'your.redis.host'
 redislog.key = 'your-app-master'
 ```
 
-For the Lantern app, you'll need these 3 env vars set:
+For Lantern, you'll need these to either set environment variables or flags to connect to Elasticsearch and Redis.
+
+The env vars are:
 
 ```
 PLS_REDIS_URL="your.redis.host"    # Default: "127.0.0.1:6379"
 PLS_REDIS_QUEUES="your-app-master" # comma separated whitelist of redis keys being published to
 PLS_ELASTIC_URL="your.es.server"   # Default: "http://127.0.0.1:9200"
 PLS_REDIS_PASSWORD="your.password" # (Optional)
+```
+
+The flags are:
+
+```
+ -elasticUrl string
+    	Elasticsearch URL. Can also set via PLS_ELASTIC_URL env var
+  -queues string
+    	comma separated list of queues that overrides env vars. Can also be set via PLS_REDIS_QUEUES env var
+  -redisPassword string
+    	Redis password (optional). Can also set via PLS_REDIS_PASSWORD env var
+  -redisUrl string
+    	Redis URL. Can also set via PLS_REDIS_URL env var
 ```
 
 What I've done is set the Redis queue to whatever the server is. For example, we have a lot of servers based on planets, so I have them set like this saturn-master, saturn-follower, pluto-master, pluto-follower, etc.  The queue name is sent with the payload, so you can use it to filter or group your data.
