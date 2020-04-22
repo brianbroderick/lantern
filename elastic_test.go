@@ -10,7 +10,7 @@ import (
 
 	"github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
-	elastic "gopkg.in/olivere/elastic.v5"
+	elastic "gopkg.in/olivere/elastic.v6"
 )
 
 func init() {

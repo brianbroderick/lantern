@@ -10,7 +10,7 @@ import (
 	"time"
 
 	logit "github.com/brianbroderick/logit"
-	elastic "gopkg.in/olivere/elastic.v5"
+	elastic "gopkg.in/olivere/elastic.v6"
 )
 
 // SetupElastic sets up elastic conn
