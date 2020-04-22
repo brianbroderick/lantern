@@ -138,9 +138,15 @@ func indices() []string {
 }
 
 func elasticURL() string {
+	// If flag is set, use that.
+	if elasticPtr != "" {
+		return elasticPtr
+	}
+	// Next use an environment variable, if it's set
 	if value, ok := os.LookupEnv("PLS_ELASTIC_URL"); ok {
 		return value
 	}
+	// Lastly return default
 	return "http://127.0.0.1:9200"
 }
 

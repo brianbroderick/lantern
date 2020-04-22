@@ -28,10 +28,14 @@ var (
 	catIndices  = make(map[string]*elastic.CatIndicesService)
 	mutex       = &sync.Mutex{}
 	redisQueues = make([]string, 0)
-	queuePtr    string
-	redisPtr    string
-	redisPwPtr  string
 
+	// flags
+	queuePtr   string
+	redisPtr   string
+	redisPwPtr string
+	elasticPtr string
+
+	// colors for terminal
 	blue    = color.New(color.FgBlue).SprintFunc()
 	cyan    = color.New(color.FgCyan).SprintFunc()
 	green   = color.New(color.FgGreen).SprintFunc()
@@ -52,6 +56,7 @@ func main() {
 	flag.StringVar(&queuePtr, "queues", "", "comma separated list of queues that overrides env vars. Can also be set via PLS_REDIS_QUEUES env var")
 	flag.StringVar(&redisPtr, "redisUrl", "", "Redis URL. Can also set via PLS_REDIS_URL env var")
 	flag.StringVar(&redisPwPtr, "redisPassword", "", "Redis password (optional). Can also set via PLS_REDIS_PASSWORD env var")
+	flag.StringVar(&elasticPtr, "elasticUrl", "", "Elasticsearch URL. Can also set via PLS_ELASTIC_URL env var")
 
 	flag.Parse()
 
