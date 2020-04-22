@@ -59,7 +59,7 @@ func startRedisBatch(redisKey string) {
 	for {
 		ok, msgCount, queueLength, err := getMultiLog(redisKey)
 		if err != nil {
-			logit.Error(" Error in getMultiLog: %e", err.Error())
+			logit.Error("Error in getMultiLog: %e", err.Error())
 		}
 		if ok == false {
 			sleepDuration = getDuration(nap)
@@ -69,7 +69,7 @@ func startRedisBatch(redisKey string) {
 
 			// idle for 20 seconds, emit message
 			if (nap < 60 && nap-lastLog >= 30) || (nap >= 60 && nap-lastLog >= 60) {
-				logit.Info(" %s %s %s", yellow(nap), white(" seconds since received data from "), yellow(redisKey))
+				logit.Info("%s %s %s", yellow(nap), white(" seconds since received data from "), yellow(redisKey))
 				lastLog = nap
 				processedMessages = 0
 			}
@@ -81,8 +81,8 @@ func startRedisBatch(redisKey string) {
 				(processedMessages >= 1000000 && processedMessages-lastProcessed >= 100000) {
 				keyLog = colorKey(redisKey, processedMessages)
 				msgLog = colorKey(strconv.FormatInt(processedMessages, 10), processedMessages)
-				logit.Info(" %s messages processed from %s since last reset", msgLog, keyLog)
-				logit.Info(" Current queue length for %s is %s", keyLog, red(queueLength))
+				logit.Info("%s messages processed from %s since last reset", msgLog, keyLog)
+				logit.Info("Current queue length for %s is %s", keyLog, red(queueLength))
 				lastProcessed = processedMessages
 			}
 		}
@@ -146,7 +146,7 @@ func getMultiLog(redisKey string) (bool, int64, int64, error) {
 
 				query, suppressed, err := newQuery(q, redisKey)
 				if err != nil {
-					logit.Error(" Error in newQuery: %e", err.Error())
+					logit.Error("Error in newQuery: %e", err.Error())
 				} else if suppressed {
 					// no-op
 				} else {
@@ -182,12 +182,12 @@ func newPool(server string) *redis.Pool {
 		Dial: func() (redis.Conn, error) {
 			c, err := redis.Dial("tcp", server)
 			if err != nil {
-				logit.Error(" Error on connecting to Redis: %e", err.Error())
+				logit.Error("Error on connecting to Redis: %e", err.Error())
 				return nil, err
 			}
 			if redisPassword != "" {
 				if _, err = c.Do("AUTH", redisPassword); err != nil {
-					logit.Error(" Error on authenticating to Redis: %e", err.Error())
+					logit.Error("Error on authenticating to Redis: %e", err.Error())
 					return nil, err
 				}
 			}
@@ -204,12 +204,12 @@ func startRedisSingle(redisKey string) {
 	for {
 		query, err := getLog(redisKey)
 		if err != nil {
-			logit.Error(" Error getting log from Redis: %e", err.Error())
+			logit.Error("Error getting log from Redis: %e", err.Error())
 		}
 		if query != nil {
 			addToQueries(currentMinute(), query)
 		} else {
-			logit.Info(" No new queries found. Waiting 5 seconds.")
+			logit.Info("No new queries found. Waiting 5 seconds.")
 			time.Sleep((time.Second * 5))
 		}
 	}

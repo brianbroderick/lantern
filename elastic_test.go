@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	logit "github.com/brianbroderick/logit"
+	"github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
 	elastic "gopkg.in/olivere/elastic.v5"
 )
@@ -231,14 +231,14 @@ func getRecord(t *testing.T, wait time.Duration, username string) float64 {
 
 // func TestColor(t *testing.T) {
 // color.Set(color.FgYellow)
-// logit.Info(" Sent %d messages to ES Bulk Processor", 72)
+// logit.Info("Sent %d messages to ES Bulk Processor", 72)
 // color.Unset()
 
 // fmt.Printf("This is a %s and this is %s.\n", yellow("warning"), red("error"))
 
 // fmt.Printf("This is a %s and this is %s.\n", yellow("warning"), red("error"))
-// 	logit.Info(" %s messages processed from %s since last reset", yellow(2), green("blah"))
-// 	logit.Info(" Current queue length for %s is %s", green("blah"), red(6))
+// 	logit.Info("%s messages processed from %s since last reset", yellow(2), green("blah"))
+// 	logit.Info("Current queue length for %s is %s", green("blah"), red(6))
 // }
 
 func getRecordWithTempTable() int64 {

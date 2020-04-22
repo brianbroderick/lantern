@@ -681,7 +681,7 @@ func iterOverQueries() {
 			batchMap[k].marshalAgg()
 			data, err := json.Marshal(batchMap[k].data)
 			if err != nil {
-				logit.Error(" Error marshalling data: %e", err.Error())
+				logit.Error("Error marshalling data: %e", err.Error())
 			}
 
 			sendToBulker(data)
@@ -691,7 +691,7 @@ func iterOverQueries() {
 	mutex.Unlock()
 	if count > 0 {
 		color.Set(color.FgCyan)
-		logit.Info(" Sent %d messages to ES Bulk Processor", count)
+		logit.Info("Sent %d messages to ES Bulk Processor", count)
 		color.Unset()
 	}
 }

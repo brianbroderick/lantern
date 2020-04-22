@@ -72,16 +72,16 @@ func logErrorDetails(executionId int64, took int, items []map[string]*elastic.Bu
 	for _, item := range items {
 		for _, itemResponse := range item {
 			if itemResponse.Error != nil {
-				logit.Error("logErrorDetails:2 executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
-				logit.Error("logErrorDetails:3 executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
+				logit.Error("logErrorDetails executionId: %d, itemResponse: %+v\n", executionId, itemResponse)
+				logit.Error("logErrorDetails executionId: %d, itemResponse.Error: %+v\n", executionId, itemResponse.Error)
 			}
 		}
 	}
-	for _, request := range requests {
-		if executionId == 1 {
-			logit.Info("logErrorDetails:4 executionId: %d, request: %+v\n---\n", executionId, request)
-		}
-	}
+	// This prints all the requests in the batch. I haven't figured out how to tie this back to the actual errors.
+	// This isn't super helpful when most of the queries work. Uncomment out if needed.
+	// for _, request := range requests {
+	// 	logit.Info("logErrorDetails executionId: %d, request: %+v\n---\n", executionId, request)
+	// }
 }
 
 func sendToBulker(message []byte) {
