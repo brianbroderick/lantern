@@ -409,7 +409,14 @@ func parseMessage(q *query) error {
 				return err
 			}
 
-			q.uniqueStr = string(pgQuery)
+			// ES Keyword fields can have a max length of 32766 characters.
+			// The unique_string field is also saved as unique_string.raw, which is a
+			// keyword type.
+			pq := string(pgQuery)
+			if len(pq) > 32760 {
+				pq = pq[:32760]
+			}
+			q.uniqueStr = pq
 		}
 
 		if result["logType"] != "" {

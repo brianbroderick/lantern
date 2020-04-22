@@ -40,9 +40,11 @@
           "type": "float"
         },
         "code_module": {
+          "ignore_above": 1024,
           "type": "keyword"
         },
         "code_repo": {
+          "ignore_above": 1024,
           "type": "keyword"
         },
         "code_source": {
@@ -112,6 +114,7 @@
           "type": "keyword"
         },
         "remote_host": {
+          "ignore_above": 1024,
           "type": "keyword"
         },
         "session_id": {
