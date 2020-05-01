@@ -92,6 +92,12 @@ Once the data is in Elasticsearch, you can create all the charts you'd like such
 
 ![Total Count](https://user-images.githubusercontent.com/7585181/80007228-36037580-8483-11ea-8225-29507c9b32db.png)
 
+## Kubernetes
+
+If you deploy this in K8s and are using 1 core or less, consider setting GOMAXPROCS to a low number like 1 or 2. 
+If it's set too high, K8s throttles the process when it exceeds the CPU you've allotted it. This can cause 100ms pauses, which will significantly slow down the worker.
+
+To set GOMAXPROCS, you simply need to set it as an environment variable.
 
 ## Authors
 
