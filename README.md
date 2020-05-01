@@ -69,13 +69,15 @@ What I've done is set the Redis queue to whatever the server is. For example, we
 
 ## 1 minute grain
 
-Lantern aggregates queries to a 1 minute interval. This
+Lantern aggregates normalized queries to a 1 minute interval. This
 
 * Limits ES' storage requirements
 * Speeds up ES' queries
 
 * Only the first params are stored per query, per minute
 * Up to 2 minute latency
+
+In this context, a normalized query means that it converts `SELECT * FROM table WHERE id = 42;` to `SELECT * FROM table WHERE id = ?;` All string and number variables are converted to a question mark. It then hashes the text and uses that to determine uniqueness. 
 
 ## Local Dependencies
 * `docker-compose up -d`
@@ -98,6 +100,26 @@ If you deploy this in K8s and are using 1 core or less, consider setting GOMAXPR
 If it's set too high, K8s throttles the process when it exceeds the CPU you've allotted it. This can cause 100ms pauses, which will significantly slow down the worker.
 
 To set GOMAXPROCS, you simply need to set it as an environment variable.
+
+## Benchmark
+
+On an AWS C5.large, which has 2 virtual cores and 4GB of memory, it's able to process a little more than 10k queries per second. The process is CPU intensive and uses minimal memory, so the compute optimized servers are the best.
+
+## Scaling Caveats
+
+Each Redis key you're consuming from the environment variable PLS_REDIS_QUEUES spawns a separate Goroutine, which are light weight threads. For this reason, you'll get the most performance if you're consuming from more than 1 key per worker. 
+
+It's good practice to use a different key per PG server. For example `my-application-prod` and `my-application-follower-1`.  
+
+Workers don't know of the existence of other workers. Therefore, if multiple workers consume from the same Redis key, it will result in additional storage requirements on your Elasticsearch cluster. This is because each worker will insert a document for each normalized query it's exposed to, even if another worker is inserting data for the same normalized query.
+
+All of the stats will still be correct because `total_count`, and `total_duration` are calculated based on the queries that particular worker consumed assuming your Kibana graphs are calculating the sum. 
+
+The `avg_duration` key will be problematic if you're consuming the same key from multiple workers. This is because one worker will have consumed a larger percentage of a particular query. You _could_ do an average of this key, but that would give both messages equal weight, which wouldn't be true. In this case, it would be more accurate to do a calculated field in ES with the formula: `total_duration / total_count`. 
+
+To optimize for performance, have enough workers that each one can consume 2 or more different keys, and don't share keys across workers. 
+
+To optimize for uptime, you can duplicate keys across workers; however, as noted, this will increase the storage requirements on your ES cluster. 
 
 ## Authors
 
