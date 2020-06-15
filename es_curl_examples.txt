@@ -117,9 +117,11 @@ curl -X PUT "localhost:9200/_template/pglog" -H 'Content-Type: application/json'
           "type": "float"
         },
         "code_module": {
+          "ignore_above": 1024,
           "type": "keyword"
         },
         "code_repo": {
+          "ignore_above": 1024,
           "type": "keyword"
         },
         "code_source": {
@@ -133,6 +135,10 @@ curl -X PUT "localhost:9200/_template/pglog" -H 'Content-Type: application/json'
           "ignore_above": 1024,
           "type": "keyword"
         },
+        "database_host": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
         "database_name": {
           "ignore_above": 1024,
           "type": "keyword"
@@ -142,6 +148,10 @@ curl -X PUT "localhost:9200/_template/pglog" -H 'Content-Type: application/json'
           "type": "text"
         },
         "error_severity": {
+          "ignore_above": 1024,
+          "type": "keyword"
+        },
+        "library_version": {
           "ignore_above": 1024,
           "type": "keyword"
         },
@@ -189,6 +199,7 @@ curl -X PUT "localhost:9200/_template/pglog" -H 'Content-Type: application/json'
           "type": "keyword"
         },
         "remote_host": {
+          "ignore_above": 1024,
           "type": "keyword"
         },
         "session_id": {
