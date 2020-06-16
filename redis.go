@@ -166,7 +166,7 @@ func getMultiLog(redisKey string, task string) (bool, int64, int64, error) {
 							logit.Error("Error marshalling data: %e", err.Error())
 						}
 
-						sendToBulker(data)
+						sendToStatsBulker(data)
 					}
 				}
 			}

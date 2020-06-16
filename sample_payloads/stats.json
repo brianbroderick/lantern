@@ -1,8 +1,8 @@
 {
   "@timestamp": "2020-06-12T15:52:55.793192Z",
-  "application_name": "my_app",
-  "failed_events": 1,
-  "ignored_events": 0,
+  "application_name": "myapp",
+  "failed_events": 42,
+  "ignored_events": 19,
   "interval": 60000,
   "interval_unit": "ms",
   "library_version": "client_lib:1.0.0"

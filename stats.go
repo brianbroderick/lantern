@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
 	"time"
 
 	logit "github.com/brianbroderick/logit"
+	elastic "gopkg.in/olivere/elastic.v6"
 )
 
 // This doesn't come from PG's Redislog. It's meant to come from a non-PG source such as an application
@@ -76,4 +79,21 @@ func uniqueStatsQueues() {
 		}
 	}
 	statsQueues = list
+}
+
+func sendToStatsBulker(message []byte) {
+	fmt.Println("sendToStatsBulker")
+	request := elastic.NewBulkIndexRequest().
+		Index(statsIndexName()).
+		Type("pgstats").
+		Doc(string(message))
+	bulkProc["bulk"].Add(request)
+}
+
+func statsIndexName() string {
+	currentDate := time.Now().Local()
+	var buffer bytes.Buffer
+	buffer.WriteString("pgstats-")
+	buffer.WriteString(currentDate.Format("2006-01-02"))
+	return buffer.String()
 }
