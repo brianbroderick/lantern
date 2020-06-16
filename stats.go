@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	logit "github.com/brianbroderick/logit"
+	"github.com/garyburd/redigo/redis"
 	elastic "gopkg.in/olivere/elastic.v6"
 )
 
@@ -82,12 +84,24 @@ func uniqueStatsQueues() {
 }
 
 func sendToStatsBulker(message []byte) {
-	fmt.Println("sendToStatsBulker")
+	logit.Info("sendToStatsBulker")
 	request := elastic.NewBulkIndexRequest().
 		Index(statsIndexName()).
 		Type("pgstats").
 		Doc(string(message))
 	bulkProc["bulk"].Add(request)
+}
+
+func saveToStatsElastic(message []byte) {
+	toEs, err := clients["bulk"].Index().
+		Index(statsIndexName()).
+		Type("pgstats").
+		BodyString(string(message)).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v", toEs)
 }
 
 func statsIndexName() string {
@@ -96,4 +110,30 @@ func statsIndexName() string {
 	buffer.WriteString("pgstats-")
 	buffer.WriteString(currentDate.Format("2006-01-02"))
 	return buffer.String()
+}
+
+func getStat(redisKey string) (*stats, error) {
+	var data json.RawMessage
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	reply, err := conn.Do("LPOP", redisKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if reply != nil {
+		data, err = redis.Bytes(reply, err)
+		if err != nil {
+			return nil, err
+		}
+
+		s, err := newStats(data, redisKey)
+		if err != nil {
+			return nil, err
+		}
+		return s, nil
+	}
+	return nil, nil
 }

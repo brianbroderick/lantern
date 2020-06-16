@@ -9,6 +9,7 @@ import (
 	"time"
 
 	logit "github.com/brianbroderick/logit"
+	"github.com/stretchr/testify/assert"
 	elastic "gopkg.in/olivere/elastic.v6"
 )
 
@@ -17,36 +18,42 @@ func init() {
 }
 
 // TestStats is basically an end to end integration test for a stats key
-// func TestStats(t *testing.T) {
-// 	fmt.Println("TestStats")
-// 	initialSetup()
-// 	SetupElastic()
-// 	truncateElasticSearch()
+func TestStats(t *testing.T) {
+	initialSetup()
+	SetupElastic()
+	truncateElasticSearch()
 
-// 	conn := pool.Get()
-// 	defer conn.Close()
+	conn := pool.Get()
+	defer conn.Close()
 
-// 	key := "stats"
+	key := "stats"
 
-// 	sample := readPayload("stats.json")
-// 	conn.Do("LPUSH", key, sample)
+	sample := readPayload("stats.json")
+	conn.Do("LPUSH", key, sample)
 
-// 	llen, err := conn.Do("LLEN", key)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, int64(1), llen)
+	llen, err := conn.Do("LLEN", key)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
 
-// 	err = bulkProc["bulk"].Flush()
-// 	if err != nil {
-// 		logit.Error("Error flushing messages: %e", err.Error())
-// 	}
+	stats, err := getStat(key)
+	assert.NoError(t, err)
 
-// 	totalDuration := getStatsRecord(t, 1000, "myapp")
-// 	assert.Equal(t, 0.102, totalDuration)
+	data, err := json.Marshal(stats.data)
+	assert.NoError(t, err)
 
-// 	conn.Do("DEL", key)
-// 	defer bulkProc["bulk"].Close()
-// 	defer clients["bulk"].Stop()
-// }
+	// saveToStatsElastic(data)
+	sendToStatsBulker(data)
+
+	err = bulkProc["bulk"].Flush()
+	if err != nil {
+		logit.Error("Error flushing messages: %e", err.Error())
+	}
+
+	failedEvents := getStatsRecord(t, 1000, "myapp")
+	assert.Equal(t, int64(42), failedEvents)
+
+	conn.Do("DEL", key)
+}
 
 func getStatsRecord(t *testing.T, wait time.Duration, app string) int64 {
 	// fmt.Printf("getR: %s \n", indexName())

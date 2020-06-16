@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	logit "github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,68 +16,68 @@ func init() {
 }
 
 // TestFlow is basically an end to end integration test
-func TestFlow(t *testing.T) {
-	initialSetup()
-	SetupElastic()
-	truncateElasticSearch()
+// func TestFlow(t *testing.T) {
+// 	initialSetup()
+// 	SetupElastic()
+// 	truncateElasticSearch()
 
-	conn := pool.Get()
-	defer conn.Close()
+// 	conn := pool.Get()
+// 	defer conn.Close()
 
-	// Test if code_source is nested
-	bp := readPayload("nested_payload.json")
-	conn.Do("LPUSH", redisKey(), bp)
+// 	// Test if code_source is nested
+// 	bp := readPayload("nested_payload.json")
+// 	conn.Do("LPUSH", redisKey(), bp)
 
-	sample := readPayload("execute.json")
-	conn.Do("LPUSH", redisKey(), sample)
+// 	sample := readPayload("execute.json")
+// 	conn.Do("LPUSH", redisKey(), sample)
 
-	llen, err := conn.Do("LLEN", redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, int64(2), llen)
+// 	llen, err := conn.Do("LLEN", redisKey())
+// 	assert.NoError(t, err)
+// 	assert.Equal(t, int64(2), llen)
 
-	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
-	comments := []string{"/*application:Rails,controller:users,action:search,line:/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in mon_synchronize*/"}
-	query, err := getLog(redisKey())
-	assert.NoError(t, err)
-	assert.Equal(t, message, query.message)
-	assert.Equal(t, comments, query.comments)
+// 	message := "duration: 0.051 ms  execute <unnamed>: select * from servers where id IN ('1', '2', '3') and name = 'localhost'"
+// 	comments := []string{"/*application:Rails,controller:users,action:search,line:/usr/local/rvm/rubies/ruby-2.3.7/lib/ruby/2.3.0/monitor.rb:214:in mon_synchronize*/"}
+// 	query, err := getLog(redisKey())
+// 	assert.NoError(t, err)
+// 	assert.Equal(t, message, query.message)
+// 	assert.Equal(t, comments, query.comments)
 
-	assert.Equal(t, 0.051, query.totalDuration)
-	assert.Equal(t, "execute", query.preparedStep)
-	assert.Equal(t, "<unnamed>", query.prepared)
-	assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
+// 	assert.Equal(t, 0.051, query.totalDuration)
+// 	assert.Equal(t, "execute", query.preparedStep)
+// 	assert.Equal(t, "<unnamed>", query.prepared)
+// 	assert.Equal(t, "select * from servers where id IN ('1', '2', '3') and name = 'localhost'", query.query)
 
-	pgQuery := "select * from servers where id in ($1, $2, $3) and name = $4"
-	assert.Equal(t, pgQuery, query.uniqueStr)
+// 	pgQuery := "select * from servers where id in ($1, $2, $3) and name = $4"
+// 	assert.Equal(t, pgQuery, query.uniqueStr)
 
-	assert.Equal(t, 0, len(batchMap))
-	_, ok := batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
-	assert.False(t, ok)
-	addToQueries(mockCurrentMinute(), query)
-	assert.Equal(t, 1, len(batchMap))
-	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
+// 	assert.Equal(t, 0, len(batchMap))
+// 	_, ok := batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
+// 	assert.False(t, ok)
+// 	addToQueries(mockCurrentMinute(), query)
+// 	assert.Equal(t, 1, len(batchMap))
+// 	assert.Equal(t, int32(1), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
 
-	addToQueries(mockCurrentMinute(), query)
-	_, ok = batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
-	assert.True(t, ok)
-	assert.Equal(t, 1, len(batchMap))
-	assert.Equal(t, int32(2), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
+// 	addToQueries(mockCurrentMinute(), query)
+// 	_, ok = batchMap[batch{mockCurrentMinute(), query.uniqueSha}]
+// 	assert.True(t, ok)
+// 	assert.Equal(t, 1, len(batchMap))
+// 	assert.Equal(t, int32(2), batchMap[batch{mockCurrentMinute(), query.uniqueSha}].totalCount)
 
-	iterOverQueries()
-	assert.Equal(t, 0, len(batchMap))
+// 	iterOverQueries()
+// 	assert.Equal(t, 0, len(batchMap))
 
-	err = bulkProc["bulk"].Flush()
-	if err != nil {
-		logit.Error("Error flushing messages: %e", err.Error())
-	}
+// 	err = bulkProc["bulk"].Flush()
+// 	if err != nil {
+// 		logit.Error("Error flushing messages: %e", err.Error())
+// 	}
 
-	totalDuration := getRecord(t, 1000, "execute_user")
-	assert.Equal(t, 0.102, totalDuration)
+// totalDuration := getRecord(t, 1000, "execute_user")
+// 	assert.Equal(t, 0.102, totalDuration)
 
-	conn.Do("DEL", redisKey())
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
-}
+// 	conn.Do("DEL", redisKey())
+// 	defer bulkProc["bulk"].Close()
+// 	defer clients["bulk"].Stop()
+// }
 
 func readPayload(filename string) []byte {
 	dat, err := ioutil.ReadFile("./sample_payloads/" + filename)
