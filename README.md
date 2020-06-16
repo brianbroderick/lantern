@@ -83,8 +83,14 @@ In this context, a normalized query means that it converts `SELECT * FROM table 
 * `docker-compose up -d`
 
 ## Testing
-`curl http://localhost:9200/pg-$(date +"%Y-%m-%d")/_search # search elasticsearch`
-`curl -XDELETE localhost:9200/pg-$(date +"%Y-%m-%d") # delete data in elasticsearch`
+
+```
+# search elasticsearch
+curl http://localhost:9200/pg-$(date +"%Y-%m-%d")/_search 
+
+# delete data in elasticsearch
+curl -XDELETE localhost:9200/pg-$(date +"%Y-%m-%d") 
+```
 
 ## Kibana
 

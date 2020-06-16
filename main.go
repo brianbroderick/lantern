@@ -22,15 +22,18 @@ type batch struct {
 }
 
 var (
+	// batchStats  = make([]*stats, 0)
 	batchMap    = make(map[batch]*query)
 	clients     = make(map[string]*elastic.Client)
 	bulkProc    = make(map[string]*elastic.BulkProcessor)
 	catIndices  = make(map[string]*elastic.CatIndicesService)
 	mutex       = &sync.Mutex{}
 	redisQueues = make([]string, 0)
+	statsQueues = make([]string, 0)
 
 	// flags
 	queuePtr   string
+	statsPtr   string
 	redisPtr   string
 	redisPwPtr string
 	elasticPtr string
@@ -54,6 +57,7 @@ var (
 
 func main() {
 	flag.StringVar(&queuePtr, "queues", "", "comma separated list of queues that overrides env vars. Can also be set via PLS_REDIS_QUEUES env var")
+	flag.StringVar(&statsPtr, "statsQueues", "", "comma separated list of queues for statistics that overrides env vars. Can also be set via PLS_REDIS_STATS_QUEUES env var")
 	flag.StringVar(&redisPtr, "redisUrl", "", "Redis URL. Can also set via PLS_REDIS_URL env var")
 	flag.StringVar(&redisPwPtr, "redisPassword", "", "Redis password (optional). Can also set via PLS_REDIS_PASSWORD env var")
 	flag.StringVar(&elasticPtr, "elasticUrl", "", "Elasticsearch URL. Can also set via PLS_ELASTIC_URL env var")
@@ -74,7 +78,11 @@ func main() {
 	}()
 
 	for _, queue := range redisQueues {
-		go startRedisBatch(queue)
+		go startRedisBatch(queue, "query")
+		time.Sleep(30 * time.Millisecond) // stagger threads hitting Redis
+	}
+	for _, queue := range statsQueues {
+		go startRedisBatch(queue, "stats")
 		time.Sleep(30 * time.Millisecond) // stagger threads hitting Redis
 	}
 
@@ -85,6 +93,7 @@ func main() {
 func initialSetup() {
 	setupEnv()
 	populateRedisQueues(os.Getenv("PLS_REDIS_QUEUES"))
+	populateStatsQueues(os.Getenv("PLS_REDIS_STATS_QUEUES"))
 	SetupRedis()
 }
 
@@ -109,8 +118,8 @@ func setupEnv() {
 
 func populateRedisQueues(queues string) {
 	// Override with a flag, if exists
-	if queuePtr != "" {
-		queues = queuePtr
+	if statsPtr != "" {
+		queues = statsPtr
 	}
 	if queues == "" {
 		redisQueues = append(redisQueues, "postgres")
