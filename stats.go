@@ -51,8 +51,8 @@ func newStats(b []byte, redisKey string) (*stats, error) {
 
 func populateStatsQueues(queues string) {
 	// Override with a flag, if exists
-	if queuePtr != "" {
-		queues = queuePtr
+	if statsPtr != "" {
+		queues = statsPtr
 	}
 
 	if os.Getenv("PLATFORM_ENV") == "test" {
@@ -84,7 +84,6 @@ func uniqueStatsQueues() {
 }
 
 func sendToStatsBulker(message []byte) {
-	logit.Info("sendToStatsBulker")
 	request := elastic.NewBulkIndexRequest().
 		Index(statsIndexName()).
 		Type("pgstats").

@@ -69,7 +69,7 @@ func startRedisBatch(redisKey string, task string) {
 
 			// idle for 20 seconds, emit message
 			if (nap < 60 && nap-lastLog >= 30) || (nap >= 60 && nap-lastLog >= 60) {
-				logit.Info("%s %s %s", yellow(nap), white(" seconds since received data from "), yellow(redisKey))
+				logit.Info("%s %s %s", yellow(nap), white("seconds since received data from"), yellow(redisKey))
 				lastLog = nap
 				processedMessages = 0
 			}
@@ -196,7 +196,10 @@ func redisURL() string {
 		return value
 	}
 	// Lastly return default
-	return "127.0.0.1:6379"
+	// return "127.0.0.1:6379"
+
+	// Default to Docker version
+	return "redis:6379"
 }
 
 func redisPW() string {

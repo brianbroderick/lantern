@@ -87,7 +87,6 @@ func getStatsRecord(t *testing.T, wait time.Duration, app string) int64 {
 				}
 			}
 
-			fmt.Printf("First record found returned %d for the failed attempts key\n", failedEvents)
 			return failedEvents
 		}
 	} else {

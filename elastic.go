@@ -15,9 +15,9 @@ import (
 
 // SetupElastic sets up elastic conn
 func SetupElastic() {
-	if os.Getenv("PLATFORM_ENV") != "test" {
-		logit.Info("Elastic URL: %s\n", elasticURL())
-	}
+	// if os.Getenv("PLATFORM_ENV") != "test" {
+	logit.Info("Elastic URL: %s\n", elasticURL())
+	// }
 
 	// Coming from Docker, sleep a few seconds to make sure ES is running
 	if elasticURL() == "http://elasticsearch:9200" {
@@ -60,6 +60,8 @@ func putTemplate(client *elastic.Client) {
 }
 
 func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
+	logit.Info(yellow("Posted %d records to ES"), len(requests))
+
 	if response.Errors {
 		logit.Error("executionId: %d response has errors\n", executionId)
 		logErrorDetails(executionId, response.Took, response.Items, requests)
@@ -151,7 +153,7 @@ func elasticURL() string {
 		return value
 	}
 	// Lastly return default
-	return "http://127.0.0.1:9200"
+	return "http://elasticsearch:9200"
 }
 
 func sniff() bool {

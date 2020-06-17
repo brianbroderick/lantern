@@ -63,9 +63,9 @@ func main() {
 	flag.StringVar(&elasticPtr, "elasticUrl", "", "Elasticsearch URL. Can also set via PLS_ELASTIC_URL env var")
 
 	flag.Parse()
-
 	initialSetup()
 	SetupElastic()
+
 	defer bulkProc["bulk"].Close()
 	defer clients["bulk"].Stop()
 
@@ -79,11 +79,11 @@ func main() {
 
 	for _, queue := range redisQueues {
 		go startRedisBatch(queue, "query")
-		time.Sleep(30 * time.Millisecond) // stagger threads hitting Redis
+		time.Sleep(42 * time.Millisecond) // stagger threads hitting Redis
 	}
 	for _, queue := range statsQueues {
 		go startRedisBatch(queue, "stats")
-		time.Sleep(30 * time.Millisecond) // stagger threads hitting Redis
+		time.Sleep(42 * time.Millisecond) // stagger threads hitting Redis
 	}
 
 	forever := make(chan bool)
@@ -118,8 +118,8 @@ func setupEnv() {
 
 func populateRedisQueues(queues string) {
 	// Override with a flag, if exists
-	if statsPtr != "" {
-		queues = statsPtr
+	if queuePtr != "" {
+		queues = queuePtr
 	}
 	if queues == "" {
 		redisQueues = append(redisQueues, "postgres")
