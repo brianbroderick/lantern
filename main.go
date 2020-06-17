@@ -22,7 +22,6 @@ type batch struct {
 }
 
 var (
-	// batchStats  = make([]*stats, 0)
 	batchMap    = make(map[batch]*query)
 	clients     = make(map[string]*elastic.Client)
 	bulkProc    = make(map[string]*elastic.BulkProcessor)
