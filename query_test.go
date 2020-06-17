@@ -294,6 +294,4 @@ func TestTempTable(t *testing.T) {
 	assert.Equal(t, int64(2576060), query.tempTable)
 
 	conn.Do("DEL", redisKey())
-	defer bulkProc["bulk"].Close()
-	defer clients["bulk"].Stop()
 }

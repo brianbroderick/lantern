@@ -45,7 +45,7 @@ func getLog(redisKey string) (*query, error) {
 	return nil, nil
 }
 
-func startRedisBatch(redisKey string) {
+func startRedisBatch(redisKey string, task string) {
 	var (
 		keyLog            string
 		lastLog           int
@@ -57,7 +57,7 @@ func startRedisBatch(redisKey string) {
 	)
 
 	for {
-		ok, msgCount, queueLength, err := getMultiLog(redisKey)
+		ok, msgCount, queueLength, err := getMultiLog(redisKey, task)
 		if err != nil {
 			logit.Error("Error in getMultiLog: %e", err.Error())
 		}
@@ -69,7 +69,7 @@ func startRedisBatch(redisKey string) {
 
 			// idle for 20 seconds, emit message
 			if (nap < 60 && nap-lastLog >= 30) || (nap >= 60 && nap-lastLog >= 60) {
-				logit.Info("%s %s %s", yellow(nap), white(" seconds since received data from "), yellow(redisKey))
+				logit.Info("%s %s %s", yellow(nap), white("seconds since received data from"), yellow(redisKey))
 				lastLog = nap
 				processedMessages = 0
 			}
@@ -103,7 +103,10 @@ func colorKey(str string, counter int64) string {
 	return colorString
 }
 
-func getMultiLog(redisKey string) (bool, int64, int64, error) {
+// task == "query" for normal operations.
+// task == "stats" to handle a stats payload. See stats.go for more details
+
+func getMultiLog(redisKey string, task string) (bool, int64, int64, error) {
 	conn := pool.Get()
 	defer conn.Close()
 
@@ -144,13 +147,27 @@ func getMultiLog(redisKey string) (bool, int64, int64, error) {
 					return true, 0, queueLength, err
 				}
 
-				query, suppressed, err := newQuery(q, redisKey)
-				if err != nil {
-					logit.Error("Error in newQuery: %e", err.Error())
-				} else if suppressed {
-					// no-op
+				if task == "query" {
+					query, suppressed, err := newQuery(q, redisKey)
+					if err != nil {
+						logit.Error("Error in newQuery: %e", err.Error())
+					} else if suppressed {
+						// no-op
+					} else {
+						addToQueries(roundToMinute(query.timestamp), query)
+					}
 				} else {
-					addToQueries(roundToMinute(query.timestamp), query)
+					stats, err := newStats(q, redisKey)
+					if err != nil {
+						logit.Error("Error in newStats: %e", err.Error())
+					} else {
+						data, err := json.Marshal(stats.data)
+						if err != nil {
+							logit.Error("Error marshalling data: %e", err.Error())
+						}
+
+						sendToStatsBulker(data)
+					}
 				}
 			}
 		}
@@ -179,7 +196,10 @@ func redisURL() string {
 		return value
 	}
 	// Lastly return default
-	return "127.0.0.1:6379"
+	// return "127.0.0.1:6379"
+
+	// Default to Docker version
+	return "redis:6379"
 }
 
 func redisPW() string {
