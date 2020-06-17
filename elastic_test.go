@@ -145,42 +145,42 @@ func TestElixirFlow(t *testing.T) {
 	defer clients["bulk"].Stop()
 }
 
-// func TestBadPayload(t *testing.T) {
-// 	initialSetup()
-// 	SetupElastic()
-// 	truncateElasticSearch()
+func TestBadPayload(t *testing.T) {
+	initialSetup()
+	SetupElastic()
+	truncateElasticSearch()
 
-// 	conn := pool.Get()
-// 	defer conn.Close()
+	conn := pool.Get()
+	defer conn.Close()
 
-// 	sample := readPayload("nested_payload.json")
-// 	conn.Do("LPUSH", redisKey(), sample)
+	sample := readPayload("nested_payload.json")
+	conn.Do("LPUSH", redisKey(), sample)
 
-// 	llen, err := conn.Do("LLEN", redisKey())
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, int64(1), llen)
+	llen, err := conn.Do("LLEN", redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
 
-// 	query, err := getLog(redisKey())
-// 	addToQueries(mockCurrentMinute(), query)
+	query, err := getLog(redisKey())
+	addToQueries(mockCurrentMinute(), query)
 
-// 	iterOverQueries()
-// 	assert.Equal(t, 0, len(batchMap))
+	iterOverQueries()
+	assert.Equal(t, 0, len(batchMap))
 
-// 	err = bulkProc["bulk"].Flush()
-// 	if err != nil {
-// 		logit.Error("Error flushing messages: %e", err.Error())
-// 	}
+	err = bulkProc["bulk"].Flush()
+	if err != nil {
+		logit.Error("Error flushing messages: %e", err.Error())
+	}
 
-// 	// There is no record, on ES because an array of different types can not be published
-// 	// to elastic search. We need to log out these failed publish attempts.
-// 	//getRecord(t,1000 )
+	// There is no record, on ES because an array of different types can not be published
+	// to elastic search. We need to log out these failed publish attempts.
+	//getRecord(t,1000 )
 
-// 	// We should see logs from the afterBulkCommit function
+	// We should see logs from the afterBulkCommit function
 
-// 	conn.Do("DEL", redisKey())
-// 	defer bulkProc["bulk"].Close()
-// 	defer clients["bulk"].Stop()
-// }
+	conn.Do("DEL", redisKey())
+	defer bulkProc["bulk"].Close()
+	defer clients["bulk"].Stop()
+}
 
 func getRecord(t *testing.T, wait time.Duration, username string) float64 {
 	// fmt.Printf("getR: %s \n", indexName())
