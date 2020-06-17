@@ -214,7 +214,7 @@ func getRecord(t *testing.T, wait time.Duration, username string) float64 {
 				}
 			}
 
-			// fmt.Printf("First record found has a total duration of %f\n", totalDuration)
+			fmt.Printf("First record found has a total duration of %f\n", totalDuration)
 			return totalDuration
 		}
 	} else {
