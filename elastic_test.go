@@ -273,6 +273,7 @@ func getRecordWithTempTable() int64 {
 				}
 			}
 
+			fmt.Printf("First record found has a total temp table size of %d\n", tempTable)
 			return tempTable
 		}
 	} else {
