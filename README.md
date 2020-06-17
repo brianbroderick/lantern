@@ -48,17 +48,22 @@ The env vars are:
 ```
 PLS_REDIS_URL="your.redis.host"    # Default: "127.0.0.1:6379"
 PLS_REDIS_QUEUES="your-app-master" # comma separated whitelist of redis keys being published to
+PLS_REDIS_STATS_QUEUES="stats"     # 
 PLS_ELASTIC_URL="your.es.server"   # Default: "http://127.0.0.1:9200"
 PLS_REDIS_PASSWORD="your.password" # (Optional)
+PLS_ELASTIC_SNIFF=boolean          # (Optional) it sets elastic.SetSniff. This is may need to be set to false if ES is on a                                         different network, such as within Docker.
 ```
 
 The flags are:
 
 ```
- -elasticUrl string
+  -elasticUrl string
     	Elasticsearch URL. Can also set via PLS_ELASTIC_URL env var
   -queues string
     	comma separated list of queues that overrides env vars. Can also be set via PLS_REDIS_QUEUES env var
+	-statsQueues string
+	    comma separated list of queues handling the stats payload. The stats payload doesn't come from RedisLog. It can be used
+			by other systems that mimic the RedisLog payload. 
   -redisPassword string
     	Redis password (optional). Can also set via PLS_REDIS_PASSWORD env var
   -redisUrl string
