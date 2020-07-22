@@ -16,5 +16,4 @@ require (
 	github.com/olivere/elastic/v7 v7.0.18
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/stretchr/testify v1.5.1
-	gopkg.in/olivere/elastic.v6 v6.2.34
 )
