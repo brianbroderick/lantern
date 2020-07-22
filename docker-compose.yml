@@ -7,6 +7,8 @@ services:
       PLS_ELASTIC_URL: http://es01:9200
   redis:
     image: redis:latest
+    depends_on:
+      - es01
     restart: unless-stopped
     ports:
       - 6379:6379
@@ -40,7 +42,6 @@ services:
     volumes:
       - es01_data:/usr/share/elasticsearch/data
       - certs:$CERTS_DIR
-#      - ./docker/es/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - 9200:9200
       - 9300:9300
@@ -52,6 +53,8 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:${ELASTICSEARCH_VERSION}
     container_name: kibana
+    depends_on:
+      - es01
     ports:
       - 5601:5601
     environment:

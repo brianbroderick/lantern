@@ -88,7 +88,7 @@ In this context, a normalized query means that it converts `SELECT * FROM table 
 * Copy and update [env.example](./env.example)
   * `cp env.example .env`
   * `vim .env`
-* `./bin/dev/es/start`
+* `./bin/dev/start`
 
 ## Testing
 

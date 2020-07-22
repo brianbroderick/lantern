@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PROJECT_ROOT_DIR=$DIR/../../../
+
+source $PROJECT_ROOT_DIR/.env
+
+function es_info() {
+    local ES_HOST=${1:-https://es01:9200}
+    local EXEC_CONTAINER=${2:-kibana} # Any docker container that has access to the ca.crt
+    docker exec $EXEC_CONTAINER \
+      curl --cacert $CERTS_DIR/ca/ca.crt \
+      -su elastic:$ELASTIC_PASSWORD \
+      $ES_HOST
+}
+
+function es_auth() {
+    local USER=$1
+    local PASSWORD=$2
+    local ES_HOST=${3:-https://es01:9200}
+    local EXEC_CONTAINER=${4:-kibana} # Any docker container that has access to the ca.crt
+
+    local RESULT=$(docker exec $EXEC_CONTAINER \
+      curl --cacert $CERTS_DIR/ca/ca.crt \
+      -su $USER:$PASSWORD \
+      $ES_HOST/_security/_authenticate?pretty | jq -r '.username')
+
+    if [ "$RESULT" = "$USER" ]; then
+      true
+    else
+      false
+    fi
+}
+
+function es_set_password() {
+  local USER=$1
+  local PASSWORD=$2
+  local ES_HOST=${3:-https://es01:9200}
+  local EXEC_CONTAINER=${4:-kibana} # Any docker container that has access to the ca.crt
+
+  local ENCODED=$(echo -ne elastic:$ELASTIC_PASSWORD | base64)
+  docker exec $EXEC_CONTAINER  \
+    curl -sX POST \
+    --cacert $CERTS_DIR/ca/ca.crt \
+    --url $ES_HOST/_security/user/$USER/_password \
+    -H "authorization: Basic $ENCODED" \
+    -H "content-type: application/json" \
+    -d "{
+      \"password\": \"$PASSWORD\"
+    }"
+}
+
+function es_is_ready() {
+    local ES_HOST=${1:-https://es01:9200}
+    local EXEC_CONTAINER=${2:-kibana} # Any docker container that has access to the ca.crt
+    docker exec $EXEC_CONTAINER \
+      curl -sIfo /dev/null \
+      --cacert $CERTS_DIR/ca/ca.crt \
+      -u elastic:$ELASTIC_PASSWORD \
+      $ES_HOST
+}
+
+# usage exmples
+#es_info
+#
+#if es_auth kibana_system $KIBANA_SYSTEM_PASSWORD; then
+#  echo "Username and password are correct."
+#else
+#  echo "Invalid username or password."
+#fi
+
+
+#es_set_password kibana_system $KIBANA_SYSTEM_PASSWORD
