@@ -4,40 +4,68 @@ services:
     build: .  
     environment:
       PLS_REDIS_URL: redis:6379
-      PLS_ELASTIC_URL: http://elasticsearch:9200  
+      PLS_ELASTIC_URL: http://es01:9200
   redis:
     image: redis:latest
     restart: unless-stopped
     ports:
       - 6379:6379
-  elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.8.0
+  es01:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION}
     restart: unless-stopped
-    container_name: elasticsearch
+    container_name: es01
     environment:
       - node.name=es01
-      - cluster.name=es-docker-cluster
+      - discovery.seed_hosts=es01
       - cluster.initial_master_nodes=es01
-      - bootstrap.memory_lock=true
+      - ELASTIC_PASSWORD=$ELASTIC_PASSWORD
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - cluster.name=es-docker-cluster
+      - bootstrap.memory_lock=true
+      - xpack.license.self_generated.type=trial
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=$CERTS_DIR/es01/es01.key
+      - xpack.security.http.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.http.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.verification_mode=certificate
+      - xpack.security.transport.ssl.certificate_authorities=$CERTS_DIR/ca/ca.crt
+      - xpack.security.transport.ssl.certificate=$CERTS_DIR/es01/es01.crt
+      - xpack.security.transport.ssl.key=$CERTS_DIR/es01/es01.key
     ulimits:
       memlock:
         soft: -1
         hard: -1
     volumes:
-      - elasticsearch:/usr/share/elasticsearch/data
+      - es01_data:/usr/share/elasticsearch/data
+      - certs:$CERTS_DIR
+#      - ./docker/es/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
     ports:
       - 9200:9200
       - 9300:9300
+    healthcheck:
+      test: curl --cacert $CERTS_DIR/ca/ca.crt -s https://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.8.0
+    image: docker.elastic.co/kibana/kibana:${ELASTICSEARCH_VERSION}
     container_name: kibana
     ports:
       - 5601:5601
     environment:
-      ELASTICSEARCH_URL: http://elasticsearch:9200
-      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+      SERVERNAME: localhost
+      ELASTICSEARCH_URL: https://es01:9200
+      ELASTICSEARCH_HOSTS: https://es01:9200
+      ELASTICSEARCH_USERNAME: kibana_system
+      ELASTICSEARCH_PASSWORD: $KIBANA_SYSTEM_PASSWORD
+      ELASTIC_PASSWORD: $ELASTIC_PASSWORD
+      ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES: $CERTS_DIR/ca/ca.crt
+      SERVER_SSL_ENABLED: "true"
+      SERVER_SSL_KEY: $CERTS_DIR/kibana/kibana.key
+      SERVER_SSL_CERTIFICATE: $CERTS_DIR/kibana/kibana.crt
+    volumes:
+    - certs:$CERTS_DIR
 
-volumes:
-  elasticsearch:
-
+volumes: {"es01_data", "certs"}
