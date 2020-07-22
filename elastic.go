@@ -3,10 +3,13 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	logit "github.com/brianbroderick/logit"
@@ -24,10 +27,7 @@ func SetupElastic() {
 		logit.Info("Using docker, waiting for ES to spin up")
 		time.Sleep(10 * time.Second)
 	}
-	client, err := elastic.NewClient(elastic.SetURL(elasticURL()), elastic.SetSniff(sniff()))
-	if err != nil {
-		panic(err)
-	}
+	client := elasticClientFactory(true)
 
 	clients["bulk"] = client
 
@@ -46,17 +46,74 @@ func SetupElastic() {
 	bulkProc["bulk"] = proc
 }
 
+func elasticClientFactory(isInsecure bool) *elastic.Client {
+	if isUsingBasicAuth() {
+		logit.Info("Elastic client is using basic auth.\n")
+		// ignore self-signed certs locally
+		if isInsecure {
+			logit.Info("Elastic client is using not validating certificates.\n")
+			httpClient := &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true,
+					},
+				},
+			}
+			client, err := elastic.NewClient(
+				elastic.SetHttpClient(httpClient),
+				elastic.SetBasicAuth(elasticUser(), elasticPassword()),
+				elastic.SetURL(elasticURL()),
+				elastic.SetSniff(sniff()),
+			)
+			if err != nil {
+				panic(err)
+			}
+			return client
+		} else {
+			client, err := elastic.NewClient(
+				elastic.SetBasicAuth(elasticUser(), elasticPassword()),
+				elastic.SetURL(elasticURL()),
+				elastic.SetSniff(sniff()),
+			)
+			if err != nil {
+				panic(err)
+			}
+			return client
+		}
+	} else {
+		logit.Info("Elastic client has no auth\n")
+		client, err := elastic.NewClient(
+			elastic.SetURL(elasticURL()),
+			elastic.SetSniff(sniff()),
+		)
+		if err != nil {
+			panic(err)
+		}
+		return client
+	}
+}
+
 func putTemplate(client *elastic.Client) {
 	dat, err := ioutil.ReadFile("./elasticsearch_template.json")
 	if err != nil {
 		panic(err)
 	}
 
-	client.IndexDeleteTemplate("pglog").Do(context.Background())
-	_, err = client.IndexPutTemplate("pglog").BodyString(string(dat)).Do(context.Background()) //.Body(dat).Do(context.Background())
+	exists, err := client.IndexTemplateExists("pglog").Do(context.Background())
 	if err != nil {
 		panic(err)
 	}
+
+	if exists {
+		client.IndexDeleteTemplate("pglog").Do(context.Background())
+	}
+
+	res, err := client.IndexPutTemplate("pglog").BodyString(string(dat)).Do(context.Background()) //.Body(dat).Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+
+	logit.Info("Created 'pglog' template template: %t", res.Acknowledged)
 }
 
 func afterBulkCommit(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
@@ -153,7 +210,30 @@ func elasticURL() string {
 		return value
 	}
 	// Lastly return default
-	return "http://elasticsearch:9200"
+	return "https://localhost:9200"
+}
+
+//func validateCert
+
+func isUsingBasicAuth() bool  {
+	if value, ok := os.LookupEnv("PLS_ELASTIC_BASIC_AUTH"); ok {
+		return strings.EqualFold(value, "true")
+	}
+	return len(elasticPassword()) > 0
+}
+
+func elasticUser() string {
+	if value, ok := os.LookupEnv("PLS_ELASTIC_USERNAME"); ok {
+		return value
+	}
+	return "elastic"
+}
+
+func elasticPassword() string {
+	if value, ok := os.LookupEnv("PLS_ELASTIC_PASSWORD"); ok {
+		return value
+	}
+	return ""
 }
 
 func sniff() bool {

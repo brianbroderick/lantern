@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
+	"github.com/brianbroderick/logit"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
 	"time"
 
-	logit "github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
 )
 
