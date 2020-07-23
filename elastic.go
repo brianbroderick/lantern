@@ -15,6 +15,7 @@ import (
 	logit "github.com/brianbroderick/logit"
 	elastic "github.com/olivere/elastic/v7"
 )
+var esIsReady = false
 
 // SetupElastic sets up elastic conn
 func SetupElastic() {
@@ -22,10 +23,25 @@ func SetupElastic() {
 		logit.Info("Elastic URL: %s\n", elasticURL())
 	}
 
-	// Coming from Docker, sleep a few seconds to make sure ES is running
+	// Coming from Docker, loop until elasticsearch is ready.
 	if elasticURL() == "http://elasticsearch:9200" {
-		logit.Info("Using docker, waiting for ES to spin up")
-		time.Sleep(10 * time.Second)
+		if !esIsReady {
+			code := 400
+			for code != 200 {
+				resp, err := http.Get(elasticURL())
+				if err != nil {
+					panic(err)
+				}
+				code = resp.StatusCode
+				if code == 200 {
+					logit.Info("Elasticsearch is ready.")
+					esIsReady = true
+				} else {
+					logit.Info("Elasticsearch is not available. Waiting 10s and checking again")
+					time.Sleep(10 * time.Second)
+				}
+			}
+		}
 	}
 	client := elasticClientFactory()
 
@@ -210,7 +226,10 @@ func elasticURL() string {
 		return value
 	}
 	// Lastly return default
-	return "https://localhost:9200"
+	if isUsingBasicAuth() {
+		return "https://localhost:9200"
+	}
+	return "http://localhost:9200"
 }
 
 
