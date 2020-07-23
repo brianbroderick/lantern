@@ -59,15 +59,3 @@ function es_is_ready() {
       -u elastic:$ELASTIC_PASSWORD \
       $ES_HOST
 }
-
-# usage exmples
-#es_info
-#
-#if es_auth kibana_system $KIBANA_SYSTEM_PASSWORD; then
-#  echo "Username and password are correct."
-#else
-#  echo "Invalid username or password."
-#fi
-
-
-#es_set_password kibana_system $KIBANA_SYSTEM_PASSWORD

@@ -197,7 +197,7 @@ func getRecord(t *testing.T, wait time.Duration, username string) float64 {
 	}
 
 	if result.Hits.TotalHits.Value > 0 {
-		fmt.Printf("Found a total of %d record(s)\n", result.Hits.TotalHits.Value)
+		logit.Info("Found a total of %d record(s)\n", result.Hits.TotalHits.Value)
 
 		for _, hit := range result.Hits.Hits {
 			// hit.Index contains the name of the index
@@ -256,7 +256,7 @@ func getRecordWithTempTable() int64 {
 	}
 
 	if result.Hits.TotalHits.Value > 0 {
-		fmt.Printf("Found a total of %d record(s)\n", result.Hits.TotalHits.Value)
+		logit.Info("Found a total of %d record(s)\n", result.Hits.TotalHits.Value)
 
 		for _, hit := range result.Hits.Hits {
 			// hit.Index contains the name of the index

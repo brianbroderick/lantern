@@ -70,7 +70,7 @@ func getStatsRecord(t *testing.T, wait time.Duration, app string) int64 {
 	}
 
 	if result.Hits.TotalHits.Value > 0 {
-		fmt.Printf("Found a total of %d stat record(s)\n", result.Hits.TotalHits.Value)
+		logit.Info("Found a total of %d stat record(s)\n", result.Hits.TotalHits.Value)
 
 		for _, hit := range result.Hits.Hits {
 			// hit.Index contains the name of the index

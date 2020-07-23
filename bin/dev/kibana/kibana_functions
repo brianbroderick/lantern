@@ -25,7 +25,3 @@ function kibana_is_ready() {
     $KIBANA_HOST/login?next=%2F
 }
 
-# Example Usage
-#kibana_features
-#kibana_is_ready
-
