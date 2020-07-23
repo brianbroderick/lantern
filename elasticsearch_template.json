@@ -13,11 +13,144 @@
           "version": "5.6.2"
         },
         "properties": {
-          "created_at": {
-            "format": "EEE MMM dd HH:mm:ss Z yyyy",
+          "@timestamp": {
             "type": "date"
           },
-          "host_name": {
+          "application_name": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "avg_duration_ms": {
+            "type": "float"
+          },
+          "code_module": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "code_repo": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "code_source": {
+            "type": "nested"
+          },
+          "code_tags": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "command_tag": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "database_host": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "database_name": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "detail": {
+            "norms": false,
+            "type": "text"
+          },
+          "error_severity": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "library_version": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "message": {
+            "norms": false,
+            "type": "text"
+          },
+          "mvc_action": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "mvc_application": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "mvc_code_line": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "mvc_controller": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "prepared": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "prepared_step": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "process_id": {
+            "type": "integer"
+          },
+          "notes": {
+            "norms": false,
+            "type": "text"
+          },
+          "query": {
+            "norms": false,
+            "type": "text"
+          },
+          "redis_key": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "remote_host": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "session_id": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "session_line_num": {
+            "type": "integer"
+          },
+          "session_start_time": {
+            "type": "date"
+          },
+          "temp_table_size": {
+            "type": "long"
+          },
+          "total_count": {
+            "type": "long"
+          },
+          "total_duration_ms": {
+            "type": "float"
+          },
+          "unique_sha": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "unique_string": {
+            "norms": false,
+            "type": "text",
+            "fields": {
+              "raw": {
+                "type": "keyword"
+              }
+            }
+          },
+          "unknown_message": {
+            "norms": false,
+            "type": "text"
+          },
+          "user_name": {
+            "ignore_above": 1024,
+            "type": "keyword"
+          },
+          "virtual_transaction_id": {
+            "ignore_above": 1024,
             "type": "keyword"
           }
         }
