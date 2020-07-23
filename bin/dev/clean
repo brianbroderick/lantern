@@ -11,4 +11,5 @@ source $PROJECT_ROOT_DIR/bin/dev/es/es_functions
 source $PROJECT_ROOT_DIR/bin/dev/kibana/kibana_functions
 
 docker-compose -f $PROJECT_ROOT_DIR/docker-compose.yml down
-docker volume rm es_certs es_es01_data
+docker-compose -f $PROJECT_ROOT_DIR/docker/insecure.yml down
+docker volume rm es_certs es_es01_data es01_insecure_data
