@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	elastic "gopkg.in/olivere/elastic.v6"
+	elastic "github.com/olivere/elastic/v7"
 
 	"github.com/brianbroderick/logit"
 	"github.com/fatih/color"

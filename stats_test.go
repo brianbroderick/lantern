@@ -10,7 +10,7 @@ import (
 
 	logit "github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
-	elastic "gopkg.in/olivere/elastic.v6"
+	elastic "github.com/olivere/elastic/v7"
 )
 
 func init() {
@@ -69,14 +69,14 @@ func getStatsRecord(t *testing.T, wait time.Duration, app string) int64 {
 		panic(err)
 	}
 
-	if result.Hits.TotalHits > 0 {
-		fmt.Printf("Found a total of %d stat record(s)\n", result.Hits.TotalHits)
+	if result.Hits.TotalHits.Value > 0 {
+		logit.Info("Found a total of %d stat record(s)\n", result.Hits.TotalHits.Value)
 
 		for _, hit := range result.Hits.Hits {
 			// hit.Index contains the name of the index
 
 			var data map[string]*json.RawMessage
-			if err := json.Unmarshal(*hit.Source, &data); err != nil {
+			if err := json.Unmarshal(hit.Source, &data); err != nil {
 				logit.Error("Error unmarshalling data: %e", err.Error())
 			}
 

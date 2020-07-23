@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+PROJECT_ROOT_DIR=$DIR/../../../
+
+source $PROJECT_ROOT_DIR/.env
+
+function kibana_features() {
+    local KIBANA_HOST=${1:-https://kibana:5601}
+    local EXEC_CONTAINER=${2:-es01} # Any docker container that has access to the ca.crt
+    docker exec $EXEC_CONTAINER \
+      curl --cacert $CERTS_DIR/ca/ca.crt \
+      -m 2 \
+      -su elastic:$ELASTIC_PASSWORD \
+      $KIBANA_HOST/api/features
+}
+
+function kibana_is_ready() {
+  local KIBANA_HOST=${1:-https://kibana:5601}
+  local EXEC_CONTAINER=${2:-es01} # Any docker container that has access to the ca.crt
+  docker exec $EXEC_CONTAINER \
+    curl -Isfo /dev/null \
+    -m 2 \
+    --cacert $CERTS_DIR/ca/ca.crt \
+    $KIBANA_HOST/login?next=%2F
+}
+

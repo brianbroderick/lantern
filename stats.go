@@ -12,7 +12,7 @@ import (
 
 	logit "github.com/brianbroderick/logit"
 	"github.com/garyburd/redigo/redis"
-	elastic "gopkg.in/olivere/elastic.v6"
+	elastic "github.com/olivere/elastic/v7"
 )
 
 // This doesn't come from PG's Redislog. It's meant to come from a non-PG source such as an application
