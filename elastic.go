@@ -27,7 +27,7 @@ func SetupElastic() {
 		logit.Info("Using docker, waiting for ES to spin up")
 		time.Sleep(10 * time.Second)
 	}
-	client := elasticClientFactory(true)
+	client := elasticClientFactory()
 
 	clients["bulk"] = client
 
@@ -46,11 +46,11 @@ func SetupElastic() {
 	bulkProc["bulk"] = proc
 }
 
-func elasticClientFactory(isInsecure bool) *elastic.Client {
+func elasticClientFactory() *elastic.Client {
 	if isUsingBasicAuth() {
 		logit.Info("Elastic client is using basic auth.\n")
 		// ignore self-signed certs locally
-		if isInsecure {
+		if !validateCertificates() {
 			logit.Info("Elastic client is using not validating certificates.\n")
 			httpClient := &http.Client{
 				Transport: &http.Transport{
@@ -213,7 +213,13 @@ func elasticURL() string {
 	return "https://localhost:9200"
 }
 
-//func validateCert
+
+func validateCertificates() bool  {
+	if value, ok := os.LookupEnv("PLS_VALIDATE_CERTIFICATES"); ok {
+		return strings.EqualFold(value, "true")
+	}
+	return true
+}
 
 func isUsingBasicAuth() bool  {
 	if value, ok := os.LookupEnv("PLS_ELASTIC_BASIC_AUTH"); ok {
