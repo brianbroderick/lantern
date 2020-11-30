@@ -115,10 +115,10 @@ To use Kibana:
 
 * Allow insecure host in Chrome
   * In Chrome, go to: `chrome://flags/#allow-insecure-localhost`
-	* Change `Allow invalid certificates for resources loaded from localhost.` to `Enabled`
+  * Change `Allow invalid certificates for resources loaded from localhost.` to `Enabled`
 * Go to: https://localhost:5601 
   * Username: elastic
-	* Password: ELASTIC_PASSWORD in the .env file
+  * Password: ELASTIC_PASSWORD in the .env file
 
 ## Kubernetes
 
