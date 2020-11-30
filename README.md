@@ -84,11 +84,14 @@ Lantern aggregates normalized queries to a 1 minute interval. This
 
 In this context, a normalized query means that it converts `SELECT * FROM table WHERE id = 42;` to `SELECT * FROM table WHERE id = ?;` All string and number variables are converted to a question mark. It then hashes the text and uses that to determine uniqueness. 
 
-## Local Dependencies
+## Local Development Setup
+
 * Copy and update [env.example](./env.example)
   * `cp env.example .env`
   * `vim .env`
 * `./bin/dev/start`
+
+Note: See the Kibana section for how to set up Chrome to be able to log into Kibana
 
 ## Testing
 
@@ -107,6 +110,15 @@ Once the data is in Elasticsearch, you can create all the charts you'd like such
 ![Total Duration](https://user-images.githubusercontent.com/7585181/80007253-3d2a8380-8483-11ea-9f77-93e2813c3b70.png)
 
 ![Total Count](https://user-images.githubusercontent.com/7585181/80007228-36037580-8483-11ea-8225-29507c9b32db.png)
+
+To use Kibana:
+
+* Allow insecure host in Chrome
+  * In Chrome, go to: `chrome://flags/#allow-insecure-localhost`
+	* Change `Allow invalid certificates for resources loaded from localhost.` to `Enabled`
+* Go to: https://localhost:5601 
+  * Username: elastic
+	* Password: ELASTIC_PASSWORD in the .env file
 
 ## Kubernetes
 
