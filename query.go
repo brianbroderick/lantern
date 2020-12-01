@@ -67,6 +67,7 @@ func newQuery(b []byte, redisKey string) (*query, bool, error) {
 	}
 
 	// suppress import under certain conditions like unneccessary command_tags
+	// and return before doing additional processing.
 	if suppressedCommandTag[q.commandTag] {
 		return q, true, nil
 	}

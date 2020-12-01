@@ -295,3 +295,26 @@ func TestTempTable(t *testing.T) {
 
 	conn.Do("DEL", redisKey())
 }
+
+func TestFlowExtract(t *testing.T) {
+	initialSetup()
+	// truncateElasticSearch()
+
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("extract.json")
+	conn.Do("LPUSH", redisKey(), sample)
+
+	llen, err := conn.Do("LLEN", redisKey())
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), llen)
+
+	uniq := "select c0.\"id\" from \"some_table\" as c0 where (c0.\"deleted_at\" = $1) and (c0.\"location_uid\" = $2) and (c0.\"user_uid\" = $3) limit $4"
+	comments := []string(nil)
+	query, err := getLog(redisKey())
+
+	assert.NoError(t, err)
+	assert.Equal(t, uniq, query.uniqueStr)
+	assert.Equal(t, comments, query.comments)
+}

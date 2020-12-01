@@ -1,0 +1,15 @@
+{
+  "user_name": "execute_user",
+  "database_name": "sampledb",
+  "process_id": 32135,
+  "remote_host": "10.0.0.129",
+  "session_id": "5fc58b47.7d87",
+  "session_line_num": 777,
+  "command_tag": "SELECT",
+  "session_start_time": "2020-12-01T00:16:07+0000",
+  "virtual_transaction_id": "134/2444",
+  "error_severity": "LOG",
+  "detail": "parameters: $1 = '1970-01-01 00:00:00', $2 = '721e69b2-af3d-52f8-a2a6-af630baa4be8', $3 = 'd0aff49b-5feb-5c47-9408-56491615682f'",
+  "message": "duration: 2.651 ms  execute ecto_41315: SELECT c0.\"id\" FROM \"some_table\" AS c0 WHERE (c0.\"deleted_at\" = $1) AND (c0.\"location_uid\" = $2) AND (c0.\"user_uid\" = $3) LIMIT 100",
+  "@timestamp": "2020-12-01T00:39:16.918+0000"
+}
