@@ -29,6 +29,7 @@ type query struct {
 	codeSourceMap   map[string]map[string]string
 	comments        []string
 	commandTag      string
+	detail          string
 	weekday         string
 	weekdayInt      int64
 	errorSeverity   string
@@ -80,6 +81,12 @@ func newQuery(b []byte, redisKey string) (*query, bool, error) {
 
 	if source, pres := q.data["message"]; pres {
 		if err := json.Unmarshal(*source, &q.message); err != nil {
+			return nil, false, err
+		}
+	}
+
+	if source, pres := q.data["detail"]; pres {
+		if err := json.Unmarshal(*source, &q.detail); err != nil {
 			return nil, false, err
 		}
 	}

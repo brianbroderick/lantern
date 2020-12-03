@@ -81,8 +81,7 @@ func startRedisBatch(redisKey string, task string) {
 				(processedMessages >= 1000000 && processedMessages-lastProcessed >= 100000) {
 				keyLog = colorKey(redisKey, processedMessages)
 				msgLog = colorKey(strconv.FormatInt(processedMessages, 10), processedMessages)
-				logit.Info("%s messages processed from %s since last reset", msgLog, keyLog)
-				logit.Info("Current queue length for %s is %s", keyLog, red(queueLength))
+				logit.Info("%s: %s messages processed since last reset. Queue length: %s", keyLog, msgLog, red(queueLength))
 				lastProcessed = processedMessages
 			}
 		}
