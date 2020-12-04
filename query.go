@@ -30,6 +30,9 @@ type query struct {
 	comments        []string
 	commandTag      string
 	detail          string
+	detailMap       map[string]string // parsed detail parameters
+	paramMap        map[string]string // column to param mapping
+	resolvedParams  map[string]string // match param identified (i.e. $1) to column value
 	weekday         string
 	weekdayInt      int64
 	errorSeverity   string
@@ -81,12 +84,6 @@ func newQuery(b []byte, redisKey string) (*query, bool, error) {
 
 	if source, pres := q.data["message"]; pres {
 		if err := json.Unmarshal(*source, &q.message); err != nil {
-			return nil, false, err
-		}
-	}
-
-	if source, pres := q.data["detail"]; pres {
-		if err := json.Unmarshal(*source, &q.detail); err != nil {
 			return nil, false, err
 		}
 	}

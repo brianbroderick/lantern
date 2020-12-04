@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/brianbroderick/logit"
 	"io/ioutil"
 	"os"
 	"regexp"
 	"testing"
 	"time"
 
+	logit "github.com/brianbroderick/logit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,12 +80,6 @@ func TestFlow(t *testing.T) {
 	defer clients["bulk"].Stop()
 }
 
-func readPayload(filename string) []byte {
-	dat, err := ioutil.ReadFile("./sample_payloads/" + filename)
-	check(err)
-	return dat
-}
-
 // TestCurrentMinute basically tests currentMinute()
 func TestCurrentMinute(t *testing.T) {
 	d := time.Date(2017, time.November, 10, 23, 19, 5, 1250, time.UTC)
@@ -96,11 +90,6 @@ func TestCurrentMinute(t *testing.T) {
 func TestRound(t *testing.T) {
 	r := round(0.564627465465, 0.5, 5)
 	assert.Equal(t, 0.56463, r)
-}
-
-func mockCurrentMinute() time.Time {
-	d := time.Date(2017, time.October, 27, 19, 57, 5, 1250, time.UTC)
-	return d.UTC().Round(time.Minute)
 }
 
 func TestPopulateRedisQueues(t *testing.T) {
@@ -146,4 +135,15 @@ func TestFindAllStringSubmatch(t *testing.T) {
 	match := r.FindAllStringSubmatch(str, -1)
 
 	assert.Equal(t, 0, len(match))
+}
+
+func mockCurrentMinute() time.Time {
+	d := time.Date(2017, time.October, 27, 19, 57, 5, 1250, time.UTC)
+	return d.UTC().Round(time.Minute)
+}
+
+func readPayload(filename string) []byte {
+	dat, err := ioutil.ReadFile("./sample_payloads/" + filename)
+	check(err)
+	return dat
 }

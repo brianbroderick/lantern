@@ -9,8 +9,8 @@ import (
 	"time"
 
 	logit "github.com/brianbroderick/logit"
-	"github.com/stretchr/testify/assert"
 	elastic "github.com/olivere/elastic/v7"
+	"github.com/stretchr/testify/assert"
 )
 
 func init() {
