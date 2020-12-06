@@ -22,13 +22,15 @@ type batch struct {
 }
 
 var (
-	batchMap    = make(map[batch]*query)
-	clients     = make(map[string]*elastic.Client)
-	bulkProc    = make(map[string]*elastic.BulkProcessor)
-	catIndices  = make(map[string]*elastic.CatIndicesService)
-	mutex       = &sync.Mutex{}
-	redisQueues = make([]string, 0)
-	statsQueues = make([]string, 0)
+	batchMap        = make(map[batch]*query)
+	batchDetailsMap = make(map[batch]*queryDetailStats)
+	clients         = make(map[string]*elastic.Client)
+	bulkProc        = make(map[string]*elastic.BulkProcessor)
+	catIndices      = make(map[string]*elastic.CatIndicesService)
+	mutex           = &sync.Mutex{}
+	detailsMutex    = &sync.Mutex{}
+	redisQueues     = make([]string, 0)
+	statsQueues     = make([]string, 0)
 
 	// flags
 	queuePtr   string

@@ -32,7 +32,6 @@ type query struct {
 	detail          string
 	detailMap       map[string]string // parsed detail parameters
 	paramMap        map[string]string // column to param mapping
-	resolvedParams  map[string]string // match param identified (i.e. $1) to column value
 	weekday         string
 	weekdayInt      int64
 	errorSeverity   string
@@ -656,8 +655,7 @@ func marshalString(q *query, strToMarshal string, dataKey string) error {
 
 func addToQueries(roundMin time.Time, q *query) {
 	mutex.Lock()
-	_, ok := batchMap[batch{roundMin, q.uniqueSha}]
-	if ok == true {
+	if _, ok := batchMap[batch{roundMin, q.uniqueSha}]; ok == true {
 		batchMap[batch{roundMin, q.uniqueSha}].totalCount++
 		batchMap[batch{roundMin, q.uniqueSha}].totalDuration += q.totalDuration
 

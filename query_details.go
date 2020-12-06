@@ -1,15 +1,37 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 )
 
+// for the details field, the first map is each column in question
+// the second map key is the column value
 type queryDetails struct {
 	fragment string
 	columns  []string
+}
+
+type queryDetailStats struct {
+	uid           string  // sha of uniqueSha, column, and columnValue
+	uniqueSha     string  // sha of uniqueStr and preparedStep (if available). This matches what's in the query struct
+	column        string  // column in question such as "user_id"
+	columnValue   string  // value of column such as "42"
+	totalCount    int32   // number of times the column appeared in queries
+	totalDuration float64 // total duration of each time the column appeared in queries
+}
+
+func newQueryDetails(fragment string, columns []string) *queryDetails {
+	qd := new(queryDetails)
+	qd.fragment = fragment
+	qd.columns = columns
+
+	return qd
 }
 
 func (q *query) matchFragment(qd *queryDetails) bool {
@@ -62,9 +84,37 @@ func (q *query) findParam(qd *queryDetails) {
 	}
 }
 
-func (q *query) resolveParams() {
-	q.resolvedParams = make(map[string]string)
+func (q *query) addToDetails() {
+	minute := roundToMinute(q.timestamp)
+
 	for k, v := range q.paramMap {
-		q.resolvedParams[k] = q.detailMap[v]
+		uid := q.shaQueryDetailStats(k, v)
+
+		// Multiple goroutines will access this hash
+		detailsMutex.Lock()
+
+		if _, ok := batchDetailsMap[batch{minute, uid}]; ok == true {
+			batchDetailsMap[batch{minute, uid}].totalCount++
+			batchDetailsMap[batch{minute, uid}].totalDuration += q.totalDuration
+		} else {
+			batchDetailsMap[batch{minute, uid}] = &queryDetailStats{
+				uid:           uid,
+				uniqueSha:     q.uniqueSha,
+				column:        k,
+				columnValue:   q.detailMap[v],
+				totalCount:    1,
+				totalDuration: q.totalDuration,
+			}
+		}
+
+		detailsMutex.Unlock()
 	}
+}
+
+func (q *query) shaQueryDetailStats(column string, columnValue string) string {
+	h := sha1.New()
+	io.WriteString(h, column)
+	io.WriteString(h, columnValue)
+	io.WriteString(h, q.uniqueSha)
+	return hex.EncodeToString(h.Sum(nil))
 }
