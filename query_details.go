@@ -26,16 +26,32 @@ type queryDetailStats struct {
 	totalDuration float64 // total duration of each time the column appeared in queries
 }
 
-func newQueryDetails(fragment string, columns []string) *queryDetails {
+func (q *query) handleQueryDetails() {
+	// If fragment was not found, return
+	if !q.matchFragment() {
+		return
+	}
+
+	q.extractDetails()
+	q.findParam()
+	q.addToDetails()
+}
+
+func newQueryDetails(fragment string, columns string) *queryDetails {
 	qd := new(queryDetails)
+
+	if columns == "" {
+		return qd
+	}
+
 	qd.fragment = fragment
-	qd.columns = columns
+	qd.columns = strings.Split(columns, ",")
 
 	return qd
 }
 
-func (q *query) matchFragment(qd *queryDetails) bool {
-	return strings.Contains(q.uniqueStr, qd.fragment)
+func (q *query) matchFragment() bool {
+	return strings.Contains(q.uniqueStr, detailArgs.fragment)
 }
 
 // q.detail looks like:
@@ -67,10 +83,10 @@ func (q *query) extractDetails() {
 	}
 }
 
-func (q *query) findParam(qd *queryDetails) {
+func (q *query) findParam() {
 	q.paramMap = make(map[string]string)
 
-	for _, c := range qd.columns {
+	for _, c := range detailArgs.columns {
 		// Match the following patterns. Column prefixes shouldn't affect this pattern.
 		//   "user_uid" = $1
 		//   user_uid = $1

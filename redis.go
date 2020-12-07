@@ -154,6 +154,7 @@ func getMultiLog(redisKey string, task string) (bool, int64, int64, error) {
 						// no-op
 					} else {
 						addToQueries(roundToMinute(query.timestamp), query)
+						query.handleQueryDetails()
 					}
 				} else {
 					stats, err := newStats(q, redisKey)
@@ -249,6 +250,7 @@ func startRedisSingle(redisKey string) {
 		}
 		if query != nil {
 			addToQueries(currentMinute(), query)
+			query.handleQueryDetails()
 		} else {
 			logit.Info("No new queries found. Waiting 5 seconds.")
 			time.Sleep((time.Second * 5))

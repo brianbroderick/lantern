@@ -11,7 +11,7 @@ func init() {
 	os.Setenv("PLATFORM_ENV", "test")
 }
 
-func TestExtractDetails(t *testing.T) {
+func TestHandleQueryDetailsEachStep(t *testing.T) {
 	initialSetup()
 	conn := pool.Get()
 	defer conn.Close()
@@ -25,14 +25,16 @@ func TestExtractDetails(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, uniq, query.uniqueStr)
 
-	qd := newQueryDetails("ilike", []string{"location_uid", "user_uid"})
+	detailArgs = newQueryDetails("ilike", "location_uid,user_uid")
 
-	assert.True(t, query.matchFragment(qd))
+	// qd := newQueryDetails("ilike", []string{"location_uid", "user_uid"})
+
+	assert.True(t, query.matchFragment())
 
 	query.extractDetails()
 	assert.Equal(t, "721e69b2-af3d-52f8-a2a6-af630baa4be8", query.detailMap["$2"])
 
-	query.findParam(qd)
+	query.findParam()
 	assert.Equal(t, map[string]string{"location_uid": "$2", "user_uid": "$3"}, query.paramMap)
 
 	query.addToDetails()
@@ -45,9 +47,25 @@ func TestExtractDetails(t *testing.T) {
 	assert.Equal(t, "user_uid", batchDetailsMap[batch{minute, "1adf948179710ba33ac5ed636660f9335b6a250b"}].column)
 	assert.Equal(t, "d0aff49b-5feb-5c47-9408-56491615682f", batchDetailsMap[batch{minute, "1adf948179710ba33ac5ed636660f9335b6a250b"}].columnValue)
 
-	// query.resolveParams()
-	// assert.Equal(t, map[string]string{
-	// 	"location_uid": "721e69b2-af3d-52f8-a2a6-af630baa4be8",
-	// 	"user_uid":     "d0aff49b-5feb-5c47-9408-56491615682f"},
-	// 	query.resolvedParams)
+}
+
+func TestHandleQueryDetails(t *testing.T) {
+	initialSetup()
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("extract.json")
+	conn.Do("LPUSH", redisKey(), sample)
+
+	detailArgs = newQueryDetails("ilike", "location_uid,user_uid")
+
+	query, _ := getLog(redisKey())
+
+	minute := roundToMinute(query.timestamp)
+
+	assert.Equal(t, "location_uid", batchDetailsMap[batch{minute, "0db40a64f409661d773d52075f4cd00531aee122"}].column)
+	assert.Equal(t, "721e69b2-af3d-52f8-a2a6-af630baa4be8", batchDetailsMap[batch{minute, "0db40a64f409661d773d52075f4cd00531aee122"}].columnValue)
+
+	assert.Equal(t, "user_uid", batchDetailsMap[batch{minute, "1adf948179710ba33ac5ed636660f9335b6a250b"}].column)
+	assert.Equal(t, "d0aff49b-5feb-5c47-9408-56491615682f", batchDetailsMap[batch{minute, "1adf948179710ba33ac5ed636660f9335b6a250b"}].columnValue)
 }

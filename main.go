@@ -31,13 +31,16 @@ var (
 	detailsMutex    = &sync.Mutex{}
 	redisQueues     = make([]string, 0)
 	statsQueues     = make([]string, 0)
+	detailArgs      = &queryDetails{}
 
 	// flags
-	queuePtr   string
-	statsPtr   string
-	redisPtr   string
-	redisPwPtr string
-	elasticPtr string
+	queuePtr          string
+	statsPtr          string
+	redisPtr          string
+	redisPwPtr        string
+	elasticPtr        string
+	detailFragmentPtr string
+	detailColumnsPtr  string
 
 	// colors for terminal
 	blue    = color.New(color.FgBlue).SprintFunc()
@@ -62,6 +65,10 @@ func main() {
 	flag.StringVar(&redisPtr, "redisUrl", "", "Redis URL. Can also set via PLS_REDIS_URL env var")
 	flag.StringVar(&redisPwPtr, "redisPassword", "", "Redis password (optional). Can also set via PLS_REDIS_PASSWORD env var")
 	flag.StringVar(&elasticPtr, "elasticUrl", "", "Elasticsearch URL. Can also set via PLS_ELASTIC_URL env var")
+	flag.StringVar(&detailFragmentPtr, "detailFragment", "", "SQL fragment to look for when parsing out query details")
+	flag.StringVar(&detailColumnsPtr, "detailColumn", "", "comma separated list of columns to extract from details and store")
+
+	detailArgs = newQueryDetails(detailFragmentPtr, detailColumnsPtr)
 
 	flag.Parse()
 	initialSetup()
@@ -73,7 +80,7 @@ func main() {
 	// Flush to bulkProc every 60 seconds
 	ticker := time.NewTicker(time.Second * 60)
 	go func() {
-		for _ = range ticker.C {
+		for range ticker.C {
 			iterOverQueries()
 		}
 	}()
