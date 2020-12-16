@@ -8,6 +8,10 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"time"
+
+	logit "github.com/brianbroderick/logit"
+	"github.com/fatih/color"
 )
 
 // for the details field, the first map is each column in question
@@ -17,6 +21,7 @@ type queryDetails struct {
 	columns  []string
 }
 
+// Rediskey?
 type queryDetailStats struct {
 	uid           string  // sha of uniqueSha, column, and columnValue
 	uniqueSha     string  // sha of uniqueStr and preparedStep (if available). This matches what's in the query struct
@@ -24,6 +29,7 @@ type queryDetailStats struct {
 	columnValue   string  // value of column such as "42"
 	totalCount    int32   // number of times the column appeared in queries
 	totalDuration float64 // total duration of each time the column appeared in queries
+	data          map[string]*json.RawMessage
 }
 
 func (q *query) handleQueryDetails() {
@@ -133,4 +139,97 @@ func (q *query) shaQueryDetailStats(column string, columnValue string) string {
 	io.WriteString(h, columnValue)
 	io.WriteString(h, q.uniqueSha)
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func iterOverDetails() {
+	var (
+		duration time.Duration
+		count    int64
+	)
+	now := currentMinute()
+	detailsMutex.Lock()
+	for k := range batchDetailsMap {
+		duration = now.Sub(k.minute)
+		if duration >= (1 * time.Minute) {
+			count++
+			if k.sha == "" {
+				logit.Info("Missing sha in iterOverDetails: %s", batchDetailsMap[k].uid)
+			}
+			batchDetailsMap[k].marshal()
+			data, err := json.Marshal(batchDetailsMap[k].data)
+			if err != nil {
+				logit.Error("Error marshalling batchDetailsMap data: %e", err.Error())
+			}
+			// check on bulker
+			sendToBulker(data)
+			delete(batchDetailsMap, k)
+		}
+	}
+	detailsMutex.Unlock()
+	if count > 0 {
+		color.Set(color.FgCyan)
+		logit.Info("Sent %d messages to ES Bulk Processor", count)
+		color.Unset()
+	}
+}
+
+func (qs *queryDetailStats) marshalString(strToMarshal string, dataKey string) error {
+	b, err := json.Marshal(strToMarshal)
+	if err != nil {
+		return err
+	}
+	rawMarshal := json.RawMessage(b)
+	qs.data[dataKey] = &rawMarshal
+
+	return nil
+}
+
+func (qs *queryDetailStats) marshal() ([]byte, error) {
+	var err error
+
+	// uid
+	if qs.uid != "" {
+		err = qs.marshalString(qs.uid, "uid")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// uniqueSha
+	if qs.uniqueSha != "" {
+		err = qs.marshalString(qs.uniqueSha, "unique_sha")
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// column
+	err = qs.marshalString(qs.column, "column")
+	if err != nil {
+		return nil, err
+	}
+
+	// columnValue
+	err = qs.marshalString(qs.columnValue, "column_value")
+	if err != nil {
+		return nil, err
+	}
+
+	// total count
+	b, err := json.Marshal(qs.totalCount)
+	if err != nil {
+		return nil, err
+	}
+	count := json.RawMessage(b)
+	qs.data["total_count"] = &count
+
+	// duration rounded to 5 decimal points
+	b, err = json.Marshal(round(qs.totalDuration, 0.5, 5))
+	if err != nil {
+		return nil, err
+	}
+	rawDuration := json.RawMessage(b)
+	qs.data["total_duration_ms"] = &rawDuration
+
+	return json.Marshal(qs.data)
 }
