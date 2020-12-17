@@ -188,7 +188,6 @@ func getRecord(t *testing.T, wait time.Duration, username string) float64 {
 	termQuery := elastic.NewTermQuery("user_name", username)
 	result, err := clients["bulk"].Search().
 		Index(indexName()).
-		Type("pglog").
 		Query(termQuery).
 		From(0).Size(1).
 		Do(context.Background())
@@ -247,7 +246,6 @@ func getRecordWithTempTable() int64 {
 	termQuery := elastic.NewTermQuery("user_name", "temp_table")
 	result, err := clients["bulk"].Search().
 		Index(indexName()).
-		Type("pglog").
 		Query(termQuery).
 		From(0).Size(1).
 		Do(context.Background())
