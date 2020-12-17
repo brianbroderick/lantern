@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
@@ -12,6 +14,7 @@ import (
 
 	logit "github.com/brianbroderick/logit"
 	"github.com/fatih/color"
+	elastic "github.com/olivere/elastic/v7"
 )
 
 // for the details field, the first map is each column in question
@@ -126,6 +129,7 @@ func (q *query) addToDetails() {
 				columnValue:   q.detailMap[v],
 				totalCount:    1,
 				totalDuration: q.totalDuration,
+				data:          make(map[string]*json.RawMessage),
 			}
 		}
 
@@ -161,14 +165,14 @@ func iterOverDetails() {
 				logit.Error("Error marshalling batchDetailsMap data: %e", err.Error())
 			}
 			// check on bulker
-			sendToBulker(data)
+			sendToDetailsBulker(data)
 			delete(batchDetailsMap, k)
 		}
 	}
 	detailsMutex.Unlock()
 	if count > 0 {
 		color.Set(color.FgCyan)
-		logit.Info("Sent %d messages to ES Bulk Processor", count)
+		logit.Info("Sent %d messages to ES Details Bulk Processor", count)
 		color.Unset()
 	}
 }
@@ -232,4 +236,32 @@ func (qs *queryDetailStats) marshal() ([]byte, error) {
 	qs.data["total_duration_ms"] = &rawDuration
 
 	return json.Marshal(qs.data)
+}
+
+func detailsIndexName() string {
+	currentDate := time.Now().Local()
+	var buffer bytes.Buffer
+	buffer.WriteString("pgdetails-")
+	buffer.WriteString(currentDate.Format("2006-01-02"))
+	return buffer.String()
+}
+
+func sendToDetailsBulker(message []byte) {
+	request := elastic.NewBulkIndexRequest().
+		Index(detailsIndexName()).
+		Type("pgdetails").
+		Doc(string(message))
+	bulkProc["bulk"].Add(request)
+}
+
+func saveToDetailsElastic(message []byte) {
+	toEs, err := clients["bulk"].Index().
+		Index(detailsIndexName()).
+		Type("pgdetails").
+		BodyString(string(message)).
+		Do(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%+v", toEs)
 }

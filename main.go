@@ -94,6 +94,15 @@ func main() {
 		time.Sleep(42 * time.Millisecond) // stagger threads hitting Redis
 	}
 
+	// Flush to bulkProc every 60 seconds
+	// Do this after other things have spun up to spread load more across the minute.
+	detailsTicker := time.NewTicker(time.Second * 60)
+	go func() {
+		for range detailsTicker.C {
+			iterOverDetails()
+		}
+	}()
+
 	forever := make(chan bool)
 	<-forever
 }
