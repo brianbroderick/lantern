@@ -1,0 +1,15 @@
+{
+  "user_name": "execute_user",
+  "database_name": "sampledb",
+  "process_id": 32135,
+  "remote_host": "10.0.0.129",
+  "session_id": "5fc58b47.7d87",
+  "session_line_num": 777,
+  "command_tag": "SELECT",
+  "session_start_time": "2020-12-01T00:16:07+0000",
+  "virtual_transaction_id": "134/2444",
+  "error_severity": "LOG",
+  "detail": "parameters: $1 = '%scott, george, c%', $2 = 'd5d3c4d6-735f-413a-a360-96acbe1d943b', $3 = '6f962f29-53dd-437f-a202-11f7d7679586'",
+  "message": "duration: 2.651 ms  execute ecto_41315: SELECT c0.\"id\" FROM \"some_table\" AS c0 WHERE (c0.\"name\" ilike $1) AND (c0.\"location_uid\" = $2) AND (c0.\"user_uid\" = $3) LIMIT 100",
+  "@timestamp": "2020-12-01T00:39:16.918+0000"
+}

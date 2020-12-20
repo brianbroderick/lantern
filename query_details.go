@@ -77,10 +77,7 @@ func (q *query) extractDetails() {
 		return
 	}
 
-	q.detail = strings.ReplaceAll(q.detail, "parameters:", "")
-
-	details := strings.Split(q.detail, ",")
-
+	details := q.splitIntoParams()
 	re := regexp.MustCompile(`(?P<param>\$\d+) = '(?P<value>.*)'`)
 	q.detailMap = make(map[string]string)
 
@@ -90,6 +87,19 @@ func (q *query) extractDetails() {
 			q.detailMap[match[1]] = match[2]
 		}
 	}
+}
+
+func (q *query) splitIntoParams() []string {
+	re := regexp.MustCompile(`\$\d+\s*=\s*'.*?'`)
+	match := re.FindAllString(q.detail, -1)
+	params := []string{}
+
+	if len(match) >= 1 {
+		for _, v := range match {
+			params = append(params, v)
+		}
+	}
+	return params
 }
 
 func (q *query) findParam() {
@@ -113,7 +123,7 @@ func (q *query) addToDetails() {
 	minute := roundToMinute(q.timestamp)
 
 	for k, v := range q.paramMap {
-		uid := q.shaQueryDetailStats(k, v)
+		uid := q.shaQueryDetailStats(k, q.detailMap[v])
 
 		// Multiple goroutines will access this hash
 		detailsMutex.Lock()
