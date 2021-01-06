@@ -41,9 +41,11 @@ func (q *query) handleQueryDetails() {
 		return
 	}
 
-	q.extractDetails()
 	q.findParam()
-	q.addToDetails()
+	if len(q.paramMap) > 0 {
+		q.extractDetails()
+		q.addToDetails()
+	}
 }
 
 func newQueryDetails(fragment string, columns string) *queryDetails {

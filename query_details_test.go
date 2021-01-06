@@ -101,6 +101,8 @@ func TestHandleQueryDetailsWithCommas(t *testing.T) {
 	query, _ := getLog(redisKey)
 	query.handleQueryDetails()
 
+	assert.Equal(t, 2, len(query.paramMap))
+
 	minute := roundToMinute(query.timestamp)
 
 	assert.Equal(t, "location_uid", batchDetailsMap[batch{minute, "46a0a6742ce40bc5002314cdeaaa0f0eb88bc848"}].column)
@@ -109,4 +111,22 @@ func TestHandleQueryDetailsWithCommas(t *testing.T) {
 	assert.Equal(t, "user_uid", batchDetailsMap[batch{minute, "51554bfe74c13945b63cb5729701ddbec78e6425"}].column)
 	assert.Equal(t, "6f962f29-53dd-437f-a202-11f7d7679586", batchDetailsMap[batch{minute, "51554bfe74c13945b63cb5729701ddbec78e6425"}].columnValue)
 
+}
+
+func TestHandleQueryDetailsWhenColumnNotFound(t *testing.T) {
+	initialSetup()
+
+	redisKey := "TestHandleQueryDetailsWhenColumnNotFound"
+	conn := pool.Get()
+	defer conn.Close()
+
+	sample := readPayload("extract_parameters_not_found.json")
+	conn.Do("LPUSH", redisKey, sample)
+
+	detailArgs = newQueryDetails("ilike", "location_uid,user_uid")
+
+	query, _ := getLog(redisKey)
+	query.handleQueryDetails()
+
+	assert.Equal(t, 0, len(query.paramMap))
 }
