@@ -261,7 +261,6 @@ func detailsIndexName() string {
 func sendToDetailsBulker(message []byte) {
 	request := elastic.NewBulkIndexRequest().
 		Index(detailsIndexName()).
-		Type("pgdetails").
 		Doc(string(message))
 	bulkProc["bulk"].Add(request)
 }
@@ -269,7 +268,6 @@ func sendToDetailsBulker(message []byte) {
 func saveToDetailsElastic(message []byte) {
 	toEs, err := clients["bulk"].Index().
 		Index(detailsIndexName()).
-		Type("pgdetails").
 		BodyString(string(message)).
 		Do(context.Background())
 	if err != nil {
