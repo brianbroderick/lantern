@@ -62,6 +62,11 @@ func newQueryDetails(fragment string, columns string) *queryDetails {
 }
 
 func (q *query) matchFragment() bool {
+	// If fragment hasn't been set, return
+	if detailArgs.fragment == "" {
+		return false
+	}
+
 	return strings.Contains(q.uniqueStr, detailArgs.fragment)
 }
 
@@ -263,6 +268,8 @@ func sendToDetailsBulker(message []byte) {
 		Index(detailsIndexName()).
 		Doc(string(message))
 	bulkProc["bulk"].Add(request)
+
+	logit.Info("sendtodetailsbulker : %s\n", string(message))
 }
 
 func saveToDetailsElastic(message []byte) {
