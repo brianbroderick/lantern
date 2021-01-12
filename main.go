@@ -68,9 +68,11 @@ func main() {
 	flag.StringVar(&detailFragmentPtr, "detailFragment", "", "SQL fragment to look for when parsing out query details")
 	flag.StringVar(&detailColumnsPtr, "detailColumn", "", "comma separated list of columns to extract from details and store")
 
-	detailArgs = newQueryDetails(detailFragmentPtr, detailColumnsPtr)
-
 	flag.Parse()
+	// set detail flags after they've been parsed
+	detailArgs = newQueryDetails(detailFragmentPtr, detailColumnsPtr)
+	logit.Info("detailArgs: %v", detailArgs)
+
 	initialSetup()
 	SetupElastic()
 
