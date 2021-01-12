@@ -79,11 +79,13 @@ func TestHandleQueryDetails(t *testing.T) {
 
 	minute := roundToMinute(query.timestamp)
 
-	assert.Equal(t, "location_uid", batchDetailsMap[batch{minute, "9abbefa5a8e865f6b191b1124e5631c08fc43c71"}].column)
-	assert.Equal(t, "8819196b-d5b4-47d5-9646-8645e2b2ed85", batchDetailsMap[batch{minute, "9abbefa5a8e865f6b191b1124e5631c08fc43c71"}].columnValue)
+	record1 := batchDetailsMap[batch{minute, "9abbefa5a8e865f6b191b1124e5631c08fc43c71"}]
+	assert.Equal(t, "location_uid", record1.column)
+	assert.Equal(t, "8819196b-d5b4-47d5-9646-8645e2b2ed85", record1.columnValue)
 
-	assert.Equal(t, "user_uid", batchDetailsMap[batch{minute, "4c4fbcc9ad216febbc3e77e8b99c50ab0c37cda4"}].column)
-	assert.Equal(t, "b15e38eb-c09f-46b7-ae35-deee2cdffad2", batchDetailsMap[batch{minute, "4c4fbcc9ad216febbc3e77e8b99c50ab0c37cda4"}].columnValue)
+	record := batchDetailsMap[batch{minute, "4c4fbcc9ad216febbc3e77e8b99c50ab0c37cda4"}]
+	assert.Equal(t, "user_uid", record.column)
+	assert.Equal(t, "b15e38eb-c09f-46b7-ae35-deee2cdffad2", record.columnValue)
 }
 
 func TestHandleQueryDetailsWithCommas(t *testing.T) {

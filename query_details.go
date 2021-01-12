@@ -32,6 +32,7 @@ type queryDetailStats struct {
 	columnValue   string  // value of column such as "42"
 	totalCount    int32   // number of times the column appeared in queries
 	totalDuration float64 // total duration of each time the column appeared in queries
+	timestamp     time.Time
 	data          map[string]*json.RawMessage
 }
 
@@ -142,6 +143,7 @@ func (q *query) addToDetails() {
 			batchDetailsMap[batch{minute, uid}] = &queryDetailStats{
 				uid:           uid,
 				uniqueSha:     q.uniqueSha,
+				timestamp:     q.timestamp,
 				column:        k,
 				columnValue:   q.detailMap[v],
 				totalCount:    1,
@@ -252,6 +254,15 @@ func (qs *queryDetailStats) marshal() ([]byte, error) {
 	rawDuration := json.RawMessage(b)
 	qs.data["total_duration_ms"] = &rawDuration
 
+	// timestamp
+	b, err = json.Marshal(qs.timestamp)
+	if err != nil {
+		return nil, err
+	}
+
+	tm := json.RawMessage(b)
+	qs.data["@timestamp"] = &tm
+
 	return json.Marshal(qs.data)
 }
 
@@ -268,8 +279,6 @@ func sendToDetailsBulker(message []byte) {
 		Index(detailsIndexName()).
 		Doc(string(message))
 	bulkProc["bulk"].Add(request)
-
-	logit.Info("sendtodetailsbulker : %s\n", string(message))
 }
 
 func saveToDetailsElastic(message []byte) {
