@@ -1,6 +1,6 @@
 # Lantern
 
-The original version of Lantern aggregated and exported Postgres query logs to Elasticsearch. This code has moved to the deprecated folder and is only for reference. If you’re using this code, create an issue, and I’ll ensure all the import paths are correct and able to build. 
+The original version of Lantern aggregated and exported Postgres query logs to Elasticsearch. This code has moved to the `deprecated` folder and is only for reference. If you’re using this code, create an issue, and I’ll ensure all the import paths are correct and able to build. 
 
 The original concept depends on the Redislog extension installed on Postgres. However, managed Postgres, such as AWS RDS, does not allow the installation of custom extensions. 
 
