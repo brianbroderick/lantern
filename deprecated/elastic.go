@@ -1,4 +1,4 @@
-package main
+package deprecated
 
 import (
 	"bytes"
@@ -15,6 +15,7 @@ import (
 	logit "github.com/brianbroderick/logit"
 	elastic "github.com/olivere/elastic/v7"
 )
+
 var esIsReady = false
 
 // SetupElastic sets up elastic conn
@@ -232,15 +233,14 @@ func elasticURL() string {
 	return "http://localhost:9200"
 }
 
-
-func validateCertificates() bool  {
+func validateCertificates() bool {
 	if value, ok := os.LookupEnv("PLS_VALIDATE_CERTIFICATES"); ok {
 		return strings.EqualFold(value, "true")
 	}
 	return true
 }
 
-func isUsingBasicAuth() bool  {
+func isUsingBasicAuth() bool {
 	if value, ok := os.LookupEnv("PLS_ELASTIC_BASIC_AUTH"); ok {
 		return strings.EqualFold(value, "true")
 	}

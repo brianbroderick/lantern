@@ -1,4 +1,4 @@
-package main
+package deprecated
 
 import (
 	"encoding/json"
@@ -177,7 +177,7 @@ func getMultiLog(redisKey string, task string) (bool, int64, int64, error) {
 	return false, 0, queueLength, nil
 }
 
-//SetupRedis setup redis
+// SetupRedis setup redis
 func SetupRedis() {
 	if os.Getenv("PLATFORM_ENV") != "test" {
 		logit.Info("Redis URL: %s\n", redisURL())
