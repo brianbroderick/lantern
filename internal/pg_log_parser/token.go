@@ -30,6 +30,9 @@ const (
 	BADSTRING // "abc
 	BADESCAPE // \qwe
 	TIMESTAMP // 2023-07-10 09:52:46 MDT
+	DATE      // 2023-07-10
+	TIME      // 09:52:46
+	TIMEZONE  // MDT
 	IPADDR    // 127.0.0.1
 	// literalEnd
 
@@ -64,6 +67,9 @@ var Tokens = [...]string{
 	BADSTRING: "BADSTRING",
 	BADESCAPE: "BADESCAPE",
 	TIMESTAMP: "TIMESTAMP",
+	DATE:      "DATE",
+	TIME:      "TIME",
+	TIMEZONE:  "TIMEZONE",
 	IPADDR:    "IPADDR",
 
 	LPAREN:     "(",

@@ -42,8 +42,8 @@ func (p *Parser) ParseIdent() (string, error) {
 	return lit, nil
 }
 
-// parseString parses a string.
-func (p *Parser) parseString() (string, error) {
+// ParseString parses a string.
+func (p *Parser) ParseString() (string, error) {
 	tok, pos, lit := p.ScanIgnoreWhitespace()
 	if tok != STRING {
 		return "", newParseError(tokstr(tok, lit), []string{"string"}, pos)

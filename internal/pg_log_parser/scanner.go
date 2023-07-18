@@ -277,23 +277,41 @@ func (s *Scanner) scanNumber() (tok Token, pos Pos, lit string) {
 	_, _ = buf.WriteString(s.scanDigits())
 
 	// If next code points are a full stop and digit then consume them.
-	isDecimal := false
-	if ch0, _ := s.read(); ch0 == '.' {
-		isDecimal = true
-		if ch1, _ := s.read(); isDigit(ch1) {
-			_, _ = buf.WriteRune(ch0)
-			_, _ = buf.WriteRune(ch1)
+	dots := 0
+
+	for {
+		ch, _ := s.read()
+		if ch == eof {
+			break
+		} else if ch == '.' {
+			dots++
+			_, _ = buf.WriteRune(ch)
 			_, _ = buf.WriteString(s.scanDigits())
-		} else {
+		} else if !isDigit(ch) {
 			s.unread()
+			break
+		} else {
+			_, _ = buf.WriteRune(ch)
 		}
-	} else {
-		s.unread()
 	}
+	// if ch0, _ := s.read(); ch0 == '.' {
+	// 	isDecimal = true
+	// 	if ch1, _ := s.read(); isDigit(ch1) {
+	// 		_, _ = buf.WriteRune(ch0)
+	// 		_, _ = buf.WriteRune(ch1)
+	// 		_, _ = buf.WriteString(s.scanDigits())
+	// 	} else {
+	// 		s.unread()
+	// 	}
+	// } else {
+	// 	s.unread()
+	// }
 
 	// Read as a duration or integer if it doesn't have a fractional part.
-	if !isDecimal {
+	if dots == 0 {
 		return INTEGER, pos, buf.String()
+	} else if dots > 1 {
+		return IPADDR, pos, buf.String()
 	}
 
 	return NUMBER, pos, buf.String()

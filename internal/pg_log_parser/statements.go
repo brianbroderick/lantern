@@ -1,13 +1,27 @@
 package pgLogParser
 
-import "bytes"
+import (
+	"bytes"
+	"time"
+)
 
 //*******
 // LOG
 //*******
 
 // LogStatement represents a log entry
-type LogStatement struct{}
+type LogStatement struct {
+	eventDate    time.Time
+	remoteHost   string
+	remotePort   int
+	userName     string
+	databaseName string
+	processID    int
+	duration     time.Duration
+	preparedStep string
+	preparedName string
+	statement    string
+}
 
 func (s *LogStatement) String() string {
 	var buf bytes.Buffer
@@ -21,7 +35,9 @@ func (s *LogStatement) KeyTok() Token {
 }
 
 // parseLogStatement parses a log entry a Statement AST object.
-// This function assumes the TIMESTAMP token has already been consumed.
 func (p *Parser) parseLogStatement() (*LogStatement, error) {
-	return &LogStatement{}, nil
+	p.Unscan()
+	stmt := &LogStatement{}
+
+	return stmt, nil
 }
