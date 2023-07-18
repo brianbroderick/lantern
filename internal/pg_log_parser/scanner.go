@@ -278,6 +278,8 @@ func (s *Scanner) scanNumber() (tok Token, pos Pos, lit string) {
 
 	// If next code points are a full stop and digit then consume them.
 	dots := 0
+	colons := 0
+	hyphens := 0
 
 	for {
 		ch, _ := s.read()
@@ -287,6 +289,14 @@ func (s *Scanner) scanNumber() (tok Token, pos Pos, lit string) {
 			dots++
 			_, _ = buf.WriteRune(ch)
 			_, _ = buf.WriteString(s.scanDigits())
+		} else if ch == ':' {
+			colons++
+			_, _ = buf.WriteRune(ch)
+			_, _ = buf.WriteString(s.scanDigits())
+		} else if ch == '-' {
+			hyphens++
+			_, _ = buf.WriteRune(ch)
+			_, _ = buf.WriteString(s.scanDigits())
 		} else if !isDigit(ch) {
 			s.unread()
 			break
@@ -294,27 +304,23 @@ func (s *Scanner) scanNumber() (tok Token, pos Pos, lit string) {
 			_, _ = buf.WriteRune(ch)
 		}
 	}
-	// if ch0, _ := s.read(); ch0 == '.' {
-	// 	isDecimal = true
-	// 	if ch1, _ := s.read(); isDigit(ch1) {
-	// 		_, _ = buf.WriteRune(ch0)
-	// 		_, _ = buf.WriteRune(ch1)
-	// 		_, _ = buf.WriteString(s.scanDigits())
-	// 	} else {
-	// 		s.unread()
-	// 	}
-	// } else {
-	// 	s.unread()
-	// }
 
-	// Read as a duration or integer if it doesn't have a fractional part.
-	if dots == 0 {
-		return INTEGER, pos, buf.String()
-	} else if dots > 1 {
-		return IPADDR, pos, buf.String()
+	// Date and Time
+	if hyphens == 2 {
+		return DATE, pos, buf.String()
+	} else if colons == 2 {
+		return TIME, pos, buf.String()
 	}
 
-	return NUMBER, pos, buf.String()
+	// If there is one dot, it's a number (aka float)
+	if dots == 0 {
+		return INTEGER, pos, buf.String()
+	} else if dots == 1 {
+		return NUMBER, pos, buf.String()
+	}
+
+	// If there are more than one dot, it's an IP Address
+	return IPADDR, pos, buf.String()
 }
 
 // scanDigits consumes a contiguous series of digits.

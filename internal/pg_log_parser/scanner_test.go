@@ -19,6 +19,16 @@ func TestScanner(t *testing.T) {
 		lit string
 	}{
 		{
+			s:   "2023-07-10",
+			tok: DATE,
+			lit: "2023-07-10",
+		},
+		{
+			s:   "09:52:46",
+			tok: TIME,
+			lit: "09:52:46",
+		},
+		{
 			s:   "4321",
 			tok: INTEGER,
 			lit: "4321",
