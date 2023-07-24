@@ -134,20 +134,19 @@ func (p *Parser) Scan() (tok Token, pos Pos, lit string) { return p.t.Scan() }
 
 func (p *Parser) UnscanAndReturn() (tok Token, pos Pos, lit string) { return p.t.UnscanAndReturn() }
 
-// This will likely turn into a ScanQuery method that returns a Query object
-// func (p *Parser) ScanSentence() (tok Token, pos Pos, lit string) {
-// 	var words []string
-// 	for p.t.n > 0 {
-// 		tok, _, lit = p.Scan()
-// 		words = append(words, lit)
-// 	}
-// 	tok, pos, lit = p.t.s.ScanSentence()
-// 	// if lit != "" {
-// 	// 	words = append(words, lit)
-// 	// }
+func (p *Parser) ScanQuery() (tok Token, pos Pos, lit string) {
+	var words []string
+	for p.t.n > 0 {
+		_, _, lit = p.Scan()
+		words = append(words, lit)
+	}
+	tok, pos, lit = p.t.s.scanQuery()
+	// if lit != "" {
+	// 	words = append(words, lit)
+	// }
 
-// 	return tok, pos, strings.Join(words, " ") + lit
-// }
+	return tok, pos, strings.Join(words, " ") + lit
+}
 
 // Unscan pushes the previously token back onto the underlying buffer.
 func (p *Parser) Unscan() { p.t.Unscan() }

@@ -34,6 +34,7 @@ const (
 	TIME      // 09:52:46
 	TIMEZONE  // MDT
 	IPADDR    // 127.0.0.1
+	QUERY     // select * from users
 	// literalEnd
 
 	// Misc characters
@@ -73,6 +74,7 @@ var Tokens = [...]string{
 	TIME:      "TIME",
 	TIMEZONE:  "TIMEZONE",
 	IPADDR:    "IPADDR",
+	QUERY:     "QUERY",
 
 	LPAREN:     "(",
 	RPAREN:     ")",

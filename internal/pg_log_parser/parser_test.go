@@ -21,45 +21,46 @@ func TestDuration(t *testing.T) {
 }
 
 func TestParser(t *testing.T) {
-	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>:"
-	_, err := NewParser(strings.NewReader(s)).ParseStatement()
+	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1"
+	stmt, err := NewParser(strings.NewReader(s)).ParseStatement()
 	assert.NoError(t, err)
+	assert.Equal(t, "2023-07-10 09:52:46 MDT: select * from foo where bar = $1", stmt.ShortString())
 }
 
-// func TestParserParseStatement(t *testing.T) {
-// 	// timestamp, _ := time.Parse(longForm, "2023-07-10 09:52:46 MDT")
-// 	duration, _ := time.ParseDuration("0.059ms")
+func TestParserParseStatement(t *testing.T) {
+	var tests = []struct {
+		s   string
+		obj Statement
+		p   string
+		err string
+	}{
+		// Single log entry without query
+		{
+			s: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users where id = $1`,
+			obj: &LogStatement{
+				date:            "2023-07-10",
+				time:            "09:52:46",
+				timezone:        "MDT",
+				remoteHost:      "127.0.0.1",
+				remotePort:      50032,
+				user:            "postgres",
+				database:        "sampledb",
+				pid:             24649,
+				severity:        "LOG",
+				durationLit:     "0.059",
+				durationMeasure: "ms",
+				preparedStep:    "execute",
+				preparedName:    "unnamed",
+				statement:       "select * from users where id = $1",
+			},
+			p: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users where id = $1`,
+		},
+	}
 
-// 	var tests = []struct {
-// 		s   string
-// 		obj Statement
-// 		p   string
-// 		err string
-// 	}{
-// 		// Single log entry without query
-// 		{
-// 			s: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>:`,
-// 			obj: &LogStatement{
-// 				logDate:      "2023-07-10 09:52:46 MDT",
-// 				remoteHost:   "127.0.0.1",
-// 				remotePort:   50032,
-// 				user:         "postgres",
-// 				database:     "sampledb",
-// 				pid:          24649,
-// 				severity:     "LOG",
-// 				duration:     duration,
-// 				preparedStep: "execute",
-// 				preparedName: "unnamed",
-// 				statement:    "",
-// 			},
-// 			p: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>:`,
-// 		},
-// 	}
-
-// 	for _, tt := range tests {
-// 		obj, err := NewParser(strings.NewReader(tt.s)).ParseStatement()
-// 		assert.NoError(t, err)
-// 		assert.Equal(t, tt.obj, obj)
-// 		assert.Equal(t, tt.p, tt.obj.String())
-// 	}
-// }
+	for _, tt := range tests {
+		obj, err := NewParser(strings.NewReader(tt.s)).ParseStatement()
+		assert.NoError(t, err)
+		assert.Equal(t, tt.obj, obj)
+		assert.Equal(t, tt.p, tt.obj.String())
+	}
+}

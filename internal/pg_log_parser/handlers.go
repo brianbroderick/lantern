@@ -47,5 +47,6 @@ func (t *ParseTree) Parse(p *Parser) (Statement, error) {
 // Statement represents a single command
 type Statement interface {
 	String() string
+	ShortString() string
 	KeyTok() Token
 }

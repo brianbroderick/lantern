@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"strings"
 )
 
 // scanner is a wrapper for io.RuneScanner to scan a slice of runes
@@ -340,6 +341,26 @@ func (s *Scanner) scanDigits() string {
 		_, _ = buf.WriteRune(ch)
 	}
 	return buf.String()
+}
+
+func (s *Scanner) scanQuery() (tok Token, pos Pos, lit string) {
+	var buf bytes.Buffer
+	var ch rune
+
+	// Read every subsequent rune into the buffer.
+	// EOF will cause the loop to exit.
+	for {
+		ch, pos = s.read()
+		if ch == eol || ch == eof {
+			break
+		} else {
+			_, _ = buf.WriteRune(ch)
+		}
+	}
+
+	str := strings.TrimSpace(buf.String())
+
+	return QUERY, pos, str
 }
 
 // isWhitespace returns true if the rune is a space, tab, or newline.

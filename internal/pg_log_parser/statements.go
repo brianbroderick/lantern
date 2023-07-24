@@ -32,7 +32,7 @@ type LogStatement struct {
 
 func (s *LogStatement) String() string {
 	var buf bytes.Buffer
-	_, _ = buf.WriteString(fmt.Sprintf("%s %s %s:%s(%d):%s@%s:[%d]:%s:  duration: %s %s  %s %s:%s:",
+	_, _ = buf.WriteString(fmt.Sprintf("%s %s %s:%s(%d):%s@%s:[%d]:%s:  duration: %s %s  %s <%s>: %s",
 		s.date, s.time, s.timezone, s.remoteHost, s.remotePort, s.user, s.database, s.pid, s.severity, s.durationLit, s.durationMeasure,
 		s.preparedStep, s.preparedName, s.statement))
 
@@ -41,6 +41,10 @@ func (s *LogStatement) String() string {
 
 func (s *LogStatement) KeyTok() Token {
 	return DATE
+}
+
+func (s *LogStatement) ShortString() string {
+	return fmt.Sprintf("%s %s %s: %s", s.date, s.time, s.timezone, s.statement)
 }
 
 // parseLogStatement parses a log entry a Statement AST object.
@@ -172,7 +176,6 @@ func (p *Parser) parseLogStatement() (*LogStatement, error) {
 				return nil, parseErr(iter, IDENT, tok)
 			}
 			stmt.preparedStep = lit
-			// 2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>:
 		case 24:
 			if tok != LT {
 				return nil, parseErr(iter, LT, tok)
@@ -190,22 +193,18 @@ func (p *Parser) parseLogStatement() (*LogStatement, error) {
 			if tok != COLON {
 				return nil, parseErr(iter, COLON, tok)
 			}
-		// case 28:
-		// 	if tok != IDENT {
-		// 		return nil, parseErr(iter, IDENT, tok)
-		// 	}
-		// 	stmt.statement = lit
 		default:
-			if iter > 27 {
-				// return nil, fmt.Errorf("too many tokens in log statement")
+			qtok, _, qlit := p.ScanQuery()
+			if qtok == QUERY {
+				stmt.statement = lit + " " + qlit
 				return stmt, nil
+			} else {
+				return nil, parseErr(iter, QUERY, tok)
 			}
 		}
 
 		iter++
-
 	}
-
 }
 
 func parseErr(iter int, expected Token, tok Token) error {
