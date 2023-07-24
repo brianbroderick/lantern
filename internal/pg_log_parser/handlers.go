@@ -11,7 +11,7 @@ type ParseTree struct {
 
 func init() {
 	// Iterate INTEGER times over rest of the command
-	Language.Handle(TIMESTAMP, func(p *Parser) (Statement, error) {
+	Language.Handle(DATE, func(p *Parser) (Statement, error) {
 		return p.parseLogStatement()
 	})
 }
@@ -32,16 +32,16 @@ func (t *ParseTree) Handle(tok Token, fn func(*Parser) (Statement, error)) {
 
 // Parse parses a statement using the language defined in the parse tree.
 func (t *ParseTree) Parse(p *Parser) (Statement, error) {
-	for {
-		tok, pos, lit := p.ScanIgnoreWhitespace()
+	// for { // not sure why we had this loop
+	tok, pos, lit := p.ScanIgnoreWhitespace()
 
-		if stmt := t.Handlers[tok]; stmt != nil {
-			return stmt(p)
-		}
-
-		// There were no registered handlers. Return the valid tokens in the order they were added.
-		return nil, newParseError(tokstr(tok, lit), t.Keys, pos)
+	if stmt := t.Handlers[tok]; stmt != nil {
+		return stmt(p)
 	}
+
+	// There were no registered handlers. Return the valid tokens in the order they were added.
+	return nil, newParseError(tokstr(tok, lit), t.Keys, pos)
+	// }
 }
 
 // Statement represents a single command

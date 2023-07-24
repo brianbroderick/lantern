@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+// const longForm = "2006-01-02 15:04:05 MST"
+
 // Parser represents a parser.
 type Parser struct {
 	t      *tokenizer

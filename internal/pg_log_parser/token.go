@@ -47,6 +47,8 @@ const (
 	APOSTROPHE // '
 	DOT        // .
 	ATSYMBOL   // @
+	LT         // <
+	GT         // >
 
 	// placeholder for keywords, when we need some
 	keywordBeg
@@ -82,6 +84,8 @@ var Tokens = [...]string{
 	APOSTROPHE: "'",
 	DOT:        ".",
 	ATSYMBOL:   "@",
+	LT:         "<",
+	GT:         ">",
 }
 
 var keywords map[string]Token

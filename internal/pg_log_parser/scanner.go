@@ -70,6 +70,10 @@ func (s *Scanner) Scan() (tok Token, pos Pos, lit string) {
 		return DOT, pos, ""
 	case '@':
 		return ATSYMBOL, pos, ""
+	case '>':
+		return GT, pos, ""
+	case '<':
+		return LT, pos, ""
 	}
 
 	return ILLEGAL, pos, string(ch)
