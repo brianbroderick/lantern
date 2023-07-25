@@ -63,7 +63,7 @@ func (p *Parser) ParseInt(min, max int) (int, error) {
 
 	// Convert string to int.
 	n, err := strconv.Atoi(lit)
-	if err != nil {
+	if hasErr(err) {
 		return 0, &ParseError{Message: err.Error(), Pos: pos}
 	} else if min > n || n > max {
 		return 0, &ParseError{
@@ -84,7 +84,7 @@ func (p *Parser) ParseUInt64() (uint64, error) {
 
 	// Convert string to unsigned 64-bit integer
 	n, err := strconv.ParseUint(lit, 10, 64)
-	if err != nil {
+	if hasErr(err) {
 		return 0, &ParseError{Message: err.Error(), Pos: pos}
 	}
 

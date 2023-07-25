@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 //*******
@@ -27,7 +26,7 @@ type LogStatement struct {
 	preparedStep    string
 	preparedName    string
 	statement       string
-	duration        time.Duration
+	// duration        time.Duration
 }
 
 func (s *LogStatement) String() string {
@@ -62,7 +61,7 @@ func (p *Parser) parseLogStatement() (*LogStatement, error) {
 		tok, _, lit := p.ScanIgnoreWhitespace()
 		if tok == INTEGER {
 			intLit, err = strconv.Atoi(lit)
-			if err != nil {
+			if hasErr(err) {
 				return nil, err
 			}
 		}
