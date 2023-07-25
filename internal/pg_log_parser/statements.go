@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 //*******
@@ -193,9 +194,25 @@ func (p *Parser) parseLogStatement() (*LogStatement, error) {
 				return nil, parseErr(iter, COLON, tok)
 			}
 		default:
+			qLines := make([]string, 0)
+			qLines = append(qLines, lit)
 			qtok, _, qlit := p.ScanQuery()
 			if qtok == QUERY {
-				stmt.statement = lit + " " + qlit
+				qLines = append(qLines, qlit)
+				for {
+					peektok, _, _ := p.ScanIgnoreWhitespace()
+					p.Unscan()
+					if peektok == DATE || peektok == EOF {
+						break
+					}
+					qtok, _, qlit := p.ScanQuery()
+					if qtok == QUERY {
+						qLines = append(qLines, qlit)
+					} else {
+						break
+					}
+				}
+				stmt.statement = strings.Join(qLines, " ")
 				return stmt, nil
 			} else {
 				return nil, parseErr(iter, QUERY, tok)

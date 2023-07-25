@@ -34,7 +34,7 @@ func TestParserParseStatement(t *testing.T) {
 		p   string
 		err string
 	}{
-		// Single log entry without query
+		// Single line log entry
 		{
 			s: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users where id = $1`,
 			obj: &LogStatement{
@@ -55,6 +55,49 @@ func TestParserParseStatement(t *testing.T) {
 			},
 			p: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users where id = $1`,
 		},
+		// Multiple line log entry
+		{
+			s: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users\nwhere id = $1`,
+			obj: &LogStatement{
+				date:            "2023-07-10",
+				time:            "09:52:46",
+				timezone:        "MDT",
+				remoteHost:      "127.0.0.1",
+				remotePort:      50032,
+				user:            "postgres",
+				database:        "sampledb",
+				pid:             24649,
+				severity:        "LOG",
+				durationLit:     "0.059",
+				durationMeasure: "ms",
+				preparedStep:    "execute",
+				preparedName:    "unnamed",
+				statement:       `select * from users\nwhere id = $1`,
+			},
+			p: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users\nwhere id = $1`,
+		},
+		// // Two log entries
+		// {
+		// 	s: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users where id = $1
+		// 	2023-07-10 10:00:00 MDT:127.0.0.1(50032):postgres@sampledb:[24650]:LOG:  duration: 0.060 ms  execute <unnamed>: select * from users where id = $1`,
+		// 	obj: &LogStatement{
+		// 		date:            "2023-07-10",
+		// 		time:            "09:52:46",
+		// 		timezone:        "MDT",
+		// 		remoteHost:      "127.0.0.1",
+		// 		remotePort:      50032,
+		// 		user:            "postgres",
+		// 		database:        "sampledb",
+		// 		pid:             24649,
+		// 		severity:        "LOG",
+		// 		durationLit:     "0.059",
+		// 		durationMeasure: "ms",
+		// 		preparedStep:    "execute",
+		// 		preparedName:    "unnamed",
+		// 		statement:       "select * from users where id = $1",
+		// 	},
+		// 	p: `2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from users where id = $1`,
+		// },
 	}
 
 	for _, tt := range tests {
