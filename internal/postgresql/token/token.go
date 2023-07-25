@@ -1,10 +1,12 @@
 package token
 
+import "strings"
+
 type TokenType int
 
 type Token struct {
-	Type TokenType
-	Lit  string
+	Type    TokenType
+	Literal string
 }
 
 // PG Log entry:
@@ -40,8 +42,8 @@ const (
 	LT       // <
 
 	// Keywords
-	// keywordBeg
-	// keywordEnd
+	keywordBeg
+	keywordEnd
 )
 
 // These are how a string is mapped to the token
@@ -74,13 +76,13 @@ var Tokens = [...]string{
 	LT:       "LT '<'",
 }
 
-// var keywords map[string]TokenType
+var keywords map[string]TokenType
 
 func init() {
-	// keywords = make(map[string]TokenType)
-	// for tok := keywordBeg + 1; tok < keywordEnd; tok++ {
-	// 	keywords[strings.ToLower(Tokens[tok])] = tok
-	// }
+	keywords = make(map[string]TokenType)
+	for tok := keywordBeg + 1; tok < keywordEnd; tok++ {
+		keywords[strings.ToLower(Tokens[tok])] = tok
+	}
 }
 
 // String returns the string representation of the token.
@@ -91,11 +93,11 @@ func (tok TokenType) String() string {
 	return ""
 }
 
-// // Lookup returns the token associated with a given string.
-// func Lookup(ident string) TokenType {
-// 	if tok, ok := keywords[strings.ToLower(ident)]; ok {
-// 		return tok
-// 	}
+// Lookup returns the token associated with a given string.
+func Lookup(ident string) TokenType {
+	if tok, ok := keywords[strings.ToLower(ident)]; ok {
+		return tok
+	}
 
-// 	return IDENT
-// }
+	return IDENT
+}

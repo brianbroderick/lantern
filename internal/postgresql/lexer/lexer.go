@@ -56,7 +56,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = l.scanString()
 		return tok, pos
 	case 0:
-		tok = token.Token{Type: token.EOF, Lit: ""}
+		tok = token.Token{Type: token.EOF, Literal: ""}
 	default:
 		if isLetter(l.ch) {
 			l.unread()
@@ -79,7 +79,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 }
 
 func newToken(tokenType token.TokenType, ch rune) token.Token {
-	return token.Token{Type: tokenType, Lit: string(ch)}
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }
 
 func (l *Lexer) read() {
@@ -145,7 +145,7 @@ func (l *Lexer) scanIdent() token.Token {
 		}
 	}
 	lit := buf.String()
-	return token.Token{Type: token.Lookup(lit), Lit: lit}
+	return token.Token{Type: token.Lookup(lit), Literal: lit}
 }
 
 func (l *Lexer) scanString() token.Token {
@@ -159,7 +159,7 @@ func (l *Lexer) scanString() token.Token {
 		}
 	}
 	lit := buf.String()
-	return token.Token{Type: token.STRING, Lit: lit}
+	return token.Token{Type: token.STRING, Literal: lit}
 }
 
 func (l *Lexer) scanNumber() token.Token {
@@ -173,7 +173,7 @@ func (l *Lexer) scanNumber() token.Token {
 			_, _ = buf.WriteRune(l.ch)
 		}
 	}
-	return token.Token{Type: token.INT, Lit: buf.String()}
+	return token.Token{Type: token.INT, Literal: buf.String()}
 }
 
 // isWhitespace returns true if the rune is a space, tab, or newline.

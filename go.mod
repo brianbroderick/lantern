@@ -1,4 +1,4 @@
-module brianbroderick/lantern
+module github.com/brianbroderick/lantern
 
 go 1.20
 
