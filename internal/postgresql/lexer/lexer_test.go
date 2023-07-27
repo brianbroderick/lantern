@@ -11,16 +11,16 @@ func TestSimpleScan(t *testing.T) {
 	input := `< > : ( ) [ ] foo 12345 `
 
 	tests := []token.Token{
-		{Type: token.LT, Literal: "<"},
-		{Type: token.GT, Literal: ">"},
-		{Type: token.COLON, Literal: ":"},
-		{Type: token.LPAREN, Literal: "("},
-		{Type: token.RPAREN, Literal: ")"},
-		{Type: token.LBRACKET, Literal: "["},
-		{Type: token.RBRACKET, Literal: "]"},
-		{Type: token.IDENT, Literal: "foo"},
-		{Type: token.INT, Literal: "12345"},
-		{Type: token.EOF, Literal: ""},
+		{Type: token.LT, Lit: "<"},
+		{Type: token.GT, Lit: ">"},
+		{Type: token.COLON, Lit: ":"},
+		{Type: token.LPAREN, Lit: "("},
+		{Type: token.RPAREN, Lit: ")"},
+		{Type: token.LBRACKET, Lit: "["},
+		{Type: token.RBRACKET, Lit: "]"},
+		{Type: token.IDENT, Lit: "foo"},
+		{Type: token.INT, Lit: "12345"},
+		{Type: token.EOF, Lit: ""},
 	}
 
 	l := New(input)
@@ -29,6 +29,6 @@ func TestSimpleScan(t *testing.T) {
 		tok, _ := l.Scan()
 
 		assert.Equal(t, token.Tokens[tt.Type], token.Tokens[tok.Type])
-		assert.Equal(t, tt.Literal, tok.Literal)
+		assert.Equal(t, tt.Lit, tok.Lit)
 	}
 }

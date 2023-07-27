@@ -5,8 +5,8 @@ import "strings"
 type TokenType int
 
 type Token struct {
-	Type    TokenType
-	Literal string
+	Type TokenType
+	Lit  string
 }
 
 // PG Log entry:
