@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/brianbroderick/lantern/internal/postgresql/ast"
 	"github.com/brianbroderick/lantern/internal/postgresql/lexer"
@@ -10,8 +9,8 @@ import (
 )
 
 type (
-	prefixParseFn func() ast.Expression
-	// infixParseFn  func(ast.Expression) ast.Expression
+// prefixParseFn func() ast.Expression
+// infixParseFn  func(ast.Expression) ast.Expression
 )
 
 type Parser struct {
@@ -21,8 +20,9 @@ type Parser struct {
 	curToken  token.Token
 	peekToken token.Token
 
-	prefixParseFns map[token.TokenType]prefixParseFn
-	// infixParseFns  map[token.TokenType]infixParseFn
+	// // aka handlers
+	// prefixParseFns map[token.TokenType]prefixParseFn
+	// // infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -31,8 +31,8 @@ func New(l *lexer.Lexer) *Parser {
 		errors: []string{},
 	}
 
-	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
-	p.registerPrefix(token.IDENT, p.parseIdentifier)
+	// p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	// p.registerPrefix(token.DATE, p.parseLog)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -74,10 +74,10 @@ func (p *Parser) peekError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
-	p.errors = append(p.errors, msg)
-}
+// func (p *Parser) noPrefixParseFnError(t token.TokenType) {
+// 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+// 	p.errors = append(p.errors, msg)
+// }
 
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
@@ -85,34 +85,31 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
-		if stmt != nil {
-			program.Statements = append(program.Statements, stmt)
-		}
+		program.Statements = append(program.Statements, stmt)
+
 		p.nextToken()
 	}
 
 	return program
 }
 
+// This function allows for the possibility of having different statement types
+// in the future.
 func (p *Parser) parseStatement() ast.Statement {
 	return p.parseLogStatement()
-
-	// If we want to support more than just log statements, we'll need to:
-
-	// switch p.curToken.Type {
-	// case token.DATE:
-	// 	return p.parseLogStatement()
-	// default:
-	// 	return p.parseLogStatement()
-	// }
 }
 
 func (p *Parser) parseLogStatement() *ast.LogStatement {
 	stmt := &ast.LogStatement{Token: p.curToken}
 
-	if !p.expectPeek(token.IDENT) {
-		return nil
+	if p.curTokenIs(token.DATE) {
+		stmt.Date = p.curToken.Lit
 	}
+
+	fmt.Println(stmt.Date)
+	// if !p.expectPeek(token.IDENT) {
+	// 	return nil
+	// }
 
 	// stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 
@@ -131,28 +128,28 @@ func (p *Parser) parseLogStatement() *ast.LogStatement {
 	return stmt
 }
 
-func (p *Parser) parseIdentifier() ast.Expression {
-	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
-}
+// func (p *Parser) parseIdentifier() ast.Expression {
+// 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+// }
 
-func (p *Parser) parseIntegerLiteral() ast.Expression {
-	lit := &ast.IntegerLiteral{Token: p.curToken}
+// func (p *Parser) parseIntegerLiteral() ast.Expression {
+// 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
-	value, err := strconv.ParseInt(p.curToken.Lit, 0, 64)
-	if err != nil {
-		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Lit)
-		p.errors = append(p.errors, msg)
-		return nil
-	}
+// 	value, err := strconv.ParseInt(p.curToken.Lit, 0, 64)
+// 	if err != nil {
+// 		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Lit)
+// 		p.errors = append(p.errors, msg)
+// 		return nil
+// 	}
 
-	lit.Value = value
+// 	lit.Value = value
 
-	return lit
-}
+// 	return lit
+// }
 
-func (p *Parser) parseStringLiteral() ast.Expression {
-	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}
-}
+// func (p *Parser) parseStringLiteral() ast.Expression {
+// 	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}
+// }
 
 // func (p *Parser) parsePrefixExpression() ast.Expression {
 // 	expression := &ast.PrefixExpression{
@@ -167,6 +164,6 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 // 	return expression
 // }
 
-func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
-	p.prefixParseFns[tokenType] = fn
-}
+// func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+// 	p.prefixParseFns[tokenType] = fn
+// }

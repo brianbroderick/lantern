@@ -112,14 +112,14 @@ func (l *Lexer) unread() {
 	l.pos.Line = l.lastPos.Line
 }
 
-func (l *Lexer) peek() rune {
-	ch, _, err := l.r.ReadRune()
-	if err != nil {
-		ch = eof
-	}
-	l.r.UnreadRune()
-	return ch
-}
+// func (l *Lexer) peek() rune {
+// 	ch, _, err := l.r.ReadRune()
+// 	if err != nil {
+// 		ch = eof
+// 	}
+// 	l.r.UnreadRune()
+// 	return ch
+// }
 
 func (l *Lexer) skipWhitespace() {
 	for {
@@ -164,16 +164,68 @@ func (l *Lexer) scanString() token.Token {
 
 func (l *Lexer) scanNumber() token.Token {
 	var buf bytes.Buffer
+
+	buf.WriteString(l.scanDigits())
+
+	// If next code points are a full stop and digit then consume them.
+	dots := 0
+	colons := 0
+	hyphens := 0
+
 	for {
 		l.read()
-		if !isDigit(l.ch) {
+		if l.ch == eof {
+			break
+		} else if l.ch == '.' {
+			dots++
+			_, _ = buf.WriteRune(l.ch)
+			_, _ = buf.WriteString(l.scanDigits())
+		} else if l.ch == ':' {
+			colons++
+			_, _ = buf.WriteRune(l.ch)
+			_, _ = buf.WriteString(l.scanDigits())
+		} else if l.ch == '-' {
+			hyphens++
+			_, _ = buf.WriteRune(l.ch)
+			_, _ = buf.WriteString(l.scanDigits())
+		} else if !isDigit(l.ch) {
 			l.unread()
 			break
 		} else {
 			_, _ = buf.WriteRune(l.ch)
 		}
 	}
-	return token.Token{Type: token.INT, Lit: buf.String()}
+
+	// Date and Time
+	if hyphens == 2 {
+		return token.Token{Type: token.DATE, Lit: buf.String()}
+	} else if colons == 2 {
+		return token.Token{Type: token.TIME, Lit: buf.String()}
+	}
+
+	// If there is one dot, it's a number (aka float)
+	if dots == 0 {
+		return token.Token{Type: token.INT, Lit: buf.String()}
+	} else if dots == 1 {
+		return token.Token{Type: token.NUMBER, Lit: buf.String()}
+	}
+
+	// If there are more than one dot, it's an IP Address
+	return token.Token{Type: token.IPADDR, Lit: buf.String()}
+}
+
+func (l *Lexer) scanDigits() string {
+	var buf bytes.Buffer
+	for {
+		l.read()
+		if !isDigit(l.ch) {
+			l.unread()
+			break
+		} else {
+			buf.WriteRune(l.ch)
+		}
+	}
+	return buf.String()
 }
 
 // isWhitespace returns true if the rune is a space, tab, or newline.
