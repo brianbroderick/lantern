@@ -2,7 +2,7 @@
 *.o
 *.a
 *.so
-# lantern
+lantern
 
 automated_payloads*
 
