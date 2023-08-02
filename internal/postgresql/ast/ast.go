@@ -19,7 +19,7 @@ type Statement interface {
 	statementNode()
 }
 
-// All expression nodes implement this
+// All expression nodes implement this, although we don't have any yet
 type Expression interface {
 	Node
 	expressionNode()
