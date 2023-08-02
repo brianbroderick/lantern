@@ -7,16 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func TestParser(t *testing.T) {
-// 	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1"
-// 	l := lexer.New(s)
-// 	p := New(l)
-// 	program := p.ParseProgram()
-// 	checkParserErrors(t, p)
+func TestParser(t *testing.T) {
+	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1"
+	l := lexer.New(s)
+	p := New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
 
-// 	assert.Equal(t, 1, len(program.Statements))
-// 	assert.Equal(t, "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1", program.Statements[0].String())
-// }
+	assert.Equal(t, 1, len(program.Statements))
+	assert.Equal(t, "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1", program.Statements[0].String())
+}
 
 func TestParserStatements(t *testing.T) {
 	var tests = []struct {

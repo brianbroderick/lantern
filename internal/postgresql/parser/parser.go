@@ -10,21 +10,12 @@ import (
 	"github.com/brianbroderick/lantern/internal/postgresql/token"
 )
 
-type (
-// prefixParseFn func() ast.Expression
-// infixParseFn  func(ast.Expression) ast.Expression
-)
-
 type Parser struct {
 	l      *lexer.Lexer
 	errors []string
 
 	curToken  token.Token
 	peekToken token.Token
-
-	// // aka handlers
-	// prefixParseFns map[token.TokenType]prefixParseFn
-	// // infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -33,9 +24,6 @@ func New(l *lexer.Lexer) *Parser {
 		errors: []string{},
 	}
 
-	// p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
-	// p.registerPrefix(token.DATE, p.parseLog)
-
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
 	p.nextToken()
@@ -43,7 +31,6 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
-// might need to add a token to the beginning of this function
 func (p *Parser) scanQuery() {
 	p.peekToken = p.l.ScanQuery()
 	p.nextToken()
@@ -82,11 +69,6 @@ func (p *Parser) peekError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-// func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-// 	msg := fmt.Sprintf("no prefix parse function for %s found", t)
-// 	p.errors = append(p.errors, msg)
-// }
-
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
@@ -117,6 +99,7 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 	iter := 0
 	eos := false // end of statement
 
+	// Tokens should always be in the same order, so we can just iterate through them
 	for !eos {
 		var err error
 		intLit := 0
@@ -262,41 +245,30 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 			// scan to the end of the line
 			p.scanQuery()
 			qLines = append(qLines, p.curToken.Lit)
-			// fmt.Println("qLines: ", qLines)
 
 			// if the next line starts with a date or EOF, then we're done with this statement
 			if !p.peekTokenIs(token.DATE) && !p.peekTokenIs(token.EOF) {
+
 				// it's a multi-line query, so grab the peek token, which is an indent with the first word on the line, and keep scanning
 				qLines = append(qLines, p.peekToken.Lit)
-				// fmt.Println("qLines2: ", qLines)
+
 				for {
 					// scan to the end of the line and keep going until a new line starts with a date or EOF
 					p.scanQuery()
 					qLines = append(qLines, p.curToken.Lit)
-					// fmt.Println("qLines3: ", qLines)
 
 					if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
 						eos = true
 						break
 					}
-
-					// p.nextToken()
-					// // fmt.Printf("cur: %s, peek: %s\n", p.curToken.Type, p.peekToken.Type)
-					// if p.curTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
-					// 	break
-					// }
-					// qLines = append(qLines, p.curToken.Lit)
-					// qLines = append(qLines, p.peekToken.Lit)
-
 				}
 			}
-			// } else {
-			// 	return nil, parseErr(iter, token.QUERY, p.curToken.Type)
-			// }
+
 			stmt.Query = strings.Join(qLines, " ")
 			eos = true
 		}
 
+		// We're not done with this statement, so move to the next token
 		if !eos {
 			p.nextToken()
 			iter++
