@@ -51,6 +51,8 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = newToken(token.LBRACKET, l.ch)
 	case ']':
 		tok = newToken(token.RBRACKET, l.ch)
+	case '@':
+		tok = newToken(token.ATSYMBOL, l.ch)
 	case '"':
 		pos = l.pos
 		tok = l.scanString()
@@ -226,6 +228,23 @@ func (l *Lexer) scanDigits() string {
 		}
 	}
 	return buf.String()
+}
+
+func (l *Lexer) ScanQuery() token.Token {
+	var buf bytes.Buffer
+	l.skipWhitespace()
+
+	for {
+		l.read()
+		if l.ch == eol || l.ch == eof {
+			l.unread()
+			break
+		} else {
+			_, _ = buf.WriteRune(l.ch)
+		}
+	}
+	lit := buf.String()
+	return token.Token{Type: token.QUERY, Lit: lit}
 }
 
 // isWhitespace returns true if the rune is a space, tab, or newline.
