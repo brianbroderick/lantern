@@ -1,12 +1,14 @@
 package analyzer
 
 import (
+	"fmt"
+
 	pg_query "github.com/pganalyze/pg_query_go/v4"
 )
 
 type Select struct {
 	Columns []string
-	Table   string
+	Tables  []string
 }
 
 func ParseToJSON(sql string) string {
@@ -39,6 +41,7 @@ func EnumStatements(ast *pg_query.ParseResult) []*Select {
 	for _, stmt := range ast.Stmts {
 		s := new(Select)
 		s.Columns = TargetList(stmt) // fmt.Printf("stmt: %+v\n", s.Stmt)
+		s.Tables = TableList(stmt)   // fmt.Printf("location: %+v\n", s.StmtLocation)
 		selects = append(selects, s)
 	}
 	return selects
@@ -52,4 +55,13 @@ func TargetList(ast *pg_query.RawStmt) []string {
 		}
 	}
 	return cols
+}
+
+func TableList(ast *pg_query.RawStmt) []string {
+	tables := make([]string, 0)
+	for _, str := range ast.Stmt.GetSelectStmt().GetFromClause() {
+		fmt.Printf("str: %+v\n", str)
+		tables = append(tables, str.GetRangeVar().Relname)
+	}
+	return tables
 }

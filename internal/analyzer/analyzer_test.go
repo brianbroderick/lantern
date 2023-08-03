@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -12,11 +13,25 @@ func init() {
 }
 
 // func TestParseToJSON(t *testing.T) {
-// 	json := ParseToJSON("select 42;")
+// 	json := ParseToJSON("select u.id, u.name from users u inner join addresses a on a.user_id = u.id where id = 42;")
 // 	assert.NotEmpty(t, json)
 
 // 	fmt.Println(json)
 // }
+
+// func TestParseToJSON(t *testing.T) {
+// 	json := ParseToJSON("select u.id, u.name from users where id = 42;")
+// 	assert.NotEmpty(t, json)
+
+// 	fmt.Println(json)
+// }
+
+func TestParseToJSON(t *testing.T) {
+	json := ParseToJSON("select u.id, u.name from users u inner join addresses a on a.user_id = u.id inner join phone_numbers p on p.user_id = u.id where id = 42;")
+	assert.NotEmpty(t, json)
+
+	fmt.Println(json)
+}
 
 // func TestParse(t *testing.T) {
 // 	p := Parse("select 42;")
@@ -25,50 +40,36 @@ func init() {
 // 	fmt.Printf("Parse: %+v\n", p)
 // }
 
-// func TestParseNodes(t *testing.T) {
-// 	stmts := Parse("select * from users where id = ?;")
-
-// 	// stmt:
-// 	//   select_stmt:
-// 	//     {
-// 	// 			target_list:
-// 	// 				{res_target:
-// 	// 					{val:
-// 	// 						{column_ref:
-// 	// 							{fields: {a_star:{}} location:7}
-// 	// 						} location:7
-// 	// 					}
-// 	// 				}
-// 	// 			from_clause:
-// 	// 				{range_var:
-// 	// 					{relname:"users" inh:true relpersistence:"p" location:14}
-// 	// 				}
-// 	// 			where_clause:
-// 	// 				{a_expr:
-// 	// 					{
-// 	// 						kind:AEXPR_OP name:{string:{sval:"="}}
-// 	// 						lexpr:{column_ref:{fields:{string:{sval:"id"}} location:26}}
-// 	// 						rexpr:{a_const:{ival:{ival:42} location:31}}
-// 	// 						location:29
-// 	// 					}
-// 	// 				}
-// 	// 			limit_option:LIMIT_OPTION_DEFAULT op:SETOP_NONE
-// 	// 	  }
-
-// 	for _, s := range stmts.Stmts {
-// 		fmt.Printf("stmt: %+v\n", s.Stmt)
-// 		fmt.Printf("location: %+v\n", s.StmtLocation)
-// 		fmt.Printf("len: %+v\n", s.StmtLen)
-
+// func TestWalk(t *testing.T) {
+// 	stmts := Walk("select id, email, 1 + 2 as math from users where id = 42 and email = 'joe@example.com' and foo like concat('1','2');")
+// 	assert.NotNil(t, stmts)
+// 	for _, s := range stmts {
+// 		for _, c := range s.Columns {
+// 			fmt.Printf("col: %+v\n", c)
+// 		}
+// 		for _, t := range s.Tables {
+// 			fmt.Printf("table: %+v\n", t)
+// 		}
 // 	}
 // }
 
-func TestWalk(t *testing.T) {
-	stmts := Walk("select id, email, 1 + 2 as math from users where id = 42 and email = 'joe@example.com' and foo like concat('1','2');")
-	assert.NotNil(t, stmts)
-	// fmt.Printf("stmt: %+v\n", stmts.Stmts)
+// func TestWalk(t *testing.T) {
+// 	stmts := Walk("select u.id from users u inner join addresses a on a.user_id = u.id where id = 42;")
+// 	assert.NotNil(t, stmts)
+// 	for _, s := range stmts {
+// 		for _, c := range s.Columns {
+// 			fmt.Printf("col: %+v\n", c)
+// 		}
+// 		// for _, t := range s.Tables {
+// 		// 	fmt.Printf("table: %+v\n", t)
+// 		// }
+// 	}
+// }
 
-}
+// func TestJSON(t *testing.T) {
+// 	stmts := Parse("select id, email as email_address, 1 + 2 as math from users where id = 42 and email = 'joe@example.com' and foo like concat('1','2');")
+// 	fmt.Printf("%+v\n", stmts)
+// }
 
 // stmts := Parse("select id, email, 1 + 2 as math from users where id = 42 and email = 'joe@example.com' and foo like concat('1','2');")
 // fmt.Printf("stmt: %+v\n", stmts.Stmts)
