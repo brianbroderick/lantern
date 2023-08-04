@@ -115,8 +115,8 @@ func (p *Parser) Errors() []string {
 }
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead",
-		t, p.peekToken.Type)
+	msg := fmt.Sprintf("expected next token to be %s, got %s with lit of %s instead. current token is: %s with lit of %s",
+		t, p.peekToken.Type, p.peekToken.Lit, p.curToken.Type, p.curToken.Lit)
 	p.errors = append(p.errors, msg)
 }
 
@@ -162,10 +162,11 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	if !p.expectPeek(token.FROM) {
 		return nil
 	}
+	p.nextToken()
 
 	stmt.From = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 
-	if !p.expectPeek(token.SEMICOLON) {
+	if p.expectPeek(token.SEMICOLON) {
 		p.nextToken()
 	}
 
