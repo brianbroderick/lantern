@@ -7,6 +7,8 @@ import (
 	"github.com/brianbroderick/lantern/internal/sql/token"
 )
 
+// Describes the Abstract Syntax Tree (AST) for the SQL language.
+
 // The base Node interface
 type Node interface {
 	TokenLiteral() string

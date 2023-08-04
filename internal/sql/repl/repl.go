@@ -10,6 +10,8 @@ import (
 	"github.com/brianbroderick/lantern/internal/sql/parser"
 )
 
+// REPL stands for Read Eval Print Loop. i.e., console
+
 const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
