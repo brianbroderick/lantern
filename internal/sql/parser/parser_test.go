@@ -6,14 +6,17 @@ import (
 
 	"github.com/brianbroderick/lantern/internal/sql/ast"
 	"github.com/brianbroderick/lantern/internal/sql/lexer"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSelectStatements(t *testing.T) {
 	tests := []struct {
-		input         string
-		expectedTable string
+		input           string
+		expectedColumns []string
+		expectedTable   string
 	}{
-		{"select id from users;", "users"},
+		{"select id from users;", []string{"id"}, "users"},
+		{"select id, name from users;", []string{"id", "name"}, "users"},
 	}
 
 	for _, tt := range tests {
@@ -22,15 +25,17 @@ func TestSelectStatements(t *testing.T) {
 		program := p.ParseProgram()
 		checkParserErrors(t, p)
 
-		if len(program.Statements) != 1 {
-			t.Fatalf("program.Statements does not contain 1 statements. got=%d",
-				len(program.Statements))
-		}
+		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		if !testSelectStatement(t, stmt, tt.expectedTable) {
-			return
-		}
+		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+
+		selectStmt, ok := stmt.(*ast.SelectStatement)
+		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+
+		assert.Equal(t, tt.expectedTable, selectStmt.From.Value, "selectStmt.From.Value not '%s'. got=%s", tt.expectedTable, selectStmt.From.Value)
+		assert.Equal(t, tt.expectedTable, selectStmt.From.TokenLiteral(), "selectStmt.From.TokenLiteral() not '%s'. got=%s", tt.expectedTable, selectStmt.From.TokenLiteral())
+		assert.Equal(t, len(tt.expectedColumns), len(selectStmt.Columns), "len(selectStmt.Columns) not %d. got=%d", len(tt.expectedColumns), len(selectStmt.Columns))
 	}
 }
 
@@ -532,32 +537,6 @@ func TestParsingIndexExpressions(t *testing.T) {
 	if !testInfixExpression(t, indexExp.Index, 1, "+", 1) {
 		return
 	}
-}
-
-func testSelectStatement(t *testing.T, s ast.Statement, name string) bool {
-	if s.TokenLiteral() != "select" {
-		t.Errorf("s.TokenLiteral not 'select'. got=%q", s.TokenLiteral())
-		return false
-	}
-
-	selectStmt, ok := s.(*ast.SelectStatement)
-	if !ok {
-		t.Errorf("s not *ast.SelectStatement. got=%T", s)
-		return false
-	}
-
-	if selectStmt.From.Value != name {
-		t.Errorf("selectStmt.From.Value not '%s'. got=%s", name, selectStmt.From.Value)
-		return false
-	}
-
-	if selectStmt.From.TokenLiteral() != name {
-		t.Errorf("selectStmt.From.TokenLiteral() not '%s'. got=%s",
-			name, selectStmt.From.TokenLiteral())
-		return false
-	}
-
-	return true
 }
 
 func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},

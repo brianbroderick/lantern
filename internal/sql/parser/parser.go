@@ -115,7 +115,7 @@ func (p *Parser) Errors() []string {
 }
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s with lit of %s instead. current token is: %s with lit of %s",
+	msg := fmt.Sprintf("expected next token to be %s, got %s: %s instead. current token is: %s: %s",
 		t, p.peekToken.Type, p.peekToken.Lit, p.curToken.Type, p.curToken.Lit)
 	p.errors = append(p.errors, msg)
 }
