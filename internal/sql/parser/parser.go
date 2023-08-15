@@ -155,9 +155,15 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
-	columns := []*ast.Identifier{}
-	columns = append(columns, &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit})
-	stmt.Columns = columns
+	// columns := []*ast.Identifier{}
+	// columns = append(columns, &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit})
+	// stmt.Columns = columns
+
+	// stmt.Columns = p.p.parseExpression(LOWEST)
+
+	// columns := []*ast.Column{}
+	// columns = append(columns, &ast.Column{Token: p.curToken, Value: p.curToken.Lit})
+	// stmt.columns = p.parseExpression(LOWEST)
 
 	if !p.expectPeek(token.FROM) {
 		return nil

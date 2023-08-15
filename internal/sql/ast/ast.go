@@ -50,18 +50,18 @@ func (p *Program) String() string {
 }
 
 // Statements
-// Most of these need to be replaced by expressions
+// Most of these need to be replaced by structs
 type SelectStatement struct {
 	Token   token.Token // the token.SELECT token
-	Columns []*Identifier
+	Columns Expression
 	From    *Identifier
-	Joins   []*Identifier
-	Where   []*Identifier
-	GroupBy []*Identifier
-	Having  []*Identifier
-	OrderBy []*Identifier
-	Limit   *IntegerLiteral
-	Offset  *IntegerLiteral
+	// Joins   []*Identifier
+	// Where   []*Identifier
+	// GroupBy []*Identifier
+	// Having  []*Identifier
+	// OrderBy []*Identifier
+	// Limit   *IntegerLiteral
+	// Offset  *IntegerLiteral
 }
 
 func (ls *SelectStatement) statementNode()       {}
@@ -72,11 +72,12 @@ func (ls *SelectStatement) String() string {
 	var out bytes.Buffer
 
 	out.WriteString(ls.TokenLiteral() + " ")
-	columns := []string{}
-	for _, c := range ls.Columns {
-		columns = append(columns, c.String())
-	}
-	out.WriteString(strings.Join(columns, ", "))
+	out.WriteString(ls.Columns.String())
+	// columns := []string{}
+	// for _, c := range ls.Columns {
+	// 	columns = append(columns, c.String())
+	// }
+	// out.WriteString(strings.Join(columns, ", "))
 	out.WriteString(" from ")
 	out.WriteString(ls.From.String())
 	out.WriteString(";")
@@ -84,6 +85,7 @@ func (ls *SelectStatement) String() string {
 	return out.String()
 }
 
+// This is a statement without a leading token. For example: x + 10;
 type ExpressionStatement struct {
 	Token      token.Token // the first token of the expression
 	Expression Expression
@@ -237,6 +239,26 @@ func (ie *IndexExpression) String() string {
 	out.WriteString("[")
 	out.WriteString(ie.Index.String())
 	out.WriteString("])")
+
+	return out.String()
+}
+
+type ColumnExpression struct {
+	Token token.Token // the token.IDENT token
+	Value Expression
+	Alias string
+}
+
+func (c *ColumnExpression) expressionNode()      {}
+func (c *ColumnExpression) TokenLiteral() string { return c.Token.Lit }
+func (c *ColumnExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(c.Value.String())
+	if c.Alias != "" {
+		out.WriteString(" as ")
+		out.WriteString(c.Alias)
+	}
 
 	return out.String()
 }

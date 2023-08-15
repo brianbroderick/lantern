@@ -11,31 +11,20 @@ func TestString(t *testing.T) {
 		Statements: []Statement{
 			&SelectStatement{
 				Token: token.Token{Type: token.SELECT, Lit: "select"},
-				Columns: []*Identifier{
-					{
-						Token: token.Token{Type: token.IDENT, Lit: "id"},
-						Value: "id",
-					},
-					{
-						Token: token.Token{Type: token.IDENT, Lit: "name"},
-						Value: "name",
-					},
+				Columns: &Identifier{
+					Token: token.Token{Type: token.IDENT, Lit: "id"},
+					Value: "id",
 				},
+
 				From: &Identifier{
 					Token: token.Token{Type: token.IDENT, Lit: "users"},
 					Value: "users",
-				},
-				Where: []*Identifier{
-					{
-						Token: token.Token{Type: token.IDENT, Lit: "id"},
-						Value: "id",
-					},
 				},
 			},
 		},
 	}
 
-	if program.String() != "select id, name from users;" {
+	if program.String() != "select id from users;" {
 		t.Errorf("program.String() wrong. got=%q", program.String())
 	}
 }
