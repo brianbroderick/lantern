@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/brianbroderick/lantern/internal/sql/ast"
 	"github.com/brianbroderick/lantern/internal/sql/lexer"
 	"github.com/brianbroderick/lantern/internal/sql/parser"
 )
@@ -16,6 +17,8 @@ const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+
+	var inspect *ast.Program
 
 	for {
 		fmt.Fprint(out, PROMPT)
@@ -31,6 +34,12 @@ func Start(in io.Reader, out io.Writer) {
 			os.Exit(0)
 		}
 
+		if line == "inspect" {
+			io.WriteString(out, inspect.String())
+			io.WriteString(out, "\n")
+			continue
+		}
+
 		l := lexer.New(line)
 		p := parser.New(l)
 
@@ -40,6 +49,7 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
+		inspect = program
 		io.WriteString(out, program.String())
 		io.WriteString(out, "\n")
 	}
