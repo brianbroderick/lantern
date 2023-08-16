@@ -126,6 +126,7 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
+	defer untrace(trace("ParseProgram"))
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
@@ -141,6 +142,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
+	defer untrace(trace("parseStatement"))
 	switch p.curToken.Type {
 	case token.SELECT:
 		return p.parseSelectStatement()
@@ -150,20 +152,16 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
+	defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
+
 	stmt := &ast.SelectStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENT) {
 		return nil
 	}
-	// columns := []*ast.Identifier{}
-	// columns = append(columns, &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit})
-	// stmt.Columns = columns
 
-	// stmt.Columns = p.p.parseExpression(LOWEST)
-
-	// columns := []*ast.Column{}
-	// columns = append(columns, &ast.Column{Token: p.curToken, Value: p.curToken.Lit})
-	// stmt.columns = p.parseExpression(LOWEST)
+	stmt.Columns = p.parseColumnList(token.FROM)
+	// fmt.Printf("parseSelectStatement2: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	if !p.expectPeek(token.FROM) {
 		return nil
@@ -180,6 +178,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	defer untrace(trace("parseExpressionStatement"))
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
 	stmt.Expression = p.parseExpression(LOWEST)
@@ -192,6 +191,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
+	defer untrace(trace("parseExpression"))
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
@@ -210,6 +210,66 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		leftExp = infix(leftExp)
 	}
 
+	return leftExp
+}
+
+func (p *Parser) parseColumnList(end token.TokenType) []ast.Expression {
+	defer untrace(trace("parseColumnList"))
+
+	list := []ast.Expression{}
+
+	// fmt.Printf("parseColumnList1: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+
+	if p.curTokenIs(end) {
+		return list
+	}
+
+	list = append(list, p.parseColumn(LOWEST))
+
+	// fmt.Printf("parseColumnList2: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+
+	for p.peekTokenIs(token.COMMA) {
+		// fmt.Printf("parseColumnList3: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseColumn(LOWEST))
+	}
+
+	// fmt.Printf("parseColumnList4: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+	return list
+}
+
+func (p *Parser) parseColumn(precedence int) ast.Expression {
+	defer untrace(trace("parseColumn"))
+	// fmt.Printf("parseColumn1: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
+		return nil
+	}
+	leftExp := prefix()
+
+	// fmt.Printf("parseColumn2: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+
+	for !p.peekTokenIs(token.COMMA) && !p.peekTokenIs(token.FROM) && !p.peekTokenIs(token.AS) && precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Type]
+		if infix == nil {
+			return leftExp
+		}
+
+		p.nextToken()
+
+		leftExp = infix(leftExp)
+	}
+	if p.peekTokenIs(token.AS) {
+		p.nextToken()
+		p.nextToken()
+		alias := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+		leftExp = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
+	}
+
+	// fmt.Printf("parseColumn3: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
 	return leftExp
 }
 
@@ -266,6 +326,7 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	defer untrace(trace("parseInfixExpression"))
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Lit,

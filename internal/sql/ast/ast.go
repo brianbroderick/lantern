@@ -53,7 +53,7 @@ func (p *Program) String() string {
 // Most of these need to be replaced by structs
 type SelectStatement struct {
 	Token   token.Token // the token.SELECT token
-	Columns Expression
+	Columns []Expression
 	From    *Identifier
 	// Joins   []*Identifier
 	// Where   []*Identifier
@@ -71,14 +71,18 @@ func (ls *SelectStatement) TokenLiteral() string { return ls.Token.Lit }
 func (ls *SelectStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(ls.TokenLiteral() + " ")
-	out.WriteString(ls.Columns.String())
+	out.WriteString(strings.ToUpper(ls.TokenLiteral()) + " ")
+	columns := []string{}
+	for _, c := range ls.Columns {
+		columns = append(columns, c.String())
+	}
+	out.WriteString(strings.Join(columns, ", "))
 	// columns := []string{}
 	// for _, c := range ls.Columns {
 	// 	columns = append(columns, c.String())
 	// }
 	// out.WriteString(strings.Join(columns, ", "))
-	out.WriteString(" from ")
+	out.WriteString(" FROM ")
 	out.WriteString(ls.From.String())
 	out.WriteString(";")
 
@@ -244,9 +248,10 @@ func (ie *IndexExpression) String() string {
 }
 
 type ColumnExpression struct {
-	Token token.Token // the token.IDENT token
-	Value Expression
-	Alias string
+	Token   token.Token   // the token.AS token
+	Name    *Identifier   // the name of the column or alias
+	Value   Expression    // the complete expression including all of the columns
+	Columns []*Identifier // the columns that make up the expression for ease of reporting
 }
 
 func (c *ColumnExpression) expressionNode()      {}
@@ -254,10 +259,11 @@ func (c *ColumnExpression) TokenLiteral() string { return c.Token.Lit }
 func (c *ColumnExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(c.Value.String())
-	if c.Alias != "" {
-		out.WriteString(" as ")
-		out.WriteString(c.Alias)
+	val := c.Value.String()
+	out.WriteString(val)
+	if c.Name.String() != val && c.Name.String() != "" {
+		out.WriteString(" AS ")
+		out.WriteString(c.Name.String())
 	}
 
 	return out.String()
