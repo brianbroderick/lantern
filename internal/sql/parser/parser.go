@@ -184,7 +184,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 	stmt := &ast.SelectStatement{Token: p.curToken}
 
-	if !p.expectPeek(token.IDENT) {
+	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT}) {
 		return nil
 	}
 
