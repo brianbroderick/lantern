@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/brianbroderick/lantern/internal/sql/ast"
 	"github.com/brianbroderick/lantern/internal/sql/lexer"
@@ -110,8 +111,35 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	}
 }
 
+func (p *Parser) expectPeekIsOne(tokens []token.TokenType) bool {
+	found := false
+	for _, t := range tokens {
+		if p.peekTokenIs(t) {
+			found = true
+		}
+	}
+	if found {
+		p.nextToken()
+		return true
+	} else {
+		p.peekErrorIsOne(tokens)
+		return false
+	}
+}
+
 func (p *Parser) Errors() []string {
 	return p.errors
+}
+
+func (p *Parser) peekErrorIsOne(tokens []token.TokenType) {
+	toks := []string{}
+	for _, t := range tokens {
+		toks = append(toks, t.String())
+	}
+
+	msg := fmt.Sprintf("expected next token to be one of %s, got %s: %s instead. current token is: %s: %s",
+		strings.Join(toks, ", "), p.peekToken.Type, p.peekToken.Lit, p.curToken.Type, p.curToken.Lit)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) peekError(t token.TokenType) {
@@ -170,7 +198,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 	stmt.From = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 
-	if p.expectPeek(token.SEMICOLON) {
+	if p.expectPeekIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
 		p.nextToken()
 	}
 

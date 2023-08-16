@@ -19,6 +19,7 @@ func TestSelectStatements(t *testing.T) {
 		{"select id, name from users;", 2, "users", "SELECT id, name FROM users;"},
 		{"select id, first_name from users;", 2, "users", "SELECT id, first_name FROM users;"},
 		{"select id, first_name as name from users;", 2, "users", "SELECT id, first_name AS name FROM users;"},
+		{"select id from no_semi_colons", 1, "no_semi_colons", "SELECT id FROM no_semi_colons;"},
 	}
 
 	for _, tt := range tests {
