@@ -87,9 +87,11 @@ func (w *WildcardLiteral) TokenLiteral() string { return w.Token.Lit }
 func (w *WildcardLiteral) String() string       { return w.Value }
 
 type TableExpression struct {
-	Token token.Token // the token.JOIN token
-	Name  *Identifier // the name of the table or alias
-	Alias *Identifier // the alias of the table
+	Token    token.Token // the token.JOIN token
+	Name     *Identifier // the name of the table or alias
+	Alias    *Identifier // the alias of the table
+	JoinType *Identifier // the type of join: inner, left, right, full, etc
+	On       Expression  // the ON clause
 }
 
 func (t *TableExpression) expressionNode()      {}
