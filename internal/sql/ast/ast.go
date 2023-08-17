@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/brianbroderick/lantern/internal/sql/token"
@@ -19,6 +20,7 @@ type Node interface {
 type Statement interface {
 	Node
 	statementNode()
+	Inspect() string
 }
 
 // All expression nodes implement this
@@ -44,6 +46,17 @@ func (p *Program) String() string {
 
 	for _, s := range p.Statements {
 		out.WriteString(s.String())
+	}
+
+	return out.String()
+}
+
+func (p *Program) Inspect() string {
+	var out bytes.Buffer
+
+	for i, s := range p.Statements {
+		out.WriteString(fmt.Sprintf("Statement %d:\n", i+1))
+		out.WriteString(s.Inspect())
 	}
 
 	return out.String()
@@ -89,6 +102,17 @@ func (ls *SelectStatement) String() string {
 	return out.String()
 }
 
+func (ls *SelectStatement) Inspect() string {
+	columns := []string{}
+	for _, c := range ls.Columns {
+		columns = append(columns, c.String())
+	}
+	strColumns := strings.Join(columns, "\n\t\t")
+
+	ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, ls.From.String())
+	return ins
+}
+
 // This is a statement without a leading token. For example: x + 10;
 type ExpressionStatement struct {
 	Token      token.Token // the first token of the expression
@@ -102,6 +126,9 @@ func (es *ExpressionStatement) String() string {
 		return es.Expression.String()
 	}
 	return ""
+}
+func (es *ExpressionStatement) Inspect() string {
+	return es.String()
 }
 
 // Expressions

@@ -35,7 +35,7 @@ func Start(in io.Reader, out io.Writer) {
 		}
 
 		if line == "inspect" {
-			io.WriteString(out, inspect.String())
+			io.WriteString(out, inspect.Inspect())
 			io.WriteString(out, "\n")
 			continue
 		}
@@ -51,6 +51,8 @@ func Start(in io.Reader, out io.Writer) {
 
 		inspect = program
 		io.WriteString(out, program.String())
+		io.WriteString(out, "\n\n")
+		io.WriteString(out, program.Inspect())
 		io.WriteString(out, "\n")
 	}
 }
