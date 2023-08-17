@@ -13,7 +13,7 @@ type SelectStatement struct {
 	Token   token.Token // the token.SELECT token
 	Columns []Expression
 	From    *Identifier
-	Joins   []Expression
+	Tables  []Expression
 	// Joins   []*Identifier
 	// Where   []*Identifier
 	// GroupBy []*Identifier
@@ -76,6 +76,35 @@ func (c *ColumnExpression) String() string {
 	if c.Name.String() != val && c.Name.String() != "" {
 		out.WriteString(" AS ")
 		out.WriteString(c.Name.String())
+	}
+
+	return out.String()
+}
+
+type WildcardLiteral struct {
+	Token token.Token // the token.ASTERISK token
+	Value string
+}
+
+func (w *WildcardLiteral) expressionNode()      {}
+func (w *WildcardLiteral) TokenLiteral() string { return w.Token.Lit }
+func (w *WildcardLiteral) String() string       { return w.Value }
+
+type TableExpression struct {
+	Token token.Token // the token.JOIN token
+	Name  *Identifier // the name of the table or alias
+	Alias *Identifier // the alias of the table
+}
+
+func (t *TableExpression) expressionNode()      {}
+func (t *TableExpression) TokenLiteral() string { return t.Token.Lit }
+func (t *TableExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(t.Name.String())
+	if t.Alias.String() != "" {
+		out.WriteString(" AS ")
+		out.WriteString(t.Alias.String())
 	}
 
 	return out.String()

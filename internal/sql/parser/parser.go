@@ -67,6 +67,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
+	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -184,7 +185,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 	stmt := &ast.SelectStatement{Token: p.curToken}
 
-	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT}) {
+	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT, token.ASTERISK}) {
 		return nil
 	}
 
@@ -319,6 +320,10 @@ func (p *Parser) curPrecedence() int {
 
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+}
+
+func (p *Parser) parseWildcardLiteral() ast.Expression {
+	return &ast.WildcardLiteral{Token: p.curToken, Value: p.curToken.Lit}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
