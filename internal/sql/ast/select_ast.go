@@ -36,11 +36,7 @@ func (ls *SelectStatement) String() string {
 		columns = append(columns, c.String())
 	}
 	out.WriteString(strings.Join(columns, ", "))
-	// columns := []string{}
-	// for _, c := range ls.Columns {
-	// 	columns = append(columns, c.String())
-	// }
-	// out.WriteString(strings.Join(columns, ", "))
+
 	out.WriteString(" FROM ")
 	out.WriteString(ls.From.String())
 	out.WriteString(";")
