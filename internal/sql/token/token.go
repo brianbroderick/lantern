@@ -133,6 +133,8 @@ const (
 	CONFLICT
 	TRUE
 	FALSE
+	AND
+	OR
 	keywordEnd
 )
 
@@ -257,6 +259,8 @@ var Tokens = [...]string{
 	CONFLICT:     "CONFLICT",
 	TRUE:         "TRUE",
 	FALSE:        "FALSE",
+	AND:          "AND",
+	OR:           "OR",
 }
 
 var keywords map[string]TokenType

@@ -13,6 +13,8 @@ import (
 const (
 	_ int = iota
 	LOWEST
+	OR          // OR
+	AND         // AND
 	EQUALS      // ==
 	LESSGREATER // > or <
 	SUM         // +
@@ -33,7 +35,24 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK: PRODUCT,
 	token.LPAREN:   CALL,
 	token.LBRACKET: INDEX,
+	token.AND:      AND,
+	token.OR:       OR,
 }
+
+// https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
+// operators/elements, from highest to lowest precedence:
+// . table/column name separator
+// :: typecast
+// [ ] array element selection
+// + - unary plus, unary minus
+// ^ exponentiation
+// * / % multiplication, division, modulo
+// + - addition, subtraction
+// BETWEEN IN LIKE ILIKE SIMILAR range containment, set membership, string matching
+// < > = <= >= <> comparison operators
+// NOT logical negation
+// AND logical conjunction
+// OR logical disjunction
 
 type (
 	prefixParseFn func() ast.Expression
@@ -78,6 +97,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
+	p.registerInfix(token.AND, p.parseInfixExpression)
+	p.registerInfix(token.OR, p.parseInfixExpression)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
@@ -100,6 +121,26 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 
 func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
+}
+
+func (p *Parser) curTokenIsOne(tokens []token.TokenType) bool {
+	found := false
+	for _, t := range tokens {
+		if p.curTokenIs(t) {
+			found = true
+		}
+	}
+	return found
+}
+
+func (p *Parser) peekTokenIsOne(tokens []token.TokenType) bool {
+	found := false
+	for _, t := range tokens {
+		if p.peekTokenIs(t) {
+			found = true
+		}
+	}
+	return found
 }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {

@@ -86,12 +86,16 @@ func (w *WildcardLiteral) expressionNode()      {}
 func (w *WildcardLiteral) TokenLiteral() string { return w.Token.Lit }
 func (w *WildcardLiteral) String() string       { return w.Value }
 
+// JoinType  Table     Alias JoinCondition
+// source    customers c
+// inner     addresses a     Expression
+
 type TableExpression struct {
-	Token    token.Token // the token.JOIN token
-	Name     *Identifier // the name of the table or alias
-	Alias    *Identifier // the alias of the table
-	JoinType *Identifier // the type of join: inner, left, right, full, etc
-	On       Expression  // the ON clause
+	Token         token.Token // the token.JOIN token
+	JoinType      string      // the type of join: source, inner, left, right, full, etc
+	Table         string      // the name of the table
+	Alias         string      // the alias of the table
+	JoinCondition Expression  // the ON clause
 }
 
 func (t *TableExpression) expressionNode()      {}
@@ -99,10 +103,17 @@ func (t *TableExpression) TokenLiteral() string { return t.Token.Lit }
 func (t *TableExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(t.Name.String())
-	if t.Alias.String() != "" {
-		out.WriteString(" AS ")
-		out.WriteString(t.Alias.String())
+	if t.JoinType != "" && t.JoinType != "source" {
+		out.WriteString(t.JoinType + " JOIN ")
+	}
+
+	out.WriteString(t.Table)
+	if t.Alias != "" {
+		out.WriteString(" " + t.Alias)
+	}
+
+	if t.JoinCondition != nil {
+		out.WriteString(" ON " + t.JoinCondition.String())
 	}
 
 	return out.String()

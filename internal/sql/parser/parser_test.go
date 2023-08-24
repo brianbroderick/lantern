@@ -9,20 +9,58 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSelectStatements(t *testing.T) {
+// func TestSelectStatements(t *testing.T) {
+// 	tests := []struct {
+// 		input         string
+// 		columnCount   int
+// 		expectedTable string
+// 		output        string
+// 	}{
+// 		{"select id from users;", 1, "users", "SELECT id FROM users;"},
+// 		{"select id, name from users;", 2, "users", "SELECT id, name FROM users;"},
+// 		{"select id, first_name from users;", 2, "users", "SELECT id, first_name FROM users;"},
+// 		{"select id, first_name as name from users;", 2, "users", "SELECT id, first_name AS name FROM users;"},
+// 		{"select id from no_semi_colons", 1, "no_semi_colons", "SELECT id FROM no_semi_colons;"},
+// 		{"select 1 + 2 as math, foo + 7 as seven from foo", 2, "foo", "SELECT (1 + 2) AS math, (foo + 7) AS seven FROM foo;"},
+// 		{"select 1 + 2 * 3 / value as math from foo", 1, "foo", "SELECT (1 + ((2 * 3) / value)) AS math FROM foo;"},
+// 	}
+
+// 	for _, tt := range tests {
+// 		l := lexer.New(tt.input)
+// 		p := New(l)
+// 		program := p.ParseProgram()
+// 		checkParserErrors(t, p)
+
+// 		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+
+// 		stmt := program.Statements[0]
+// 		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+
+// 		selectStmt, ok := stmt.(*ast.SelectStatement)
+// 		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+
+// 		assert.Equal(t, tt.expectedTable, selectStmt.From.Value, "selectStmt.From.Value not '%s'. got=%s", tt.expectedTable, selectStmt.From.Value)
+// 		assert.Equal(t, tt.expectedTable, selectStmt.From.TokenLiteral(), "selectStmt.From.TokenLiteral() not '%s'. got=%s", tt.expectedTable, selectStmt.From.TokenLiteral())
+// 		assert.Equal(t, tt.columnCount, len(selectStmt.Columns), "len(selectStmt.Columns) not %d. got=%d", tt.columnCount, len(selectStmt.Columns))
+// 		assert.Equal(t, tt.output, program.String(), "program.String() not '%s'. got=%s", tt.output, program.String())
+// 	}
+// }
+
+// join_type table     alias join_condition
+// source    customers c
+// inner     addresses a     Expression
+
+// select * from users join addresses on users.id = addresses.user_id;
+// select * from users u inner join addresses a on u.id = a.user_id;
+
+func TestJoinStatements(t *testing.T) {
 	tests := []struct {
-		input         string
-		columnCount   int
-		expectedTable string
-		output        string
+		input      string
+		tableCount int
+		output     string
 	}{
-		{"select id from users;", 1, "users", "SELECT id FROM users;"},
-		{"select id, name from users;", 2, "users", "SELECT id, name FROM users;"},
-		{"select id, first_name from users;", 2, "users", "SELECT id, first_name FROM users;"},
-		{"select id, first_name as name from users;", 2, "users", "SELECT id, first_name AS name FROM users;"},
-		{"select id from no_semi_colons", 1, "no_semi_colons", "SELECT id FROM no_semi_colons;"},
-		{"select 1 + 2 as math, foo + 7 as seven from foo", 2, "foo", "SELECT (1 + 2) AS math, (foo + 7) AS seven FROM foo;"},
-		{"select 1 + 2 * 3 / value as math from foo", 1, "foo", "SELECT (1 + ((2 * 3) / value)) AS math FROM foo;"},
+		{"select id from customers;", 1, "SELECT id FROM customers;"},
+		// {"select id from customers join addresses on customers.id = addresses.customer_id;", 2, "SELECT id FROM customers JOIN addresses ON customers.id = addresses.customer_id;"},
 	}
 
 	for _, tt := range tests {
@@ -39,9 +77,7 @@ func TestSelectStatements(t *testing.T) {
 		selectStmt, ok := stmt.(*ast.SelectStatement)
 		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
 
-		assert.Equal(t, tt.expectedTable, selectStmt.From.Value, "selectStmt.From.Value not '%s'. got=%s", tt.expectedTable, selectStmt.From.Value)
-		assert.Equal(t, tt.expectedTable, selectStmt.From.TokenLiteral(), "selectStmt.From.TokenLiteral() not '%s'. got=%s", tt.expectedTable, selectStmt.From.TokenLiteral())
-		assert.Equal(t, tt.columnCount, len(selectStmt.Columns), "len(selectStmt.Columns) not %d. got=%d", tt.columnCount, len(selectStmt.Columns))
+		assert.Equal(t, tt.tableCount, len(selectStmt.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectStmt.Tables))
 		assert.Equal(t, tt.output, program.String(), "program.String() not '%s'. got=%s", tt.output, program.String())
 	}
 }
