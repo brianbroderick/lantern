@@ -13,30 +13,44 @@ import (
 const (
 	_ int = iota
 	LOWEST
-	OR          // OR
-	AND         // AND
-	EQUALS      // ==
-	LESSGREATER // > or <
-	SUM         // +
-	PRODUCT     // *
-	PREFIX      // -X or !X
-	CALL        // myFunction(X)
-	INDEX       // array[index]
+	OR             // OR
+	AND            // AND
+	NOT            // NOT
+	IS             // IS, ISNULL, NOTNULL
+	EQUALS         // ==
+	LESSGREATER    // > or <
+	FILTER         // BETWEEN, IN, LIKE, ILIKE, SIMILAR
+	SUM            // +
+	PRODUCT        // *
+	EXPONENTIATION // ^
+	PREFIX         // -X or !X
+	CALL           // myFunction(X)
+	INDEX          // array[index]
 )
 
 var precedences = map[token.TokenType]int{
-	token.EQ:       EQUALS,
-	token.NOT_EQ:   EQUALS,
-	token.LT:       LESSGREATER,
-	token.GT:       LESSGREATER,
-	token.PLUS:     SUM,
-	token.MINUS:    SUM,
-	token.SLASH:    PRODUCT,
-	token.ASTERISK: PRODUCT,
-	token.LPAREN:   CALL,
-	token.LBRACKET: INDEX,
-	token.AND:      AND,
-	token.OR:       OR,
+	token.EQ:             EQUALS,
+	token.NOT_EQ:         EQUALS,
+	token.LT:             LESSGREATER,
+	token.GT:             LESSGREATER,
+	token.PLUS:           SUM,
+	token.MINUS:          SUM,
+	token.SLASH:          PRODUCT,
+	token.ASTERISK:       PRODUCT,
+	token.LPAREN:         CALL,
+	token.LBRACKET:       INDEX,
+	token.AND:            AND,
+	token.OR:             OR,
+	token.NOT:            NOT,
+	token.IS:             IS,
+	token.ISNULL:         IS,
+	token.NOTNULL:        IS,
+	token.BETWEEN:        FILTER,
+	token.IN:             FILTER,
+	token.LIKE:           FILTER,
+	token.ILIKE:          FILTER,
+	token.SIMILAR:        FILTER,
+	token.EXPONENTIATION: EXPONENTIATION,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -82,6 +96,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
+	p.registerPrefix(token.EXPONENTIATION, p.parsePrefixExpression)
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
@@ -99,6 +114,14 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.GT, p.parseInfixExpression)
 	p.registerInfix(token.AND, p.parseInfixExpression)
 	p.registerInfix(token.OR, p.parseInfixExpression)
+	p.registerInfix(token.IS, p.parseInfixExpression)
+	p.registerInfix(token.ISNULL, p.parseInfixExpression)  // this might actually be a postfix operator
+	p.registerInfix(token.NOTNULL, p.parseInfixExpression) // this might actually be a postfix operator
+	p.registerInfix(token.IN, p.parseInfixExpression)
+	p.registerInfix(token.LIKE, p.parseInfixExpression)
+	p.registerInfix(token.ILIKE, p.parseInfixExpression)
+	p.registerInfix(token.SIMILAR, p.parseInfixExpression)
+	p.registerInfix(token.BETWEEN, p.parseInfixExpression)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)

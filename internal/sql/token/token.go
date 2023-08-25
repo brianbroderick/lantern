@@ -51,6 +51,18 @@ const (
 
 	// Keywords
 	keywordBeg
+	AND
+	OR
+	IS
+	ISNULL
+	NOTNULL
+	IN
+	LIKE
+	ILIKE
+	SIMILAR
+	EXPONENTIATION
+	BETWEEN
+
 	WITH
 	RECURSIVE
 	SELECT
@@ -119,7 +131,6 @@ const (
 	PARTITION
 	RANGE
 	GROUPS
-	BETWEEN
 	UNBOUNDED
 	PRECEDING
 	CURRENT
@@ -133,8 +144,6 @@ const (
 	CONFLICT
 	TRUE
 	FALSE
-	AND
-	OR
 	keywordEnd
 )
 
@@ -162,6 +171,18 @@ var Tokens = [...]string{
 
 	EQ:     "EQ '=='",
 	NOT_EQ: "NOT_EQ '!=' or '<>'",
+
+	AND:            "AND",
+	OR:             "OR",
+	IS:             "IS",
+	ISNULL:         "ISNULL",
+	NOTNULL:        "NOTNULL",
+	IN:             "IN",
+	LIKE:           "LIKE",
+	ILIKE:          "ILIKE",
+	SIMILAR:        "SIMILAR",
+	EXPONENTIATION: "EXPONENTIATION",
+	BETWEEN:        "BETWEEN",
 
 	// Delimiters
 	COMMA:     "COMMA ','",
@@ -245,7 +266,6 @@ var Tokens = [...]string{
 	PARTITION:    "PARTITION",
 	RANGE:        "RANGE",
 	GROUPS:       "GROUPS",
-	BETWEEN:      "BETWEEN",
 	UNBOUNDED:    "UNBOUNDED",
 	PRECEDING:    "PRECEDING",
 	CURRENT:      "CURRENT",
@@ -259,8 +279,6 @@ var Tokens = [...]string{
 	CONFLICT:     "CONFLICT",
 	TRUE:         "TRUE",
 	FALSE:        "FALSE",
-	AND:          "AND",
-	OR:           "OR",
 }
 
 var keywords map[string]TokenType
