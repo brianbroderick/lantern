@@ -13,8 +13,7 @@ type SelectStatement struct {
 	Token   token.Token // the token.SELECT token
 	Columns []Expression
 	Tables  []Expression
-	// Joins   []*Identifier
-	// Where   []*Identifier
+	Where   Expression
 	// GroupBy []*Identifier
 	// Having  []*Identifier
 	// OrderBy []*Identifier
@@ -29,6 +28,7 @@ func (ls *SelectStatement) TokenLiteral() string { return ls.Token.Lit }
 func (ls *SelectStatement) String() string {
 	var out bytes.Buffer
 
+	// Columns
 	out.WriteString(strings.ToUpper(ls.TokenLiteral()) + " ")
 	columns := []string{}
 	for _, c := range ls.Columns {
@@ -36,12 +36,20 @@ func (ls *SelectStatement) String() string {
 	}
 	out.WriteString(strings.Join(columns, ", "))
 
+	// Tables
 	out.WriteString(" FROM ")
 	tables := []string{}
 	for _, t := range ls.Tables {
 		tables = append(tables, t.String())
 	}
 	out.WriteString(strings.Join(tables, " "))
+
+	// Where
+	if ls.Where != nil {
+		out.WriteString(" WHERE ")
+		out.WriteString(ls.Where.String())
+	}
+
 	out.WriteString(";")
 
 	return out.String()

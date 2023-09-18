@@ -12,20 +12,24 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 	stmt := &ast.SelectStatement{Token: p.curToken}
 
+	// COLUMNS
 	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT, token.ASTERISK}) {
 		return nil
 	}
-
 	stmt.Columns = p.parseColumnList(token.FROM)
-	// fmt.Printf("parseSelectStatement2: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
 
+	// FROM CLAUSE
 	if !p.expectPeek(token.FROM) {
 		return nil
 	}
 	p.nextToken()
-
 	stmt.Tables = p.parseTables()
-	// stmt.From = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+
+	// WHERE CLAUSE
+	if p.curTokenIs(token.WHERE) {
+		p.nextToken()
+		stmt.Where = p.parseExpression(LOWEST)
+	}
 
 	if p.expectPeekIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
 		p.nextToken()
@@ -33,11 +37,6 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 	return stmt
 }
-
-// customers inner join addresses on c.id = a.customer_id
-// join_type table     alias join_condition
-// source    customers c
-// inner     addresses a     Expression
 
 func (p *Parser) parseTables() []ast.Expression {
 	defer untrace(trace("parseTables"))

@@ -35,6 +35,7 @@ func TestJoinStatements(t *testing.T) {
 		{"select id from customers join addresses on id = customer_id;", 2, "SELECT id FROM customers INNER JOIN addresses ON (id = customer_id);"},
 		{"select id from customers join addresses on customers.id = addresses.customer_id;", 2, "SELECT id FROM customers INNER JOIN addresses ON (customers.id = addresses.customer_id);"},
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;", 2, "SELECT c.id FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id);"},
+		{"select id from users where id = 42;", 1, "SELECT id FROM users WHERE (id = 42);"},
 	}
 
 	for _, tt := range tests {
