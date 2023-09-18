@@ -50,11 +50,9 @@ func (p *Parser) parseTables() []ast.Expression {
 
 	tables = append(tables, p.parseTable())
 
-	// for p.peekTokenIs(token.COMMA) {
-	// 	p.nextToken()
-	// 	p.nextToken()
-	// 	tables = append(tables, p.parseTable(LOWEST))
-	// }
+	for p.curTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
+		tables = append(tables, p.parseTable())
+	}
 
 	return tables
 }
@@ -103,8 +101,8 @@ func (p *Parser) parseTable() ast.Expression {
 		p.nextToken()
 	}
 
-	// Peek forward and see if we have an alias
-	if p.peekTokenIs(token.IDENT) {
+	// Do we have an alias?
+	if p.curTokenIs(token.IDENT) {
 		table.Alias = p.peekToken.Lit
 		p.nextToken()
 		p.nextToken()

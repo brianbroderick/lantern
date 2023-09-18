@@ -31,6 +31,7 @@ const (
 var precedences = map[token.TokenType]int{
 	token.EQ:             EQUALS,
 	token.NOT_EQ:         EQUALS,
+	token.ASSIGN:         EQUALS,
 	token.LT:             LESSGREATER,
 	token.GT:             LESSGREATER,
 	token.PLUS:           SUM,
@@ -109,6 +110,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.SLASH, p.parseInfixExpression)
 	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
 	p.registerInfix(token.EQ, p.parseInfixExpression)
+	p.registerInfix(token.ASSIGN, p.parseInfixExpression)
 	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
 	p.registerInfix(token.LT, p.parseInfixExpression)
 	p.registerInfix(token.GT, p.parseInfixExpression)
@@ -259,6 +261,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	defer untrace(trace("parseExpression"))
+
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)

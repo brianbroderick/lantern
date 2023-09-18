@@ -59,8 +59,17 @@ func TestJoinStatements(t *testing.T) {
 		tableCount int
 		output     string
 	}{
+		{"select id from users;", 1, "SELECT id FROM users;"},
+		{"select id, name from users;", 1, "SELECT id, name FROM users;"},
+		{"select id, first_name from users;", 1, "SELECT id, first_name FROM users;"},
+		{"select id, first_name as name from users;", 1, "SELECT id, first_name AS name FROM users;"},
+		{"select id from no_semi_colons", 1, "SELECT id FROM no_semi_colons;"},
+		{"select 1 + 2 as math, foo + 7 as seven from foo", 1, "SELECT (1 + 2) AS math, (foo + 7) AS seven FROM foo;"},
+		{"select 1 + 2 * 3 / value as math from foo", 1, "SELECT (1 + ((2 * 3) / value)) AS math FROM foo;"},
 		{"select id from addresses;", 1, "SELECT id FROM addresses;"},
-		// {"select id from customers join addresses on customers.id = addresses.customer_id;", 2, "SELECT id FROM customers JOIN addresses ON customers.id = addresses.customer_id;"},
+		{"select id from addresses a;", 1, "SELECT id FROM addresses a;"},
+		{"select id from customers join addresses on id = customer_id;", 2, "SELECT id FROM customers INNER JOIN addresses ON (id = customer_id);"},
+		{"select id from customers join addresses on customers.id = addresses.customer_id;", 2, "SELECT id FROM customers INNER JOIN addresses ON (customers.id = addresses.customer_id);"},
 	}
 
 	for _, tt := range tests {
@@ -77,7 +86,7 @@ func TestJoinStatements(t *testing.T) {
 		selectStmt, ok := stmt.(*ast.SelectStatement)
 		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
 
-		fmt.Printf("%+v\n", selectStmt.Tables[0])
+		// fmt.Printf("%+v\n", selectStmt.Tables[0])
 
 		assert.Equal(t, tt.tableCount, len(selectStmt.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectStmt.Tables))
 		assert.Equal(t, tt.output, program.String(), "program.String() not '%s'. got=%s", tt.output, program.String())

@@ -175,7 +175,8 @@ func (l *Lexer) scanIdent() token.Token {
 	var buf bytes.Buffer
 	for {
 		l.read()
-		if !isIdentChar(l.ch) {
+		// Allow '.' in identifiers.
+		if !isIdentChar(l.ch) && l.ch != '.' {
 			l.unread()
 			break
 		} else {

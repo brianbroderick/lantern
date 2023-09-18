@@ -12,8 +12,7 @@ import (
 type SelectStatement struct {
 	Token   token.Token // the token.SELECT token
 	Columns []Expression
-	// From    *Identifier
-	Tables []Expression
+	Tables  []Expression
 	// Joins   []*Identifier
 	// Where   []*Identifier
 	// GroupBy []*Identifier
@@ -38,9 +37,11 @@ func (ls *SelectStatement) String() string {
 	out.WriteString(strings.Join(columns, ", "))
 
 	out.WriteString(" FROM ")
-	if len(ls.Tables) > 0 {
-		out.WriteString(ls.Tables[0].String())
+	tables := []string{}
+	for _, t := range ls.Tables {
+		tables = append(tables, t.String())
 	}
+	out.WriteString(strings.Join(tables, " "))
 	out.WriteString(";")
 
 	return out.String()
@@ -99,6 +100,7 @@ func (w *WildcardLiteral) String() string       { return w.Value }
 type TableExpression struct {
 	Token         token.Token // the token.JOIN token
 	JoinType      string      // the type of join: source, inner, left, right, full, etc
+	Schema        string      // the name of the schema
 	Table         string      // the name of the table
 	Alias         string      // the alias of the table
 	JoinCondition Expression  // the ON clause
