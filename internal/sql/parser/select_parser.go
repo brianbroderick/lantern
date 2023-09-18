@@ -25,7 +25,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	p.nextToken()
 
 	stmt.Tables = p.parseTables()
-	stmt.From = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+	// stmt.From = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 
 	if p.expectPeekIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
 		p.nextToken()

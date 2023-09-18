@@ -12,8 +12,8 @@ import (
 type SelectStatement struct {
 	Token   token.Token // the token.SELECT token
 	Columns []Expression
-	From    *Identifier
-	Tables  []Expression
+	// From    *Identifier
+	Tables []Expression
 	// Joins   []*Identifier
 	// Where   []*Identifier
 	// GroupBy []*Identifier
@@ -38,7 +38,9 @@ func (ls *SelectStatement) String() string {
 	out.WriteString(strings.Join(columns, ", "))
 
 	out.WriteString(" FROM ")
-	out.WriteString(ls.From.String())
+	if len(ls.Tables) > 0 {
+		out.WriteString(ls.Tables[0].String())
+	}
 	out.WriteString(";")
 
 	return out.String()
@@ -50,8 +52,12 @@ func (ls *SelectStatement) Inspect() string {
 		columns = append(columns, c.String())
 	}
 	strColumns := strings.Join(columns, "\n\t\t")
+	strTables := []string{}
+	for _, t := range ls.Tables {
+		strTables = append(strTables, t.String())
+	}
 
-	ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, ls.From.String())
+	ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, strTables)
 	return ins
 }
 

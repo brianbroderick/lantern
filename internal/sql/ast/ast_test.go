@@ -22,15 +22,15 @@ func TestString(t *testing.T) {
 					},
 				},
 				},
-				From: &Identifier{
+				Tables: []Expression{&Identifier{
 					Token: token.Token{Type: token.IDENT, Lit: "users"},
-					Value: "users",
+					Value: "users"},
 				},
 			},
 		},
 	}
 
-	if program.String() != "select id FROM users;" {
+	if program.String() != "SELECT id FROM users;" {
 		t.Errorf("program.String() wrong. got=%q", program.String())
 	}
 }

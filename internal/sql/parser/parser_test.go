@@ -59,7 +59,7 @@ func TestJoinStatements(t *testing.T) {
 		tableCount int
 		output     string
 	}{
-		{"select id from customers;", 1, "SELECT id FROM customers;"},
+		{"select id from addresses;", 1, "SELECT id FROM addresses;"},
 		// {"select id from customers join addresses on customers.id = addresses.customer_id;", 2, "SELECT id FROM customers JOIN addresses ON customers.id = addresses.customer_id;"},
 	}
 
@@ -76,6 +76,8 @@ func TestJoinStatements(t *testing.T) {
 
 		selectStmt, ok := stmt.(*ast.SelectStatement)
 		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+
+		fmt.Printf("%+v\n", selectStmt.Tables[0])
 
 		assert.Equal(t, tt.tableCount, len(selectStmt.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectStmt.Tables))
 		assert.Equal(t, tt.output, program.String(), "program.String() not '%s'. got=%s", tt.output, program.String())
