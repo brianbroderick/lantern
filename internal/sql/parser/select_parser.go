@@ -103,8 +103,7 @@ func (p *Parser) parseTable() ast.Expression {
 
 	// Do we have an alias?
 	if p.curTokenIs(token.IDENT) {
-		table.Alias = p.peekToken.Lit
-		p.nextToken()
+		table.Alias = p.curToken.Lit
 		p.nextToken()
 	}
 
