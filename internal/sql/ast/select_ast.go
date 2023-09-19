@@ -15,9 +15,10 @@ type SelectStatement struct {
 	Tables  []Expression
 	Where   Expression
 	GroupBy []Expression
-	// Having  []*Identifier
-	// OrderBy []*Identifier
-	// Limit   *IntegerLiteral
+	Having  Expression
+	OrderBy []Expression
+	Limit   Expression
+	Offset  Expression
 	// Offset  *IntegerLiteral
 }
 
@@ -58,6 +59,34 @@ func (ls *SelectStatement) String() string {
 			groupBy = append(groupBy, g.String())
 		}
 		out.WriteString(strings.Join(groupBy, ", "))
+	}
+
+	// Having
+	if ls.Having != nil {
+		out.WriteString(" HAVING ")
+		out.WriteString(ls.Having.String())
+	}
+
+	// Order By
+	if len(ls.OrderBy) > 0 {
+		out.WriteString(" ORDER BY ")
+		orderBy := []string{}
+		for _, g := range ls.OrderBy {
+			orderBy = append(orderBy, g.String())
+		}
+		out.WriteString(strings.Join(orderBy, ", "))
+	}
+
+	// Limit
+	if ls.Limit != nil {
+		out.WriteString(" LIMIT ")
+		out.WriteString(ls.Limit.String())
+	}
+
+	// Offset
+	if ls.Offset != nil {
+		out.WriteString(" OFFSET ")
+		out.WriteString(ls.Offset.String())
 	}
 
 	out.WriteString(";")

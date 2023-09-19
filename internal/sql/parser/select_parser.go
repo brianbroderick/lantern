@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/brianbroderick/lantern/internal/sql/ast"
@@ -19,8 +18,6 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	}
 	stmt.Columns = p.parseColumnList([]token.TokenType{token.COMMA, token.FROM, token.AS})
 
-	fmt.Printf("from: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-
 	// FROM CLAUSE
 	if !p.expectPeek(token.FROM) {
 		return nil
@@ -28,16 +25,12 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	p.nextToken()
 	stmt.Tables = p.parseTables()
 
-	fmt.Printf("where: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-
 	// WHERE CLAUSE
 	if p.curTokenIs(token.WHERE) {
 		p.nextToken()
 		stmt.Where = p.parseExpression(LOWEST)
 		p.nextToken()
 	}
-
-	fmt.Printf("group: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	// GROUP BY CLAUSE
 	if p.curTokenIs(token.GROUP) {
@@ -50,6 +43,35 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	}
 
 	// HAVING CLAUSE
+	if p.curTokenIs(token.HAVING) {
+		p.nextToken()
+		stmt.Having = p.parseExpression(LOWEST)
+		p.nextToken()
+	}
+
+	// ORDER BY CLAUSE
+	if p.curTokenIs(token.ORDER) {
+		if !p.expectPeek(token.BY) {
+			return nil
+		}
+		p.nextToken()
+		stmt.OrderBy = p.parseColumnList([]token.TokenType{token.COMMA, token.LIMIT, token.OFFSET})
+		p.nextToken()
+	}
+
+	// LIMIT CLAUSE
+	if p.curTokenIs(token.LIMIT) {
+		p.nextToken()
+		stmt.Limit = p.parseExpression(LOWEST)
+		p.nextToken()
+	}
+
+	// OFFSET CLAUSE
+	if p.curTokenIs(token.OFFSET) {
+		p.nextToken()
+		stmt.Offset = p.parseExpression(LOWEST)
+		p.nextToken()
+	}
 
 	// fmt.Printf("parseSelectStatement2: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
@@ -95,8 +117,6 @@ func (p *Parser) parseFirstTable() ast.Expression {
 		}
 	}
 
-	fmt.Printf("parseFirstTable: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
-
 	return &table
 }
 
@@ -104,8 +124,6 @@ func (p *Parser) parseTable() ast.Expression {
 	defer untrace(trace("parseTable"))
 
 	table := ast.TableExpression{Token: token.Token{Type: token.FROM}}
-
-	fmt.Printf("parseTable1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	// Get the join type
 	if p.curTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
@@ -126,8 +144,6 @@ func (p *Parser) parseTable() ast.Expression {
 		p.nextToken()
 	}
 
-	fmt.Printf("parseTable2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
-
 	// Get the table name
 	if p.curTokenIs(token.IDENT) {
 		table.Table = p.curToken.Lit
@@ -146,7 +162,6 @@ func (p *Parser) parseTable() ast.Expression {
 		table.JoinCondition = p.parseExpression(LOWEST)
 		p.nextToken()
 	}
-	fmt.Printf("parseTable3: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	return &table
 }

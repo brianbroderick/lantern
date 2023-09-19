@@ -68,6 +68,14 @@ func TestJoinStatements(t *testing.T) {
 		{"select id from users where name = 'brian';", 1, "SELECT id FROM users WHERE (name = 'brian');"},
 		// select with double quotes for an identifier
 		{"select \"blah\".id from users;", 1, "SELECT blah.id FROM users;"},
+		// select with having clause
+		{"select id from users group by id having id > 2;", 1, "SELECT id FROM users GROUP BY id HAVING (id > 2);"},
+		// select with order by
+		{"select id from users order by id;", 1, "SELECT id FROM users ORDER BY id;"},
+		// select with limit
+		{"select id from users limit 10;", 1, "SELECT id FROM users LIMIT 10;"},
+		// select with offset
+		{"select id from users limit 10 offset 10;", 1, "SELECT id FROM users LIMIT 10 OFFSET 10;"},
 	}
 
 	for _, tt := range tests {
