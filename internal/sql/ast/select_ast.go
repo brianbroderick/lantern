@@ -14,7 +14,7 @@ type SelectStatement struct {
 	Columns []Expression
 	Tables  []Expression
 	Where   Expression
-	// GroupBy []*Identifier
+	GroupBy []Expression
 	// Having  []*Identifier
 	// OrderBy []*Identifier
 	// Limit   *IntegerLiteral
@@ -48,6 +48,16 @@ func (ls *SelectStatement) String() string {
 	if ls.Where != nil {
 		out.WriteString(" WHERE ")
 		out.WriteString(ls.Where.String())
+	}
+
+	// Group By
+	if len(ls.GroupBy) > 0 {
+		out.WriteString(" GROUP BY ")
+		groupBy := []string{}
+		for _, g := range ls.GroupBy {
+			groupBy = append(groupBy, g.String())
+		}
+		out.WriteString(strings.Join(groupBy, ", "))
 	}
 
 	out.WriteString(";")

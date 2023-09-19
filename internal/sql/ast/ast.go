@@ -143,7 +143,7 @@ func (ie *InfixExpression) String() string {
 
 	out.WriteString("(")
 	out.WriteString(ie.Left.String())
-	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(" " + strings.ToUpper(ie.Operator) + " ")
 	out.WriteString(ie.Right.String())
 	out.WriteString(")")
 
@@ -181,7 +181,10 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Lit }
-func (sl *StringLiteral) String() string       { return sl.Token.Lit }
+func (sl *StringLiteral) String() string {
+	// fmt.Printf("StringLiteral: %+v, %+v, %+v\n", sl.Token, sl.Token.Lit, sl.Value)
+	return fmt.Sprintf("'%s'", sl.Token.Lit)
+}
 
 type ArrayLiteral struct {
 	Token    token.Token // the '[' token

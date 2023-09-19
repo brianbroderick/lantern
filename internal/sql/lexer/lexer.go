@@ -89,9 +89,13 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 	// TODO: Support comments /* and //
 	case '/':
 		tok = newToken(token.SLASH, l.ch)
-	case '"':
+	case '\'':
 		pos = l.pos
 		tok = l.scanString()
+		return tok, pos
+	case '"': // double quotes are allowed to surround identities
+		pos = l.pos
+		tok = l.scanIdent()
 		return tok, pos
 	case 0:
 		tok = token.Token{Type: token.EOF, Lit: ""}
@@ -179,6 +183,9 @@ func (l *Lexer) scanIdent() token.Token {
 		if !isIdentChar(l.ch) && l.ch != '.' {
 			l.unread()
 			break
+		} else if l.ch == '"' {
+			// Allow double quotes in identifiers, but don't include them in the token.
+			// They can be used to escape reserved words.
 		} else {
 			_, _ = buf.WriteRune(l.ch)
 		}
@@ -187,11 +194,12 @@ func (l *Lexer) scanIdent() token.Token {
 	return token.Token{Type: token.Lookup(lit), Lit: lit}
 }
 
+// SQL strings are single quoted.
 func (l *Lexer) scanString() token.Token {
 	var buf bytes.Buffer
 	for {
 		l.read()
-		if l.ch == '"' {
+		if l.ch == '\'' {
 			break
 		} else {
 			_, _ = buf.WriteRune(l.ch)
@@ -225,4 +233,5 @@ func isLetter(ch rune) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && c
 func isDigit(ch rune) bool { return (ch >= '0' && ch <= '9') }
 
 // isIdentChar returns true if the rune can be used in an unquoted identifier.
-func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' }
+// identities can be surrounded by double quotes and can contain any character.
+func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' || ch == '"' }
