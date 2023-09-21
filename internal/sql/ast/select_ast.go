@@ -10,15 +10,16 @@ import (
 
 // Most of these need to be replaced by structs
 type SelectStatement struct {
-	Token   token.Token // the token.SELECT token
-	Columns []Expression
-	Tables  []Expression
-	Where   Expression
-	GroupBy []Expression
-	Having  Expression
-	OrderBy []Expression
-	Limit   Expression
-	Offset  Expression
+	Token    token.Token // the token.SELECT token
+	Distinct Expression  // the DISTINCT or ALL token
+	Columns  []Expression
+	Tables   []Expression
+	Where    Expression
+	GroupBy  []Expression
+	Having   Expression
+	OrderBy  []Expression
+	Limit    Expression
+	Offset   Expression
 	// Offset  *IntegerLiteral
 }
 
@@ -29,8 +30,14 @@ func (ls *SelectStatement) TokenLiteral() string { return ls.Token.Lit }
 func (ls *SelectStatement) String() string {
 	var out bytes.Buffer
 
-	// Columns
 	out.WriteString(strings.ToUpper(ls.TokenLiteral()) + " ")
+
+	// Distinct
+	if ls.Distinct != nil {
+		out.WriteString(ls.Distinct.String() + " ")
+	}
+
+	// Columns
 	columns := []string{}
 	for _, c := range ls.Columns {
 		columns = append(columns, c.String())
@@ -109,11 +116,38 @@ func (ls *SelectStatement) Inspect() string {
 	return ins
 }
 
+type DistinctExpression struct {
+	Token token.Token  // The keyword token, e.g. DISTINCT
+	Right []Expression // The columns to be distinct
+}
+
+func (de *DistinctExpression) expressionNode()      {}
+func (de *DistinctExpression) TokenLiteral() string { return de.Token.Lit }
+func (de *DistinctExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(strings.ToUpper(de.Token.Lit))
+	if len(de.Right) > 0 {
+		out.WriteString(" ON ")
+	}
+	if de.Right != nil {
+		out.WriteString("(")
+		right := []string{}
+		for _, r := range de.Right {
+			right = append(right, r.String())
+		}
+		out.WriteString(strings.Join(right, ", "))
+		out.WriteString(")")
+	}
+
+	return out.String()
+}
+
 type ColumnExpression struct {
-	Token   token.Token   // the token.AS token
-	Name    *Identifier   // the name of the column or alias
-	Value   Expression    // the complete expression including all of the columns
-	Columns []*Identifier // the columns that make up the expression for ease of reporting
+	Token token.Token // the token.AS token
+	Name  *Identifier // the name of the column or alias
+	Value Expression  // the complete expression including all of the columns
+	// Columns []*Identifier // the columns that make up the expression for ease of reporting
 }
 
 func (c *ColumnExpression) expressionNode()      {}
@@ -128,6 +162,42 @@ func (c *ColumnExpression) String() string {
 		out.WriteString(c.Name.String())
 	}
 
+	return out.String()
+}
+
+type WindowExpression struct {
+	Token       token.Token  // the token.OVER token
+	PartitionBy []Expression // the columns to partition by
+	OrderBy     []Expression // the columns to order by
+}
+
+func (w *WindowExpression) expressionNode()      {}
+func (w *WindowExpression) TokenLiteral() string { return w.Token.Lit }
+func (w *WindowExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	if len(w.PartitionBy) > 0 {
+		out.WriteString("PARTITION BY ")
+		partitionBy := []string{}
+		for _, p := range w.PartitionBy {
+			partitionBy = append(partitionBy, p.String())
+		}
+		out.WriteString(strings.Join(partitionBy, ", "))
+	}
+	if len(w.PartitionBy) > 0 && len(w.OrderBy) > 0 {
+		out.WriteString(" ")
+	}
+	if len(w.OrderBy) > 0 {
+		out.WriteString("ORDER BY ")
+		orderBy := []string{}
+		for _, o := range w.OrderBy {
+			orderBy = append(orderBy, o.String())
+		}
+		out.WriteString(strings.Join(orderBy, ", "))
+	}
+
+	out.WriteString(")")
 	return out.String()
 }
 

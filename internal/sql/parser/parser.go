@@ -20,6 +20,7 @@ const (
 	EQUALS         // ==
 	LESSGREATER    // > or <
 	FILTER         // BETWEEN, IN, LIKE, ILIKE, SIMILAR
+	WINDOW         // OVER
 	SUM            // +
 	PRODUCT        // *
 	EXPONENTIATION // ^
@@ -46,6 +47,7 @@ var precedences = map[token.TokenType]int{
 	token.IS:             IS,
 	token.ISNULL:         IS,
 	token.NOTNULL:        IS,
+	token.OVER:           WINDOW,
 	token.BETWEEN:        FILTER,
 	token.IN:             FILTER,
 	token.LIKE:           FILTER,
@@ -103,6 +105,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
+	p.registerPrefix(token.PARTITION, p.parseWindowExpression)
+	p.registerPrefix(token.ORDER, p.parseWindowExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -124,6 +128,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.ILIKE, p.parseInfixExpression)
 	p.registerInfix(token.SIMILAR, p.parseInfixExpression)
 	p.registerInfix(token.BETWEEN, p.parseInfixExpression)
+	p.registerInfix(token.OVER, p.parseInfixExpression)
 
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)

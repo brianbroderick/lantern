@@ -13,9 +13,15 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	stmt := &ast.SelectStatement{Token: p.curToken}
 
 	// COLUMNS
-	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT, token.ASTERISK}) {
+	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT, token.ASTERISK, token.ALL, token.DISTINCT}) {
 		return nil
 	}
+
+	// DISTINCT CLAUSE
+	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
+		stmt.Distinct = p.parseDistinct()
+	}
+
 	stmt.Columns = p.parseColumnList([]token.TokenType{token.COMMA, token.FROM, token.AS})
 
 	// FROM CLAUSE
@@ -80,6 +86,36 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseDistinct() ast.Expression {
+	defer untrace(trace("parseDistinct"))
+
+	if p.curTokenIs(token.ALL) {
+		all := &ast.DistinctExpression{Token: p.curToken}
+		p.nextToken()
+		return all // &ast.DistinctExpression{Token: p.curToken, On: token.Token{Type: token.NIL, Lit: ""}}
+	}
+
+	if p.curTokenIs(token.DISTINCT) {
+		distinct := &ast.DistinctExpression{Token: p.curToken}
+		p.nextToken()
+
+		if p.curTokenIs(token.ON) {
+			p.nextToken()
+
+			if p.curTokenIs(token.LPAREN) {
+				distinct.Right = p.parseExpressionList(token.RPAREN)
+				if p.curTokenIs(token.RPAREN) {
+					p.nextToken()
+				}
+			}
+		}
+
+		return distinct
+	}
+
+	return nil
 }
 
 func (p *Parser) parseTables() []ast.Expression {
@@ -280,4 +316,35 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 
 	// fmt.Printf("parseColumn3: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
 	return leftExp
+}
+
+func (p *Parser) parseWindowExpression() ast.Expression {
+	expression := &ast.WindowExpression{
+		Token: p.curToken,
+	}
+
+	// fmt.Printf("parseWindowExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
+	if p.curTokenIs(token.PARTITION) {
+		if p.expectPeek(token.BY) {
+			p.nextToken()
+			expression.PartitionBy = p.parseColumnList([]token.TokenType{token.COMMA, token.ORDER, token.AS, token.RPAREN})
+		}
+	}
+	if p.peekTokenIs(token.ORDER) {
+		p.nextToken()
+	}
+
+	// fmt.Printf("parseWindowExpression2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
+
+	if p.curTokenIs(token.ORDER) {
+		if p.expectPeek(token.BY) {
+			p.nextToken()
+			expression.OrderBy = p.parseColumnList([]token.TokenType{token.COMMA, token.AS, token.RPAREN})
+		}
+	}
+	// fmt.Printf("parseWindowExpression3: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
+
+	// expression.Right = p.parseExpression(PREFIX)
+
+	return expression
 }

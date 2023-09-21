@@ -110,6 +110,25 @@ func (il *IntegerLiteral) expressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Lit }
 func (il *IntegerLiteral) String() string       { return il.Token.Lit }
 
+// type KeywordExpression struct {
+// 	Token token.Token // The keyword token, e.g. DISTINCT
+// 	Right Expression
+// }
+
+// func (ke *KeywordExpression) expressionNode()      {}
+// func (ke *KeywordExpression) TokenLiteral() string { return ke.Token.Lit }
+// func (ke *KeywordExpression) String() string {
+// 	var out bytes.Buffer
+
+// 	out.WriteString("(")
+// 	out.WriteString(strings.ToUpper(ke.Token.Lit))
+// 	out.WriteString(" ")
+// 	out.WriteString(ke.Right.String())
+// 	out.WriteString(")")
+
+// 	return out.String()
+// }
+
 type PrefixExpression struct {
 	Token    token.Token // The prefix token, e.g. !
 	Operator string

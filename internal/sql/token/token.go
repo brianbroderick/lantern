@@ -76,7 +76,7 @@ const (
 	GROUP
 	BY
 	HAVING
-	WINDOW
+	OVER
 	UNION
 	INTERSECT
 	EXCEPT
@@ -210,7 +210,7 @@ var Tokens = [...]string{
 	GROUP:        "GROUP",
 	BY:           "BY",
 	HAVING:       "HAVING",
-	WINDOW:       "WINDOW",
+	OVER:         "OVER",
 	UNION:        "UNION",
 	INTERSECT:    "INTERSECT",
 	EXCEPT:       "EXCEPT",

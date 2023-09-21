@@ -76,10 +76,22 @@ func TestJoinStatements(t *testing.T) {
 		{"select id from users limit 10;", 1, "SELECT id FROM users LIMIT 10;"},
 		// select with offset
 		{"select id from users limit 10 offset 10;", 1, "SELECT id FROM users LIMIT 10 OFFSET 10;"},
+		// distinct
+		{"select distinct id from users;", 1, "SELECT DISTINCT id FROM users;"},
+		// all
+		{"select all id from users;", 1, "SELECT ALL id FROM users;"},
+		// distinct with on
+		{"select distinct on (location) time, report from weather_reports;", 1, "SELECT DISTINCT ON (location) time, report FROM weather_reports;"},
+		// select with a function
+		{"select sum(a,b) from users;", 1, "SELECT sum(a, b) FROM users;"},
+		// window functions
+		{"select avg(salary) over (partition by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY depname)) FROM empsalary;"},
+		{"select avg(salary) over (order by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (ORDER BY depname)) FROM empsalary;"},
+		{"select avg(salary) over (partition by salary order by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY salary ORDER BY depname)) FROM empsalary;"},
 	}
 
 	for _, tt := range tests {
-		fmt.Printf("\ninput: %s\n", tt.input)
+		fmt.Printf("\ninput:  %s\n", tt.input)
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
@@ -96,7 +108,12 @@ func TestJoinStatements(t *testing.T) {
 		// fmt.Printf("%+v\n", selectStmt.Tables[0])
 
 		assert.Equal(t, tt.tableCount, len(selectStmt.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectStmt.Tables))
-		assert.Equal(t, tt.output, program.String(), "program.String() not '%s'. got=%s", tt.output, program.String())
+		output := program.String()
+		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
+		fmt.Printf("output: %s\n", output)
+		// for _, columns := range selectStmt.Columns {
+		// 	fmt.Printf("\n\nselect: %+v\n\n", columns)
+		// }
 	}
 }
 
