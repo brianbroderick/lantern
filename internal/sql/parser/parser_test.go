@@ -31,62 +31,69 @@ func TestJoinStatements(t *testing.T) {
 	}{
 		// Select: simple
 		{"select id from users;", 1, "SELECT id FROM users;"},
-		{"select id, name from users;", 1, "SELECT id, name FROM users;"},
+		{"select id, name from users", 1, "SELECT id, name FROM users;"},
 		{"select id, first_name from users;", 1, "SELECT id, first_name FROM users;"},
-		{"select id, first_name as name from users;", 1, "SELECT id, first_name AS name FROM users;"},
+		{"select id, first_name as name from users", 1, "SELECT id, first_name AS name FROM users;"},
 		{"select u.id, u.first_name as name from users u;", 1, "SELECT u.id, u.first_name AS name FROM users u;"},
 		{"select id from no_semi_colons", 1, "SELECT id FROM no_semi_colons;"},
 		{"select 1 + 2 as math, foo + 7 as seven from foo", 1, "SELECT (1 + 2) AS math, (foo + 7) AS seven FROM foo;"},
 		{"select 1 + 2 * 3 / value as math from foo", 1, "SELECT (1 + ((2 * 3) / value)) AS math FROM foo;"},
 		{"select id from addresses a;", 1, "SELECT id FROM addresses a;"},
-		{"select \"blah\".id from users;", 1, "SELECT blah.id FROM users;"},
+		{"select \"blah\".id from users", 1, "SELECT blah.id FROM users;"},
 		{"select sum(a,b) from users;", 1, "SELECT sum(a, b) FROM users;"},
 
 		// Select: distinct & all tokens
 		{"select distinct id from users;", 1, "SELECT DISTINCT id FROM users;"},
-		{"select all id from users;", 1, "SELECT ALL id FROM users;"},
+		{"select all id from users", 1, "SELECT ALL id FROM users;"},
 		{"select distinct on (location) time, report from weather_reports;", 1, "SELECT DISTINCT ON (location) time, report FROM weather_reports;"},
 
 		// Select: window functions
 		{"select avg(salary) over (partition by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY depname)) FROM empsalary;"},
-		{"select avg(salary) over (order by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (ORDER BY depname)) FROM empsalary;"},
+		{"select avg(salary) over (order by depname) from empsalary", 1, "SELECT (avg(salary) OVER (ORDER BY depname)) FROM empsalary;"},
 		{"select avg(salary) over (partition by salary order by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY salary ORDER BY depname)) FROM empsalary;"},
-		{"select avg(salary) over (partition by salary order by depname desc) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY salary ORDER BY depname DESC)) FROM empsalary;"},
+		{"select avg(salary) over (partition by salary order by depname desc) from empsalary", 1, "SELECT (avg(salary) OVER (PARTITION BY salary ORDER BY depname DESC)) FROM empsalary;"},
 
 		// Select: joins
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;", 2, "SELECT c.id FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id);"},
 		{"select id from customers join addresses on id = customer_id", 2, "SELECT id FROM customers INNER JOIN addresses ON (id = customer_id);"},
 		{"select id from customers join addresses on id = customer_id join phones on id = phone_id;", 3, "SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) INNER JOIN phones ON (id = phone_id);"},
-		{"select id from customers join addresses on customers.id = addresses.customer_id;", 2, "SELECT id FROM customers INNER JOIN addresses ON (customers.id = addresses.customer_id);"},
+		{"select id from customers join addresses on customers.id = addresses.customer_id", 2, "SELECT id FROM customers INNER JOIN addresses ON (customers.id = addresses.customer_id);"},
 		{"select id from customers join addresses on id = customer_id where id = 46;", 2, "SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = 46);"},
 
 		// Select: where clause
 		{"select id from users where id = 42;", 1, "SELECT id FROM users WHERE (id = 42);"},
-		{"select id from users where id = 42 and customer_id = 74;", 1, "SELECT id FROM users WHERE ((id = 42) AND (customer_id = 74));"},
+		{"select id from users where id = 42 and customer_id = 74", 1, "SELECT id FROM users WHERE ((id = 42) AND (customer_id = 74));"},
 		{"select id from users where id = 42 and customer_id > 74;", 1, "SELECT id FROM users WHERE ((id = 42) AND (customer_id > 74));"},
 		{"select id from users where name = 'brian';", 1, "SELECT id FROM users WHERE (name = 'brian');"},
+		{"select id from users where name = 'brian'", 1, "SELECT id FROM users WHERE (name = 'brian');"},
 
 		// Select: group by
-		{"select id from users group by id;", 1, "SELECT id FROM users GROUP BY id;"},
+		{"select id from users group by id", 1, "SELECT id FROM users GROUP BY id;"},
 		{"select id from users group by id, name;", 1, "SELECT id FROM users GROUP BY id, name;"},
 
 		// Select: combined clauses
-		{"select id from users where id = 42 group by id, name;", 1, "SELECT id FROM users WHERE (id = 42) GROUP BY id, name;"},
+		{"select id from users where id = 42 group by id, name", 1, "SELECT id FROM users WHERE (id = 42) GROUP BY id, name;"},
 		{"select id from customers join addresses on id = customer_id where id = 46 group by id;", 2, "SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = 46) GROUP BY id;"},
 
 		// Select: having clause
 		{"select id from users group by id having id > 2;", 1, "SELECT id FROM users GROUP BY id HAVING (id > 2);"},
+		{"select id from users group by id having id > 2 and name = 'frodo';", 1, "SELECT id FROM users GROUP BY id HAVING ((id > 2) AND (name = 'frodo'));"},
 
 		// Select: order by
 		{"select id from users order by id;", 1, "SELECT id FROM users ORDER BY id;"},
-		{"select id from users order by id desc, name;", 1, "SELECT id FROM users ORDER BY id DESC, name;"},
+		{"select id from users order by id desc, name", 1, "SELECT id FROM users ORDER BY id DESC, name;"},
 		{"select id from users order by id desc nulls first, name nulls last;", 1, "SELECT id FROM users ORDER BY id DESC NULLS FIRST, name NULLS LAST;"},
 
 		// Select: limit
 		{"select id from users limit 10;", 1, "SELECT id FROM users LIMIT 10;"},
+		{"select id from users limit ALL;", 1, "SELECT id FROM users LIMIT ALL;"},
+		{"select id from users limit ALL", 1, "SELECT id FROM users LIMIT ALL;"},
 
 		// Select: offset
+		{"select id from users limit ALL offset 10;", 1, "SELECT id FROM users LIMIT ALL OFFSET 10;"},
 		{"select id from users limit 10 offset 10;", 1, "SELECT id FROM users LIMIT 10 OFFSET 10;"},
+		{"select id from users limit 10 offset 1 ROW", 1, "SELECT id FROM users LIMIT 10 OFFSET 1;"},
+		{"select id from users limit 10 offset 2 ROWS;", 1, "SELECT id FROM users LIMIT 10 OFFSET 2;"},
 
 		// Select: combined order by, limit, offset
 		{"select id from users order by id desc limit 10 offset 10;", 1, "SELECT id FROM users ORDER BY id DESC LIMIT 10 OFFSET 10;"},

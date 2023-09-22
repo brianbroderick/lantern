@@ -77,6 +77,9 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 		p.nextToken()
 		stmt.Offset = p.parseExpression(LOWEST)
 		p.nextToken()
+		if p.curTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
+			p.nextToken()
+		}
 	}
 
 	// fmt.Printf("parseSelectStatement2: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)

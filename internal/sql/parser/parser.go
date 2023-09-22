@@ -107,6 +107,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
 	p.registerPrefix(token.PARTITION, p.parseWindowExpression)
 	p.registerPrefix(token.ORDER, p.parseWindowExpression)
+	p.registerPrefix(token.ALL, p.parseKeywordExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -310,6 +311,10 @@ func (p *Parser) parseIdentifier() ast.Expression {
 
 func (p *Parser) parseWildcardLiteral() ast.Expression {
 	return &ast.WildcardLiteral{Token: p.curToken, Value: p.curToken.Lit}
+}
+
+func (p *Parser) parseKeywordExpression() ast.Expression {
+	return &ast.KeywordExpression{Token: p.curToken}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
