@@ -20,6 +20,7 @@ type SelectStatement struct {
 	OrderBy  []Expression
 	Limit    Expression
 	Offset   Expression
+	Fetch    Expression
 }
 
 func (ls *SelectStatement) statementNode()       {}
@@ -93,6 +94,12 @@ func (ls *SelectStatement) String() string {
 	if ls.Offset != nil {
 		out.WriteString(" OFFSET ")
 		out.WriteString(ls.Offset.String())
+	}
+
+	// Fetch
+	if ls.Fetch != nil {
+		out.WriteString(" FETCH NEXT ")
+		out.WriteString(ls.Fetch.String())
 	}
 
 	out.WriteString(";")
@@ -184,6 +191,30 @@ func (s *SortExpression) String() string {
 		out.WriteString(" NULLS FIRST")
 	} else if s.Nulls.Type == token.LAST {
 		out.WriteString(" NULLS LAST")
+	}
+
+	return out.String()
+}
+
+type FetchExpression struct {
+	Token token.Token // the token.FETCH token
+	// Don't need to store "first" or "next" since these are synonyms. We'll convert everything to "next" when printing in .String()
+	Value Expression // the number of rows to fetch
+	// We also don't need to store "row" or "rows" since these are synonyms. We'll convert everything to "rows" when printing in .String()
+	Option token.Token // the token.ONLY or token.TIES token (don't need to store "with ties", just "ties" will do)
+}
+
+func (f *FetchExpression) expressionNode()      {}
+func (f *FetchExpression) TokenLiteral() string { return f.Token.Lit }
+func (f *FetchExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(f.Value.String())
+	out.WriteString(" ROWS")
+	if f.Option.Type == token.TIES {
+		out.WriteString(" WITH TIES")
+	} else {
+		out.WriteString(" ONLY")
 	}
 
 	return out.String()

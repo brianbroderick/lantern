@@ -98,6 +98,11 @@ func TestJoinStatements(t *testing.T) {
 		// Select: combined order by, limit, offset
 		{"select id from users order by id desc limit 10 offset 10;", 1, "SELECT id FROM users ORDER BY id DESC LIMIT 10 OFFSET 10;"},
 		{"select id from users order by id desc nulls last limit 10 offset 10;", 1, "SELECT id FROM users ORDER BY id DESC NULLS LAST LIMIT 10 OFFSET 10;"},
+
+		// Select: fetch
+		{"select id from users order by id fetch first row only;", 1, "SELECT id FROM users ORDER BY id FETCH NEXT 1 ROWS ONLY;"},
+		{"select id from users order by id fetch first 3 rows only;", 1, "SELECT id FROM users ORDER BY id FETCH NEXT 3 ROWS ONLY;"},
+		{"select id from users order by id fetch first 10 rows with ties;", 1, "SELECT id FROM users ORDER BY id FETCH NEXT 10 ROWS WITH TIES;"},
 	}
 
 	for _, tt := range tests {

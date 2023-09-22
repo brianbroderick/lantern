@@ -82,6 +82,12 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 		}
 	}
 
+	// FETCH CLAUSE
+	if p.curTokenIs(token.FETCH) {
+		p.nextToken()
+		stmt.Fetch = p.parseFetch()
+	}
+
 	// fmt.Printf("parseSelectStatement2: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	if p.expectPeekIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
@@ -205,67 +211,42 @@ func (p *Parser) parseTable() ast.Expression {
 	return &table
 }
 
-// func (p *Parser) parseJoinList() []ast.Expression {
-// 	defer untrace(trace("parseJoins"))
-// 	// fmt.Printf("parseJoins1: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
-// 	joins := []ast.Expression{}
+func (p *Parser) parseFetch() ast.Expression {
+	defer untrace(trace("parseFetch"))
 
-// 	if p.curTokenIsOne([]token.TokenType{token.EOF, token.SEMICOLON}) {
-// 		return joins
-// 	}
+	if p.curTokenIs(token.FETCH) {
+		p.nextToken()
+	}
 
-// 	// START HERE: working on getting the table and then joins loop working
+	fetch := &ast.FetchExpression{Token: p.curToken,
+		Value:  &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1},
+		Option: token.Token{Type: token.NIL, Lit: ""}}
 
-// 	// Get the first table
-// 	// joins = append(joins, p.parseJoin(LOWEST))
-// 	table := p.parseJoin(LOWEST)
+	if p.curTokenIsOne([]token.TokenType{token.NEXT, token.FIRST}) {
+		p.nextToken()
+	}
 
-// 	for p.peekTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.JOIN}) {
-// 		p.nextToken()
+	if p.curTokenIs(token.INT) {
+		fetch.Value = p.parseExpression(LOWEST)
+		p.nextToken()
+	}
 
-// 		if p.curTokenIs(token.JOIN) {
-// 			p.nextToken()
-// 		}
+	if p.curTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
+		p.nextToken()
+	}
 
-// 		if p.peekTokenIs(token.JOIN) {
-// 			p.nextToken()
-// 		}
-
-// 		p.nextToken()
-// 		p.nextToken()
-// 		joins = append(joins, p.parseJoin(LOWEST))
-// 	}
-
-// 	return joins
-// }
-
-// func (p *Parser) parseJoin(precedence int) ast.Expression {
-// 	defer untrace(trace("parseJoin"))
-// 	// fmt.Printf("parseJoin1: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
-
-// 	prefix := p.prefixParseFns[p.curToken.Type]
-// 	if prefix == nil {
-// 		p.noPrefixParseFnError(p.curToken.Type)
-// 		return nil
-// 	}
-// 	leftExp := prefix()
-
-// 	// fmt.Printf("parseJoin2: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
-
-// 	for !p.peekTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.JOIN}) && precedence < p.peekPrecedence() {
-// 		infix := p.infixParseFns[p.peekToken.Type]
-// 		if infix == nil {
-// 			return leftExp
-// 		}
-
-// 		p.nextToken()
-
-// 		leftExp = infix(leftExp)
-// 	}
-
-// 	// fmt.Printf("parseJoin3: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
-// 	return leftExp
-// }
+	if p.curTokenIs(token.ONLY) {
+		fetch.Option = p.curToken
+		p.nextToken()
+	} else if p.curTokenIs(token.WITH) {
+		if p.peekTokenIs(token.TIES) {
+			p.nextToken()
+			fetch.Option = p.curToken
+			p.nextToken()
+		}
+	}
+	return fetch
+}
 
 func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
 	defer untrace(trace("parseSortList"))
