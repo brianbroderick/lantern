@@ -16,6 +16,13 @@ import (
 // select * from users join addresses on users.id = addresses.user_id;
 // select * from users u inner join addresses a on u.id = a.user_id;
 
+// Window frame_clause:
+// SELECT
+// wf1() OVER w,
+// wf2() OVER w,
+// FROM table_name
+// WINDOW w AS (PARTITION BY c1 ORDER BY c2);
+
 func TestJoinStatements(t *testing.T) {
 	tests := []struct {
 		input      string
@@ -88,6 +95,12 @@ func TestJoinStatements(t *testing.T) {
 		{"select avg(salary) over (partition by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY depname)) FROM empsalary;"},
 		{"select avg(salary) over (order by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (ORDER BY depname)) FROM empsalary;"},
 		{"select avg(salary) over (partition by salary order by depname) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY salary ORDER BY depname)) FROM empsalary;"},
+		// order by
+		{"select id from users order by id desc, name;", 1, "SELECT id FROM users ORDER BY id DESC, name;"},
+		{"select avg(salary) over (partition by salary order by depname desc) from empsalary;", 1, "SELECT (avg(salary) OVER (PARTITION BY salary ORDER BY depname DESC)) FROM empsalary;"},
+		{"select id from users order by id desc nulls first, name nulls last;", 1, "SELECT id FROM users ORDER BY id DESC NULLS FIRST, name NULLS LAST;"},
+		{"select id from users order by id desc limit 10 offset 10;", 1, "SELECT id FROM users ORDER BY id DESC LIMIT 10 OFFSET 10;"},
+		{"select id from users order by id desc nulls last limit 10 offset 10;", 1, "SELECT id FROM users ORDER BY id DESC NULLS LAST LIMIT 10 OFFSET 10;"},
 	}
 
 	for _, tt := range tests {

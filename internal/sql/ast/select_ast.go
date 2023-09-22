@@ -20,7 +20,6 @@ type SelectStatement struct {
 	OrderBy  []Expression
 	Limit    Expression
 	Offset   Expression
-	// Offset  *IntegerLiteral
 }
 
 func (ls *SelectStatement) statementNode()       {}
@@ -157,9 +156,34 @@ func (c *ColumnExpression) String() string {
 
 	val := c.Value.String()
 	out.WriteString(val)
-	if c.Name.String() != val && c.Name.String() != "" {
+	if c.Name != nil && c.Name.String() != val && c.Name.String() != "" {
 		out.WriteString(" AS ")
 		out.WriteString(c.Name.String())
+	}
+
+	return out.String()
+}
+
+type SortExpression struct {
+	Token     token.Token // the token.ASC or token.DESC token
+	Value     Expression  // the column to sort on
+	Direction token.Token // the direction to sort
+	Nulls     token.Token // first or last
+}
+
+func (s *SortExpression) expressionNode()      {}
+func (s *SortExpression) TokenLiteral() string { return s.Token.Lit }
+func (s *SortExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(s.Value.String())
+	if s.Direction.Type == token.DESC {
+		out.WriteString(" DESC")
+	}
+	if s.Nulls.Type == token.FIRST {
+		out.WriteString(" NULLS FIRST")
+	} else if s.Nulls.Type == token.LAST {
+		out.WriteString(" NULLS LAST")
 	}
 
 	return out.String()

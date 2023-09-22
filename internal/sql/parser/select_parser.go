@@ -61,7 +61,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 			return nil
 		}
 		p.nextToken()
-		stmt.OrderBy = p.parseColumnList([]token.TokenType{token.COMMA, token.LIMIT, token.OFFSET})
+		stmt.OrderBy = p.parseSortList([]token.TokenType{token.COMMA, token.LIMIT, token.OFFSET})
 		p.nextToken()
 	}
 
@@ -264,6 +264,68 @@ func (p *Parser) parseTable() ast.Expression {
 // 	return leftExp
 // }
 
+func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
+	defer untrace(trace("parseSortList"))
+
+	list := []ast.Expression{}
+
+	if p.curTokenIsOne(end) {
+		return list
+	}
+
+	list = append(list, p.parseSort(LOWEST, end))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseSort(LOWEST, end))
+	}
+
+	return list
+}
+
+func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression {
+	defer untrace(trace("parseSort"))
+	// fmt.Printf("parseSort1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
+		return nil
+	}
+	leftExp := prefix()
+
+	// fmt.Printf("parseSort2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
+
+	for !p.peekTokenIsOne([]token.TokenType{token.COMMA}) && precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Type]
+		if infix == nil {
+			return leftExp
+		}
+
+		p.nextToken()
+		leftExp = infix(leftExp)
+	}
+
+	sortExp := &ast.SortExpression{Token: p.curToken, Value: leftExp, Direction: token.Token{Type: token.ASC, Lit: "ASC"}, Nulls: token.Token{Type: token.NIL, Lit: ""}}
+
+	if p.peekTokenIsOne([]token.TokenType{token.ASC, token.DESC}) {
+		p.nextToken()
+		sortExp.Direction = p.curToken
+	}
+
+	if p.peekTokenIs(token.NULLS) {
+		p.nextToken()
+		if p.peekTokenIsOne([]token.TokenType{token.FIRST, token.LAST}) {
+			p.nextToken()
+			sortExp.Nulls = p.curToken
+		}
+	}
+
+	// fmt.Printf("parseSort3: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+	return sortExp
+}
+
 func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 	defer untrace(trace("parseColumnList"))
 
@@ -286,7 +348,7 @@ func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 
 func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expression {
 	defer untrace(trace("parseColumn"))
-	// fmt.Printf("parseColumn1: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+	// fmt.Printf("parseColumn1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -295,7 +357,7 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 	}
 	leftExp := prefix()
 
-	// fmt.Printf("parseColumn2: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
+	// fmt.Printf("parseColumn2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
 
 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.FROM, token.AS}) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
@@ -307,15 +369,18 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 
 		leftExp = infix(leftExp)
 	}
+
+	colExp := &ast.ColumnExpression{Token: p.curToken, Value: leftExp}
+
 	if p.peekTokenIs(token.AS) {
 		p.nextToken()
 		p.nextToken()
 		alias := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
-		leftExp = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
+		colExp = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
 	}
 
-	// fmt.Printf("parseColumn3: %s %s\n", p.curToken.Lit, p.peekToken.Lit)
-	return leftExp
+	// fmt.Printf("parseColumn3: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+	return colExp
 }
 
 func (p *Parser) parseWindowExpression() ast.Expression {
@@ -339,7 +404,7 @@ func (p *Parser) parseWindowExpression() ast.Expression {
 	if p.curTokenIs(token.ORDER) {
 		if p.expectPeek(token.BY) {
 			p.nextToken()
-			expression.OrderBy = p.parseColumnList([]token.TokenType{token.COMMA, token.AS, token.RPAREN})
+			expression.OrderBy = p.parseSortList([]token.TokenType{token.COMMA, token.AS, token.RPAREN})
 		}
 	}
 	// fmt.Printf("parseWindowExpression3: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
