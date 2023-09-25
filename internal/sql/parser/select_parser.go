@@ -86,9 +86,15 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	if p.curTokenIs(token.FETCH) {
 		p.nextToken()
 		stmt.Fetch = p.parseFetch()
+		p.nextToken()
 	}
 
-	// fmt.Printf("parseSelectStatement2: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+	// FOR UPDATE CLAUSE
+	if p.curTokenIs(token.FOR) {
+		p.nextToken()
+		stmt.Lock = p.parseLock()
+		p.nextToken()
+	}
 
 	if p.expectPeekIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
 		p.nextToken()
@@ -114,7 +120,7 @@ func (p *Parser) parseDistinct() ast.Expression {
 			p.nextToken()
 
 			if p.curTokenIs(token.LPAREN) {
-				distinct.Right = p.parseExpressionList(token.RPAREN)
+				distinct.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 				if p.curTokenIs(token.RPAREN) {
 					p.nextToken()
 				}
@@ -394,6 +400,56 @@ func (p *Parser) parseWindowExpression() ast.Expression {
 	// fmt.Printf("parseWindowExpression3: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 
 	// expression.Right = p.parseExpression(PREFIX)
+
+	return expression
+}
+
+func (p *Parser) parseLock() ast.Expression {
+	expression := &ast.LockExpression{
+		Token: p.curToken,
+	}
+
+	switch p.curToken.Type {
+	case token.UPDATE:
+		expression.Lock = "UPDATE"
+		p.nextToken()
+	case token.SHARE:
+		expression.Lock = "SHARE"
+		p.nextToken()
+	}
+
+	if p.curTokenIs(token.KEY) {
+		p.nextToken()
+		if p.curTokenIs(token.SHARE) {
+			expression.Lock = "KEY SHARE"
+		}
+	}
+
+	if p.curTokenIs(token.NO) {
+		p.nextToken()
+		if p.curTokenIs(token.KEY) {
+			p.nextToken()
+			if p.curTokenIs(token.UPDATE) {
+				p.nextToken()
+				expression.Lock = "NO KEY UPDATE"
+			}
+		}
+	}
+
+	if p.curTokenIs(token.OF) {
+		expression.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF})
+	}
+
+	if p.curTokenIs(token.NOWAIT) {
+		expression.Options = "NOWAIT"
+	} else if p.curTokenIs(token.SKIP) {
+		p.nextToken()
+		if p.curTokenIs(token.LOCKED) {
+			expression.Options = "SKIP LOCKED"
+		}
+	}
+
+	p.nextToken()
 
 	return expression
 }

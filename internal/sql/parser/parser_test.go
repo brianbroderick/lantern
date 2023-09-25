@@ -103,6 +103,16 @@ func TestJoinStatements(t *testing.T) {
 		{"select id from users order by id fetch first row only;", 1, "SELECT id FROM users ORDER BY id FETCH NEXT 1 ROWS ONLY;"},
 		{"select id from users order by id fetch first 3 rows only;", 1, "SELECT id FROM users ORDER BY id FETCH NEXT 3 ROWS ONLY;"},
 		{"select id from users order by id fetch first 10 rows with ties;", 1, "SELECT id FROM users ORDER BY id FETCH NEXT 10 ROWS WITH TIES;"},
+
+		// Select: for update
+		{"select id from users for update;", 1, "SELECT id FROM users FOR UPDATE;"},
+		{"select id from users for no key update;;", 1, "SELECT id FROM users FOR NO KEY UPDATE;"},
+		{"select id from users for share;", 1, "SELECT id FROM users FOR SHARE;"},
+		{"select id from users for key share", 1, "SELECT id FROM users FOR KEY SHARE;"},
+		{"select id from users for update of users;", 1, "SELECT id FROM users FOR UPDATE OF users;"},
+		{"select id from users for update of users, addresses;", 1, "SELECT id FROM users FOR UPDATE OF users, addresses;"},
+		{"select id from users for update of users, addresses nowait;", 1, "SELECT id FROM users FOR UPDATE OF users, addresses NOWAIT;"},
+		{"select id from users for update of users, addresses skip locked;", 1, "SELECT id FROM users FOR UPDATE OF users, addresses SKIP LOCKED;"},
 	}
 
 	for _, tt := range tests {

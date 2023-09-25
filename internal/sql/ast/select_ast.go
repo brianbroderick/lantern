@@ -21,6 +21,7 @@ type SelectStatement struct {
 	Limit    Expression
 	Offset   Expression
 	Fetch    Expression
+	Lock     Expression
 }
 
 func (ls *SelectStatement) statementNode()       {}
@@ -100,6 +101,12 @@ func (ls *SelectStatement) String() string {
 	if ls.Fetch != nil {
 		out.WriteString(" FETCH NEXT ")
 		out.WriteString(ls.Fetch.String())
+	}
+
+	// Lock
+	if ls.Lock != nil {
+		out.WriteString(" FOR ")
+		out.WriteString(ls.Lock.String())
 	}
 
 	out.WriteString(";")
@@ -294,6 +301,33 @@ func (t *TableExpression) String() string {
 
 	if t.JoinCondition != nil {
 		out.WriteString(" ON " + t.JoinCondition.String())
+	}
+
+	return out.String()
+}
+
+type LockExpression struct {
+	Token   token.Token  // the token.FOR token
+	Lock    string       // the type of lock: update, share, key share, no key update
+	Tables  []Expression // the tables to lock
+	Options string       // the options: NOWAIT, SKIP LOCKED
+}
+
+func (l *LockExpression) expressionNode()      {}
+func (l *LockExpression) TokenLiteral() string { return l.Token.Lit }
+func (l *LockExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString(l.Lock)
+	if len(l.Tables) > 0 {
+		tables := []string{}
+		out.WriteString(" OF ")
+		for _, t := range l.Tables {
+			tables = append(tables, t.String())
+		}
+		out.WriteString(strings.Join(tables, ", "))
+	}
+	if l.Options != "" {
+		out.WriteString(" " + l.Options)
 	}
 
 	return out.String()
