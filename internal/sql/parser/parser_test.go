@@ -23,6 +23,28 @@ import (
 // FROM table_name
 // WINDOW w AS (PARTITION BY c1 ORDER BY c2);
 
+// Subquery:
+// SELECT	film_id, title,	rental_rate FROM film WHERE	rental_rate > (	SELECT AVG (rental_rate) FROM film);
+// SELECT film_id, title FROM	film WHERE film_id IN (SELECT inventory.film_id	FROM rental INNER JOIN inventory ON inventory.inventory_id = rental.inventory_id WHERE return_date BETWEEN '2005-05-29'	AND '2005-05-30');
+
+// Common Table Expression:
+// WITH regional_sales AS (
+// 	SELECT region, SUM(amount) AS total_sales
+// 	FROM orders
+// 	GROUP BY region
+// ), top_regions AS (
+// 	SELECT region
+// 	FROM regional_sales
+// 	WHERE total_sales > (SELECT SUM(total_sales)/10 FROM regional_sales)
+// )
+// SELECT region,
+// 		 product,
+// 		 SUM(quantity) AS product_units,
+// 		 SUM(amount) AS product_sales
+// FROM orders
+// WHERE region IN (SELECT region FROM top_regions)
+// GROUP BY region, product;
+
 func TestJoinStatements(t *testing.T) {
 	tests := []struct {
 		input      string

@@ -9,7 +9,7 @@ import (
 
 type SelectStatement struct {
 	Token       token.Token  // the token.SELECT token
-	Expressions []Expression // a select statement may consist of multiple select statements such as a UNION or CTE. This is the list of those statements
+	Expressions []Expression // a select statement may consist of multiple expressions such as the with clause in a CTE along with the primary select expression
 }
 
 func (ss *SelectStatement) statementNode()       {}
@@ -39,6 +39,8 @@ func (ss *SelectStatement) Inspect() string {
 	return "Inspect method not implemented"
 }
 
+// SelectExpression is a select inside a SELECT or WITH (Common Table Expression) statement,
+// since a select statement can have multiple select expressions. i.e. WITH clause, subqueries, and the primary select expression.
 type SelectExpression struct {
 	Token     token.Token // the token.SELECT token
 	TempTable *Identifier // the name of the temp table named in a WITH clause (CTE)
