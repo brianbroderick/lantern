@@ -453,3 +453,45 @@ func (p *Parser) parseLock() ast.Expression {
 
 	return expression
 }
+
+func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
+	exp := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	p.nextToken()
+	if p.curTokenIs(token.LPAREN) {
+		// p.nextToken()
+		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+	}
+	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
+
+	return exp
+}
+
+// func (p *Parser) parseWhere(precedence int) ast.Expression {
+// 	defer untrace(trace("parseExpression"))
+
+// 	prefix := p.prefixParseFns[p.curToken.Type]
+// 	if prefix == nil {
+// 		p.noPrefixParseFnError(p.curToken.Type)
+// 		return nil
+// 	}
+// 	leftExp := prefix()
+
+// 	// if p.peekTokenIs(token.IN) {
+// 	// 	p.nextToken()
+// 	// 	p.nextToken()
+// 	// 	infix := &ast.WhereExpression{Token: p.curToken, Left: leftExp, Right: p.parseExpressionList([]token.TokenType{token.RPAREN})}
+// 	// }
+
+// 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.SEMICOLON}) && precedence < p.peekPrecedence() {
+// 		infix := p.infixParseFns[p.peekToken.Type]
+// 		if infix == nil {
+// 			return leftExp
+// 		}
+
+// 		p.nextToken()
+
+// 		leftExp = infix(leftExp)
+// 	}
+
+// 	return leftExp
+// }

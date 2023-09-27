@@ -332,3 +332,31 @@ func (l *LockExpression) String() string {
 
 	return out.String()
 }
+
+type InExpression struct {
+	Token    token.Token // The operator token, e.g. +
+	Left     Expression
+	Operator string
+	Right    []Expression
+}
+
+func (ie *InExpression) expressionNode()      {}
+func (ie *InExpression) TokenLiteral() string { return ie.Token.Lit }
+func (ie *InExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ie.Left.String())
+	out.WriteString(" " + strings.ToUpper(ie.Operator) + " ")
+
+	out.WriteString("(")
+	oneLess := len(ie.Right) - 1
+	for i, e := range ie.Right {
+		out.WriteString(e.String())
+		if i < oneLess {
+			out.WriteString(", ")
+		}
+	}
+	out.WriteString(")")
+
+	return out.String()
+}

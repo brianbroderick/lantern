@@ -124,13 +124,13 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.IS, p.parseInfixExpression)
 	p.registerInfix(token.ISNULL, p.parseInfixExpression)  // this might actually be a postfix operator
 	p.registerInfix(token.NOTNULL, p.parseInfixExpression) // this might actually be a postfix operator
-	p.registerInfix(token.IN, p.parseInfixExpression)
 	p.registerInfix(token.LIKE, p.parseInfixExpression)
 	p.registerInfix(token.ILIKE, p.parseInfixExpression)
 	p.registerInfix(token.SIMILAR, p.parseInfixExpression)
 	p.registerInfix(token.BETWEEN, p.parseInfixExpression)
 	p.registerInfix(token.OVER, p.parseInfixExpression)
 
+	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
 
@@ -422,6 +422,7 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 	}
 
 	p.nextToken()
+	// fmt.Printf("parseExpressionList: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, list)
 	list = append(list, p.parseExpression(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {

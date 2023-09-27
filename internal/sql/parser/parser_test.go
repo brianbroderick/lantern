@@ -113,6 +113,10 @@ func TestJoinStatements(t *testing.T) {
 		{"select id from users for update of users, addresses;", 1, "SELECT id FROM users FOR UPDATE OF users, addresses;"},
 		{"select id from users for update of users, addresses nowait;", 1, "SELECT id FROM users FOR UPDATE OF users, addresses NOWAIT;"},
 		{"select id from users for update of users, addresses skip locked;", 1, "SELECT id FROM users FOR UPDATE OF users, addresses SKIP LOCKED;"},
+
+		// Select: IN clause
+		{"select id from users where id IN ('1','2','3','4');", 1, "SELECT id FROM users WHERE id IN ('1', '2', '3', '4');"},
+		{"select id from users where id IN ('1','2','3','4') AND name = 'brian';", 1, "SELECT id FROM users WHERE (id IN ('1', '2', '3', '4') AND (name = 'brian'));"},
 	}
 
 	for _, tt := range tests {
