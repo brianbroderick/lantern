@@ -136,7 +136,10 @@ func TestJoinStatements(t *testing.T) {
 
 		// fmt.Printf("%+v\n", selectStmt.Tables[0])
 
-		assert.Equal(t, tt.tableCount, len(selectStmt.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectStmt.Tables))
+		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
+		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+
+		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectExp.Tables))
 		output := program.String()
 		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
 		fmt.Printf("output: %s\n", output)

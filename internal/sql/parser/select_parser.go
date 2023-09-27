@@ -11,6 +11,16 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
 
 	stmt := &ast.SelectStatement{Token: p.curToken}
+	stmt.Expressions = []ast.Expression{}
+	stmt.Expressions = append(stmt.Expressions, p.parseSelectExpression())
+
+	return stmt
+}
+
+func (p *Parser) parseSelectExpression() *ast.SelectExpression {
+	defer untrace(trace("parseSelectExpression1 " + p.curToken.Lit))
+
+	stmt := &ast.SelectExpression{Token: p.curToken}
 
 	// COLUMNS
 	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT, token.ASTERISK, token.ALL, token.DISTINCT}) {

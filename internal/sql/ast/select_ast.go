@@ -2,45 +2,76 @@ package ast
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 
 	"github.com/brianbroderick/lantern/internal/sql/token"
 )
 
-// Most of these need to be replaced by structs
 type SelectStatement struct {
-	Token    token.Token // the token.SELECT token
-	Distinct Expression  // the DISTINCT or ALL token
-	Columns  []Expression
-	Tables   []Expression
-	Where    Expression
-	GroupBy  []Expression
-	Having   Expression
-	OrderBy  []Expression
-	Limit    Expression
-	Offset   Expression
-	Fetch    Expression
-	Lock     Expression
+	Token       token.Token  // the token.SELECT token
+	Expressions []Expression // a select statement may consist of multiple select statements such as a UNION or CTE. This is the list of those statements
 }
 
-func (ls *SelectStatement) statementNode()       {}
-func (ls *SelectStatement) TokenLiteral() string { return ls.Token.Lit }
-
-// String() is incomplete and only returns the most basic of select statements
-func (ls *SelectStatement) String() string {
+func (ss *SelectStatement) statementNode()       {}
+func (ss *SelectStatement) TokenLiteral() string { return ss.Token.Lit }
+func (ss *SelectStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(strings.ToUpper(ls.TokenLiteral()) + " ")
+	for _, e := range ss.Expressions {
+		out.WriteString(e.String())
+	}
+
+	return out.String()
+}
+func (ss *SelectStatement) Inspect() string {
+	// columns := []string{}
+	// for _, c := range ss.Columns {
+	// 	columns = append(columns, c.String())
+	// }
+	// strColumns := strings.Join(columns, "\n\t\t")
+	// strTables := []string{}
+	// for _, t := range ss.Tables {
+	// 	strTables = append(strTables, t.String())
+	// }
+
+	// ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, strTables)
+	// return ins
+	return "Inspect method not implemented"
+}
+
+type SelectExpression struct {
+	Token     token.Token // the token.SELECT token
+	TempTable *Identifier // the name of the temp table named in a WITH clause (CTE)
+	Distinct  Expression  // the DISTINCT or ALL token
+	Columns   []Expression
+	Tables    []Expression
+	Where     Expression
+	GroupBy   []Expression
+	Having    Expression
+	OrderBy   []Expression
+	Limit     Expression
+	Offset    Expression
+	Fetch     Expression
+	Lock      Expression
+}
+
+func (se *SelectExpression) expressionNode()      {}
+func (se *SelectExpression) TokenLiteral() string { return se.Token.Lit }
+
+// String() is incomplete and only returns the most basic of select statements
+func (se *SelectExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(strings.ToUpper(se.TokenLiteral()) + " ")
 
 	// Distinct
-	if ls.Distinct != nil {
-		out.WriteString(ls.Distinct.String() + " ")
+	if se.Distinct != nil {
+		out.WriteString(se.Distinct.String() + " ")
 	}
 
 	// Columns
 	columns := []string{}
-	for _, c := range ls.Columns {
+	for _, c := range se.Columns {
 		columns = append(columns, c.String())
 	}
 	out.WriteString(strings.Join(columns, ", "))
@@ -48,65 +79,65 @@ func (ls *SelectStatement) String() string {
 	// Tables
 	out.WriteString(" FROM ")
 	tables := []string{}
-	for _, t := range ls.Tables {
+	for _, t := range se.Tables {
 		tables = append(tables, t.String())
 	}
 	out.WriteString(strings.Join(tables, " "))
 
 	// Where
-	if ls.Where != nil {
+	if se.Where != nil {
 		out.WriteString(" WHERE ")
-		out.WriteString(ls.Where.String())
+		out.WriteString(se.Where.String())
 	}
 
 	// Group By
-	if len(ls.GroupBy) > 0 {
+	if len(se.GroupBy) > 0 {
 		out.WriteString(" GROUP BY ")
 		groupBy := []string{}
-		for _, g := range ls.GroupBy {
+		for _, g := range se.GroupBy {
 			groupBy = append(groupBy, g.String())
 		}
 		out.WriteString(strings.Join(groupBy, ", "))
 	}
 
 	// Having
-	if ls.Having != nil {
+	if se.Having != nil {
 		out.WriteString(" HAVING ")
-		out.WriteString(ls.Having.String())
+		out.WriteString(se.Having.String())
 	}
 
 	// Order By
-	if len(ls.OrderBy) > 0 {
+	if len(se.OrderBy) > 0 {
 		out.WriteString(" ORDER BY ")
 		orderBy := []string{}
-		for _, g := range ls.OrderBy {
+		for _, g := range se.OrderBy {
 			orderBy = append(orderBy, g.String())
 		}
 		out.WriteString(strings.Join(orderBy, ", "))
 	}
 
 	// Limit
-	if ls.Limit != nil {
+	if se.Limit != nil {
 		out.WriteString(" LIMIT ")
-		out.WriteString(ls.Limit.String())
+		out.WriteString(se.Limit.String())
 	}
 
 	// Offset
-	if ls.Offset != nil {
+	if se.Offset != nil {
 		out.WriteString(" OFFSET ")
-		out.WriteString(ls.Offset.String())
+		out.WriteString(se.Offset.String())
 	}
 
 	// Fetch
-	if ls.Fetch != nil {
+	if se.Fetch != nil {
 		out.WriteString(" FETCH NEXT ")
-		out.WriteString(ls.Fetch.String())
+		out.WriteString(se.Fetch.String())
 	}
 
 	// Lock
-	if ls.Lock != nil {
+	if se.Lock != nil {
 		out.WriteString(" FOR ")
-		out.WriteString(ls.Lock.String())
+		out.WriteString(se.Lock.String())
 	}
 
 	out.WriteString(";")
@@ -114,20 +145,20 @@ func (ls *SelectStatement) String() string {
 	return out.String()
 }
 
-func (ls *SelectStatement) Inspect() string {
-	columns := []string{}
-	for _, c := range ls.Columns {
-		columns = append(columns, c.String())
-	}
-	strColumns := strings.Join(columns, "\n\t\t")
-	strTables := []string{}
-	for _, t := range ls.Tables {
-		strTables = append(strTables, t.String())
-	}
+// func (se *SelectExpression) Inspect() string {
+// 	columns := []string{}
+// 	for _, c := range se.Columns {
+// 		columns = append(columns, c.String())
+// 	}
+// 	strColumns := strings.Join(columns, "\n\t\t")
+// 	strTables := []string{}
+// 	for _, t := range se.Tables {
+// 		strTables = append(strTables, t.String())
+// 	}
 
-	ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, strTables)
-	return ins
-}
+// 	ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, strTables)
+// 	return ins
+// }
 
 type DistinctExpression struct {
 	Token token.Token  // The keyword token, e.g. DISTINCT
