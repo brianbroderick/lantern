@@ -17,7 +17,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	return stmt
 }
 
-func (p *Parser) parseSelectExpression() *ast.SelectExpression {
+func (p *Parser) parseSelectExpression() ast.Expression {
 	defer untrace(trace("parseSelectExpression1 " + p.curToken.Lit))
 
 	stmt := &ast.SelectExpression{Token: p.curToken}
@@ -106,9 +106,20 @@ func (p *Parser) parseSelectExpression() *ast.SelectExpression {
 		p.nextToken()
 	}
 
-	if p.expectPeekIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
+	if p.curTokenIsOne([]token.TokenType{token.SEMICOLON}) {
 		p.nextToken()
 	}
+
+	// fmt.Printf("parseSelectExpression2: %s :: %s\n", p.curToken.Type, p.peekToken.Type)
+
+	// if p.peekTokenIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
+	// 	p.nextToken()
+	// 	p.nextToken()
+	// }
+
+	// if p.curTokenIs(token.RPAREN) {
+	// 	p.nextToken()
+	// }
 
 	return stmt
 }

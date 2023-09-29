@@ -21,6 +21,8 @@ func (ss *SelectStatement) String() string {
 		out.WriteString(e.String())
 	}
 
+	out.WriteString(";")
+
 	return out.String()
 }
 func (ss *SelectStatement) Inspect() string {
@@ -63,6 +65,9 @@ func (se *SelectExpression) TokenLiteral() string { return se.Token.Lit }
 // String() is incomplete and only returns the most basic of select statements
 func (se *SelectExpression) String() string {
 	var out bytes.Buffer
+
+	// Subqueries need to be surrounded by parentheses. A primary query may also have parentheses, so we'll add them here to be consistent.
+	out.WriteString("(")
 
 	out.WriteString(strings.ToUpper(se.TokenLiteral()) + " ")
 
@@ -142,7 +147,7 @@ func (se *SelectExpression) String() string {
 		out.WriteString(se.Lock.String())
 	}
 
-	out.WriteString(";")
+	out.WriteString(")")
 
 	return out.String()
 }

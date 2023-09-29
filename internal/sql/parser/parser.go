@@ -108,6 +108,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.PARTITION, p.parseWindowExpression)
 	p.registerPrefix(token.ORDER, p.parseWindowExpression)
 	p.registerPrefix(token.ALL, p.parseKeywordExpression)
+	p.registerPrefix(token.SELECT, p.parseSelectExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -369,11 +370,19 @@ func (p *Parser) parseBoolean() ast.Expression {
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
+	// fmt.Printf("parseGroupedExpression: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 	p.nextToken()
 
 	exp := p.parseExpression(LOWEST)
 
-	if !p.expectPeek(token.RPAREN) {
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+	}
+
+	if !p.curTokenIs(token.RPAREN) {
+		msg := fmt.Sprintf("expected token to be %s, got %s: %s instead. peek token is: %s: %s",
+			token.RPAREN, p.curToken.Type, p.curToken.Lit, p.curToken.Type, p.peekToken.Lit)
+		p.errors = append(p.errors, msg)
 		return nil
 	}
 
