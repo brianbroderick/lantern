@@ -30,7 +30,7 @@ type Expression interface {
 }
 
 type Program struct {
-	Statements []Statement
+	Statements []Statement `json:"statements,omitempty"`
 }
 
 func (p *Program) TokenLiteral() string {
@@ -66,8 +66,8 @@ func (p *Program) Inspect() string {
 
 // This is a statement without a leading token. For example: x + 10;
 type ExpressionStatement struct {
-	Token      token.Token // the first token of the expression
-	Expression Expression
+	Token      token.Token `json:"token,omitempty"` // the first token of the expression
+	Expression Expression  `json:"expression,omitempty"`
 }
 
 func (es *ExpressionStatement) statementNode()       {}
@@ -84,8 +84,8 @@ func (es *ExpressionStatement) Inspect() string {
 
 // Expressions
 type Identifier struct {
-	Token token.Token // the token.IDENT token
-	Value string
+	Token token.Token `json:"token,omitempty"` // the token.IDENT token
+	Value string      `json:"value,omitempty"`
 }
 
 func (i *Identifier) expressionNode()      {}
@@ -102,8 +102,8 @@ func (b *Boolean) TokenLiteral() string { return b.Token.Lit }
 func (b *Boolean) String() string       { return b.Token.Lit }
 
 type IntegerLiteral struct {
-	Token token.Token
-	Value int64
+	Token token.Token `json:"token,omitempty"`
+	Value int64       `json:"value,omitempty"`
 }
 
 func (il *IntegerLiteral) expressionNode()      {}
@@ -111,7 +111,7 @@ func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Lit }
 func (il *IntegerLiteral) String() string       { return il.Token.Lit }
 
 type KeywordExpression struct {
-	Token token.Token // The keyword token, e.g. ALL
+	Token token.Token `json:"token,omitempty"` // The keyword token, e.g. ALL
 }
 
 func (ke *KeywordExpression) expressionNode()      {}
@@ -123,9 +123,9 @@ func (ke *KeywordExpression) String() string {
 }
 
 type PrefixExpression struct {
-	Token    token.Token // The prefix token, e.g. !
-	Operator string
-	Right    Expression
+	Token    token.Token `json:"token,omitempty"` // The prefix token, e.g. !
+	Operator string      `json:"operator,omitempty"`
+	Right    Expression  `json:"right,omitempty"`
 }
 
 func (pe *PrefixExpression) expressionNode()      {}
@@ -142,10 +142,10 @@ func (pe *PrefixExpression) String() string {
 }
 
 type InfixExpression struct {
-	Token    token.Token // The operator token, e.g. +
-	Left     Expression
-	Operator string
-	Right    Expression
+	Token    token.Token `json:"token,omitempty"` // The operator token, e.g. +
+	Left     Expression  `json:"left,omitempty"`
+	Operator string      `json:"operator,omitempty"`
+	Right    Expression  `json:"right,omitempty"`
 }
 
 func (ie *InfixExpression) expressionNode()      {}
@@ -163,9 +163,9 @@ func (ie *InfixExpression) String() string {
 }
 
 type CallExpression struct {
-	Token     token.Token // The '(' token
-	Function  Expression  // Identifier or FunctionLiteral
-	Arguments []Expression
+	Token     token.Token  `json:"token,omitempty"`    // The '(' token
+	Function  Expression   `json:"function,omitempty"` // Identifier or FunctionLiteral
+	Arguments []Expression `json:"arguments,omitempty"`
 }
 
 func (ce *CallExpression) expressionNode()      {}
@@ -187,8 +187,8 @@ func (ce *CallExpression) String() string {
 }
 
 type StringLiteral struct {
-	Token token.Token
-	Value string
+	Token token.Token `json:"token,omitempty"`
+	Value string      `json:"value,omitempty"`
 }
 
 func (sl *StringLiteral) expressionNode()      {}
@@ -199,8 +199,8 @@ func (sl *StringLiteral) String() string {
 }
 
 type ArrayLiteral struct {
-	Token    token.Token // the '[' token
-	Elements []Expression
+	Token    token.Token  `json:"token,omitempty"` // the '[' token
+	Elements []Expression `json:"elements,omitempty"`
 }
 
 func (al *ArrayLiteral) expressionNode()      {}
@@ -221,9 +221,9 @@ func (al *ArrayLiteral) String() string {
 }
 
 type IndexExpression struct {
-	Token token.Token // The [ token
-	Left  Expression
-	Index Expression
+	Token token.Token `json:"token,omitempty"` // The [ token
+	Left  Expression  `json:"left,omitempty"`
+	Index Expression  `json:"index,omitempty"`
 }
 
 func (ie *IndexExpression) expressionNode()      {}

@@ -2,14 +2,16 @@ package ast
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/brianbroderick/lantern/internal/sql/token"
 )
 
 type SelectStatement struct {
-	Token       token.Token  // the token.SELECT token
-	Expressions []Expression // a select statement may consist of multiple expressions such as the with clause in a CTE along with the primary select expression
+	Token       token.Token  `json:"token,omitempty"`       // the token.SELECT token
+	Expressions []Expression `json:"expressions,omitempty"` // a select statement may consist of multiple expressions such as the with clause in a CTE along with the primary select expression
 }
 
 func (ss *SelectStatement) statementNode()       {}
@@ -26,37 +28,31 @@ func (ss *SelectStatement) String() string {
 	return out.String()
 }
 func (ss *SelectStatement) Inspect() string {
-	// columns := []string{}
-	// for _, c := range ss.Columns {
-	// 	columns = append(columns, c.String())
-	// }
-	// strColumns := strings.Join(columns, "\n\t\t")
-	// strTables := []string{}
-	// for _, t := range ss.Tables {
-	// 	strTables = append(strTables, t.String())
-	// }
+	j, err := json.MarshalIndent(ss, "", "  ")
+	if err != nil {
+		fmt.Printf("Error loading data: %#v\n\n", err)
+	}
+	return string(j)
 
-	// ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, strTables)
-	// return ins
-	return "Inspect method not implemented"
+	// return "Inspect method not implemented"
 }
 
 // SelectExpression is a select inside a SELECT or WITH (Common Table Expression) statement,
 // since a select statement can have multiple select expressions. i.e. WITH clause, subqueries, and the primary select expression.
 type SelectExpression struct {
-	Token     token.Token // the token.SELECT token
-	TempTable *Identifier // the name of the temp table named in a WITH clause (CTE)
-	Distinct  Expression  // the DISTINCT or ALL token
-	Columns   []Expression
-	Tables    []Expression
-	Where     Expression
-	GroupBy   []Expression
-	Having    Expression
-	OrderBy   []Expression
-	Limit     Expression
-	Offset    Expression
-	Fetch     Expression
-	Lock      Expression
+	Token     token.Token  `json:"token,omitempty"`      // the token.SELECT token
+	TempTable *Identifier  `json:"temp_table,omitempty"` // the name of the temp table named in a WITH clause (CTE)
+	Distinct  Expression   `json:"distinct,omitempty"`   // the DISTINCT or ALL token
+	Columns   []Expression `json:"columns,omitempty"`
+	Tables    []Expression `json:"tables,omitempty"`
+	Where     Expression   `json:"where,omitempty"`
+	GroupBy   []Expression `json:"group_by,omitempty"`
+	Having    Expression   `json:"having,omitempty"`
+	OrderBy   []Expression `json:"order_by,omitempty"`
+	Limit     Expression   `json:"limit,omitempty"`
+	Offset    Expression   `json:"offset,omitempty"`
+	Fetch     Expression   `json:"fetch,omitempty"`
+	Lock      Expression   `json:"lock,omitempty"`
 }
 
 func (se *SelectExpression) expressionNode()      {}
@@ -168,8 +164,8 @@ func (se *SelectExpression) String() string {
 // }
 
 type DistinctExpression struct {
-	Token token.Token  // The keyword token, e.g. DISTINCT
-	Right []Expression // The columns to be distinct
+	Token token.Token  `json:"token,omitempty"` // The keyword token, e.g. DISTINCT
+	Right []Expression `json:"right,omitempty"` // The columns to be distinct
 }
 
 func (de *DistinctExpression) expressionNode()      {}
@@ -195,10 +191,10 @@ func (de *DistinctExpression) String() string {
 }
 
 type ColumnExpression struct {
-	Token token.Token // the token.AS token
-	Name  *Identifier // the name of the column or alias
-	Value Expression  // the complete expression including all of the columns
-	// Columns []*Identifier // the columns that make up the expression for ease of reporting
+	Token token.Token `json:"token,omitempty"` // the token.AS token
+	Name  *Identifier `json:"name,omitempty"`  // the name of the column or alias
+	Value Expression  `json:"value,omitempty"` // the complete expression including all of the columns
+	// Columns []*Identifier `json:"columns,omitempty"` // the columns that make up the expression for ease of reporting
 }
 
 func (c *ColumnExpression) expressionNode()      {}
@@ -217,10 +213,10 @@ func (c *ColumnExpression) String() string {
 }
 
 type SortExpression struct {
-	Token     token.Token // the token.ASC or token.DESC token
-	Value     Expression  // the column to sort on
-	Direction token.Token // the direction to sort
-	Nulls     token.Token // first or last
+	Token     token.Token `json:"token,omitempty"`     // the token.ASC or token.DESC token
+	Value     Expression  `json:"value,omitempty"`     // the column to sort on
+	Direction token.Token `json:"direction,omitempty"` // the direction to sort
+	Nulls     token.Token `json:"nulls,omitempty"`     // first or last
 }
 
 func (s *SortExpression) expressionNode()      {}
@@ -242,11 +238,11 @@ func (s *SortExpression) String() string {
 }
 
 type FetchExpression struct {
-	Token token.Token // the token.FETCH token
+	Token token.Token `json:"token,omitempty"` // the token.FETCH token
 	// Don't need to store "first" or "next" since these are synonyms. We'll convert everything to "next" when printing in .String()
-	Value Expression // the number of rows to fetch
+	Value Expression `json:"value,omitempty"` // the number of rows to fetch
 	// We also don't need to store "row" or "rows" since these are synonyms. We'll convert everything to "rows" when printing in .String()
-	Option token.Token // the token.ONLY or token.TIES token (don't need to store "with ties", just "ties" will do)
+	Option token.Token `json:"option,omitempty"` // the token.ONLY or token.TIES token (don't need to store "with ties", just "ties" will do)
 }
 
 func (f *FetchExpression) expressionNode()      {}
@@ -266,9 +262,9 @@ func (f *FetchExpression) String() string {
 }
 
 type WindowExpression struct {
-	Token       token.Token  // the token.OVER token
-	PartitionBy []Expression // the columns to partition by
-	OrderBy     []Expression // the columns to order by
+	Token       token.Token  `json:"token,omitempty"`        // the token.OVER token
+	PartitionBy []Expression `json:"partition_by,omitempty"` // the columns to partition by
+	OrderBy     []Expression `json:"order_by,omitempty"`     // the columns to order by
 }
 
 func (w *WindowExpression) expressionNode()      {}
@@ -302,8 +298,8 @@ func (w *WindowExpression) String() string {
 }
 
 type WildcardLiteral struct {
-	Token token.Token // the token.ASTERISK token
-	Value string
+	Token token.Token `json:"token,omitempty"` // the token.ASTERISK token
+	Value string      `json:"value,omitempty"`
 }
 
 func (w *WildcardLiteral) expressionNode()      {}
@@ -315,12 +311,12 @@ func (w *WildcardLiteral) String() string       { return w.Value }
 // inner     addresses a     Expression
 
 type TableExpression struct {
-	Token         token.Token // the token.JOIN token
-	JoinType      string      // the type of join: source, inner, left, right, full, etc
-	Schema        string      // the name of the schema
-	Table         string      // the name of the table
-	Alias         string      // the alias of the table
-	JoinCondition Expression  // the ON clause
+	Token         token.Token `json:"token,omitempty"`          // the token.JOIN token
+	JoinType      string      `json:"join_type,omitempty"`      // the type of join: source, inner, left, right, full, etc
+	Schema        string      `json:"schema,omitempty"`         // the name of the schema
+	Table         string      `json:"table,omitempty"`          // the name of the table
+	Alias         string      `json:"alias,omitempty"`          // the alias of the table
+	JoinCondition Expression  `json:"join_condition,omitempty"` // the ON clause
 }
 
 func (t *TableExpression) expressionNode()      {}
@@ -345,10 +341,10 @@ func (t *TableExpression) String() string {
 }
 
 type LockExpression struct {
-	Token   token.Token  // the token.FOR token
-	Lock    string       // the type of lock: update, share, key share, no key update
-	Tables  []Expression // the tables to lock
-	Options string       // the options: NOWAIT, SKIP LOCKED
+	Token   token.Token  `json:"token,omitempty"`   // the token.FOR token
+	Lock    string       `json:"lock,omitempty"`    // the type of lock: update, share, key share, no key update
+	Tables  []Expression `json:"tables,omitempty"`  // the tables to lock
+	Options string       `json:"options,omitempty"` // the options: NOWAIT, SKIP LOCKED
 }
 
 func (l *LockExpression) expressionNode()      {}
@@ -372,10 +368,10 @@ func (l *LockExpression) String() string {
 }
 
 type InExpression struct {
-	Token    token.Token // The operator token, e.g. +
-	Left     Expression
-	Operator string
-	Right    []Expression
+	Token    token.Token  `json:"token,omitempty"` // The operator token, e.g. +
+	Left     Expression   `json:"left,omitempty"`
+	Operator string       `json:"operator,omitempty"`
+	Right    []Expression `json:"right,omitempty"`
 }
 
 func (ie *InExpression) expressionNode()      {}

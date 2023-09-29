@@ -1,12 +1,26 @@
 package token
 
-import "strings"
+import (
+	"encoding/json"
+	"strings"
+)
 
 type TokenType int
 
 type Token struct {
-	Type TokenType
-	Lit  string
+	Type TokenType `json:"type,omitempty"`
+	Lit  string    `json:"literal,omitempty"`
+}
+
+func (t *Token) MarshalJSON() ([]byte, error) {
+	type Alias Token
+	return json.Marshal(&struct {
+		Type string `json:"type,omitempty"`
+		*Alias
+	}{
+		Type:  t.Type.String(),
+		Alias: (*Alias)(t),
+	})
 }
 
 const (
@@ -159,18 +173,18 @@ var Tokens = [...]string{
 	NUMBER: "NUMBER",
 	STRING: "STRING",
 
-	ASSIGN:   "ASSIGN '='",
-	PLUS:     "PLUS '+'",
-	MINUS:    "MINUS '-'",
-	BANG:     "BANG '!'",
-	ASTERISK: "ASTERISK '*'",
-	SLASH:    "SLASH '/'",
+	ASSIGN:   "ASSIGN",   // =
+	PLUS:     "PLUS",     // +
+	MINUS:    "MINUS",    // -
+	BANG:     "BANG",     // !
+	ASTERISK: "ASTERISK", // *
+	SLASH:    "SLASH",    // /
 
-	LT: "LT '<'",
-	GT: "GT '>'",
+	LT: "LT", // <
+	GT: "GT", // >
 
-	EQ:     "EQ '=='",
-	NOT_EQ: "NOT_EQ '!=' or '<>'",
+	EQ:     "EQ",     // ==
+	NOT_EQ: "NOT_EQ", // != or <>
 
 	AND:            "AND",
 	OR:             "OR",
@@ -185,17 +199,17 @@ var Tokens = [...]string{
 	BETWEEN:        "BETWEEN",
 
 	// Delimiters
-	COMMA:     "COMMA ','",
-	SEMICOLON: "SEMICOLON ';'",
-	COLON:     "COLON ':'",
-	DOT:       "DOT '.'",
+	COMMA:     "COMMA",     // ,
+	SEMICOLON: "SEMICOLON", // ;
+	COLON:     "COLON",     // :
+	DOT:       "DOT",       // .
 
-	LPAREN:   "LPAREN '('",
-	RPAREN:   "RPAREN ')'",
-	LBRACE:   "LBRACE '{'",
-	RBRACE:   "RBRACE '}'",
-	LBRACKET: "LBRACKET '['",
-	RBRACKET: "RBRACKET ']'",
+	LPAREN:   "LPAREN",   // (
+	RPAREN:   "RPAREN",   // )
+	LBRACE:   "LBRACE",   // {
+	RBRACE:   "RBRACE",   // }
+	LBRACKET: "LBRACKET", // [
+	RBRACKET: "RBRACKET", // ]
 
 	// Keywords
 	WITH:         "WITH",

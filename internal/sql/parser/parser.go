@@ -379,12 +379,12 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 		p.nextToken()
 	}
 
-	if !p.curTokenIs(token.RPAREN) {
-		msg := fmt.Sprintf("expected token to be %s, got %s: %s instead. peek token is: %s: %s",
-			token.RPAREN, p.curToken.Type, p.curToken.Lit, p.curToken.Type, p.peekToken.Lit)
-		p.errors = append(p.errors, msg)
-		return nil
-	}
+	// if !p.curTokenIs(token.RPAREN) {
+	// 	msg := fmt.Sprintf("GroupedExpression: expected token to be %s, got %s: %s instead. peek token is: %s: %s",
+	// 		token.RPAREN, p.curToken.Type, p.curToken.Lit, p.curToken.Type, p.peekToken.Lit)
+	// 	p.errors = append(p.errors, msg)
+	// 	return nil
+	// }
 
 	return exp
 }
