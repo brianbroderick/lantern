@@ -156,7 +156,9 @@ func (ie *InfixExpression) String() string {
 	out.WriteString("(")
 	out.WriteString(ie.Left.String())
 	out.WriteString(" " + strings.ToUpper(ie.Operator) + " ")
-	out.WriteString(ie.Right.String())
+	if ie.Right != nil {
+		out.WriteString(ie.Right.String())
+	}
 	out.WriteString(")")
 
 	return out.String()

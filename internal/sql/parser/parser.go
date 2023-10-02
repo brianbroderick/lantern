@@ -275,8 +275,9 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExp := prefix()
+	// fmt.Printf("parseExpression: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
 
-	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.SEMICOLON}) && precedence < p.peekPrecedence() {
+	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
 			return leftExp
@@ -358,8 +359,11 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 		Left:     left,
 	}
 
+	// fmt.Printf("parseInfixExpressionPrecedence: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 	precedence := p.curPrecedence()
 	p.nextToken()
+
+	// fmt.Printf("parseInfixExpression: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 	expression.Right = p.parseExpression(precedence)
 
 	return expression
@@ -370,7 +374,7 @@ func (p *Parser) parseBoolean() ast.Expression {
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
-	// fmt.Printf("parseGroupedExpression: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+	// fmt.Printf("parseGroupedExpression1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 	p.nextToken()
 
 	exp := p.parseExpression(LOWEST)
@@ -379,6 +383,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 		p.nextToken()
 	}
 
+	// fmt.Printf("parseGroupedExpression2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 	// if !p.curTokenIs(token.RPAREN) {
 	// 	msg := fmt.Sprintf("GroupedExpression: expected token to be %s, got %s: %s instead. peek token is: %s: %s",
 	// 		token.RPAREN, p.curToken.Type, p.curToken.Lit, p.curToken.Type, p.peekToken.Lit)

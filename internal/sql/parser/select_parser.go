@@ -7,6 +7,12 @@ import (
 	"github.com/brianbroderick/lantern/internal/sql/token"
 )
 
+// Clauses are parsed in the order that they appear in the SQL statement.
+// Each Expression starts with the token after the keyword that starts the clause.
+// To determine if a clause is done, peek to the next token and look for the next clause keyword.
+// If it's found, advance the token twice to skip past the clause token (from peek, to current, to next).
+// Otherwise, you'll get off by one errors and have a hard time figuring out why.
+
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
 
@@ -14,16 +20,20 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	stmt.Expressions = []ast.Expression{}
 	stmt.Expressions = append(stmt.Expressions, p.parseSelectExpression())
 
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
 	return stmt
 }
 
 func (p *Parser) parseSelectExpression() ast.Expression {
-	defer untrace(trace("parseSelectExpression1 " + p.curToken.Lit))
+	defer untrace(trace("parseSelectExpression " + p.curToken.Lit))
 
 	stmt := &ast.SelectExpression{Token: p.curToken}
 
 	// COLUMNS
-	if !p.expectPeekIsOne([]token.TokenType{token.IDENT, token.INT, token.ASTERISK, token.ALL, token.DISTINCT}) {
+	if !p.expectPeekIsOne([]token.TokenType{token.LPAREN, token.IDENT, token.INT, token.ASTERISK, token.ALL, token.DISTINCT}) {
 		return nil
 	}
 
@@ -34,92 +44,88 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 
 	stmt.Columns = p.parseColumnList([]token.TokenType{token.COMMA, token.FROM, token.AS})
 
-	// FROM CLAUSE
+	// FROM CLAUSE: if the next token is FROM, advance the token and move on. Otherwise, return the statement.
 	if !p.expectPeek(token.FROM) {
 		return nil
+	} else {
+		p.nextToken() // skip past FROM
 	}
-	p.nextToken()
+
+	// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
+
+	// p.nextToken()
 	stmt.Tables = p.parseTables()
 
+	// fmt.Printf("parseSelectExpression002: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
+
 	// WHERE CLAUSE
-	if p.curTokenIs(token.WHERE) {
+	if p.peekTokenIs(token.WHERE) {
+		p.nextToken()
 		p.nextToken()
 		stmt.Where = p.parseExpression(LOWEST)
-		p.nextToken()
 	}
 
 	// GROUP BY CLAUSE
-	if p.curTokenIs(token.GROUP) {
+	if p.peekTokenIs(token.GROUP) {
+		p.nextToken()
 		if !p.expectPeek(token.BY) {
 			return nil
 		}
 		p.nextToken()
 		stmt.GroupBy = p.parseColumnList([]token.TokenType{token.COMMA, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET})
-		p.nextToken()
 	}
 
 	// HAVING CLAUSE
-	if p.curTokenIs(token.HAVING) {
+	if p.peekTokenIs(token.HAVING) {
+		p.nextToken()
 		p.nextToken()
 		stmt.Having = p.parseExpression(LOWEST)
-		p.nextToken()
 	}
 
 	// ORDER BY CLAUSE
-	if p.curTokenIs(token.ORDER) {
+	if p.peekTokenIs(token.ORDER) {
+		p.nextToken()
 		if !p.expectPeek(token.BY) {
 			return nil
 		}
 		p.nextToken()
 		stmt.OrderBy = p.parseSortList([]token.TokenType{token.COMMA, token.LIMIT, token.OFFSET})
-		p.nextToken()
 	}
 
 	// LIMIT CLAUSE
-	if p.curTokenIs(token.LIMIT) {
+	if p.peekTokenIs(token.LIMIT) {
+		p.nextToken()
 		p.nextToken()
 		stmt.Limit = p.parseExpression(LOWEST)
-		p.nextToken()
 	}
 
 	// OFFSET CLAUSE
-	if p.curTokenIs(token.OFFSET) {
+	if p.peekTokenIs(token.OFFSET) {
+		p.nextToken()
 		p.nextToken()
 		stmt.Offset = p.parseExpression(LOWEST)
-		p.nextToken()
-		if p.curTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
+
+		if p.peekTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
+			p.nextToken()
 			p.nextToken()
 		}
 	}
 
 	// FETCH CLAUSE
-	if p.curTokenIs(token.FETCH) {
+	if p.peekTokenIs(token.FETCH) {
+		p.nextToken()
 		p.nextToken()
 		stmt.Fetch = p.parseFetch()
-		p.nextToken()
 	}
 
 	// FOR UPDATE CLAUSE
-	if p.curTokenIs(token.FOR) {
+	if p.peekTokenIs(token.FOR) {
+		p.nextToken()
 		p.nextToken()
 		stmt.Lock = p.parseLock()
-		p.nextToken()
 	}
 
-	if p.curTokenIsOne([]token.TokenType{token.SEMICOLON}) {
-		p.nextToken()
-	}
-
-	// fmt.Printf("parseSelectExpression2: %s :: %s\n", p.curToken.Type, p.peekToken.Type)
-
-	// if p.peekTokenIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
-	// 	p.nextToken()
-	// 	p.nextToken()
-	// }
-
-	// if p.curTokenIs(token.RPAREN) {
-	// 	p.nextToken()
-	// }
+	// fmt.Printf("parseSelectExpressionEnd: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
 
 	return stmt
 }
@@ -159,35 +165,39 @@ func (p *Parser) parseTables() []ast.Expression {
 
 	tables := []ast.Expression{}
 
-	if p.curTokenIsOne([]token.TokenType{token.EOF, token.SEMICOLON}) {
-		return tables
-	}
+	// if p.peekTokenIsOne([]token.TokenType{token.EOF, token.SEMICOLON}) {
+	// 	return tables
+	// }
 
 	tables = append(tables, p.parseFirstTable())
 
-	for p.curTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
+	for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
 		tables = append(tables, p.parseTable())
 	}
 
 	return tables
 }
 
+// parseFirstTable will leave curToken on the last token of the table (name or alias)
 func (p *Parser) parseFirstTable() ast.Expression {
 	defer untrace(trace("parseFirstTable"))
 
 	table := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 
+	// fmt.Printf("parseFirstTable1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
+
 	// Get the first table
 	if p.curTokenIs(token.IDENT) {
 		table.Table = p.curToken.Lit
-		p.nextToken()
 
 		// Do we have an alias
-		if p.curTokenIs(token.IDENT) {
-			table.Alias = p.curToken.Lit
+		if p.peekTokenIs(token.IDENT) {
 			p.nextToken()
+			table.Alias = p.curToken.Lit
 		}
 	}
+
+	// fmt.Printf("parseFirstTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	return &table
 }
@@ -197,42 +207,53 @@ func (p *Parser) parseTable() ast.Expression {
 
 	table := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 
+	// fmt.Printf("parseTable1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
+
 	// Get the join type
-	if p.curTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
-		table.JoinType = strings.ToUpper(p.peekToken.Lit)
+	if p.peekTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
 		p.nextToken()
+		table.JoinType = strings.ToUpper(p.curToken.Lit)
 
 		// Skip the JOIN and OUTER keywords
-		for p.curTokenIsOne([]token.TokenType{token.JOIN, token.OUTER}) {
+		for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.OUTER}) {
 			p.nextToken()
 		}
+		// fmt.Printf("parseTable compound join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 	}
 
 	// If just using JOIN, assume INNER
-	if p.curTokenIs(token.JOIN) {
+	if p.peekTokenIs(token.JOIN) {
+		p.nextToken()
 		if table.JoinType == "" {
 			table.JoinType = "INNER"
 		}
-		p.nextToken()
+		// fmt.Printf("parseTable simple join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 	}
+
+	p.nextToken()
+
+	// fmt.Printf("parseTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	// Get the table name
 	if p.curTokenIs(token.IDENT) {
 		table.Table = p.curToken.Lit
-		p.nextToken()
 	}
+
+	// fmt.Printf("parseTable3: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	// Do we have an alias?
-	if p.curTokenIs(token.IDENT) {
-		table.Alias = p.curToken.Lit
+	if p.peekTokenIs(token.IDENT) {
 		p.nextToken()
+		table.Alias = p.curToken.Lit
 	}
 
-	// Get the join condition
-	if p.curTokenIs(token.ON) {
+	// fmt.Printf("parseTable4: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
+
+	// Get the join condition, but skip past the ON keyword
+	if p.peekTokenIs(token.ON) {
+		p.nextToken()
 		p.nextToken()
 		table.JoinCondition = p.parseExpression(LOWEST)
-		p.nextToken()
 	}
 
 	return &table
@@ -359,7 +380,6 @@ func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 
 func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expression {
 	defer untrace(trace("parseColumn"))
-	// fmt.Printf("parseColumn1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -368,7 +388,7 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 	}
 	leftExp := prefix()
 
-	// fmt.Printf("parseColumn2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
+	// fmt.Printf("parseColumn: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
 
 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.FROM, token.AS}) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
