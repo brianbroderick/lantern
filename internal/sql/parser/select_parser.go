@@ -13,6 +13,8 @@ import (
 // If it's found, advance the token twice to skip past the clause token (from peek, to current, to next).
 // Otherwise, you'll get off by one errors and have a hard time figuring out why.
 
+var defaultListSeparators = []token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
+
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
 
@@ -58,6 +60,13 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 
 	// fmt.Printf("parseSelectExpression002: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
 
+	// WINDOW CLAUSE
+	if p.peekTokenIs(token.WINDOW) {
+		p.nextToken()
+		p.nextToken()
+		stmt.Window = p.parseWindowList(defaultListSeparators)
+	}
+
 	// WHERE CLAUSE
 	if p.peekTokenIs(token.WHERE) {
 		p.nextToken()
@@ -72,7 +81,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 			return nil
 		}
 		p.nextToken()
-		stmt.GroupBy = p.parseColumnList([]token.TokenType{token.COMMA, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET})
+		stmt.GroupBy = p.parseColumnList(defaultListSeparators)
 	}
 
 	// HAVING CLAUSE
@@ -89,7 +98,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 			return nil
 		}
 		p.nextToken()
-		stmt.OrderBy = p.parseSortList([]token.TokenType{token.COMMA, token.LIMIT, token.OFFSET})
+		stmt.OrderBy = p.parseSortList(defaultListSeparators)
 	}
 
 	// LIMIT CLAUSE
@@ -358,6 +367,64 @@ func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression
 	return sortExp
 }
 
+func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
+	defer untrace(trace("parseWindowList"))
+
+	list := []ast.Expression{}
+
+	if p.curTokenIsOne(end) {
+		return list
+	}
+
+	list = append(list, p.parseWindow(end))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseWindow(end))
+	}
+
+	return list
+}
+
+// w as (partition by c1 order by c2)
+func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
+	defer untrace(trace("parseWindow"))
+
+	expression := &ast.WindowExpression{
+		Token: p.curToken,
+	}
+
+	// fmt.Printf("parseWindow1: '%s' :: '%s' == %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
+
+	if p.curTokenIs(token.IDENT) {
+		expression.Alias = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+		p.nextToken()
+
+		if p.curTokenIs(token.AS) {
+			p.nextToken()
+		}
+
+		if p.curTokenIs(token.LPAREN) {
+			p.nextToken()
+		}
+	}
+
+	// fmt.Printf("parseWindow2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
+
+	window := p.parseWindowExpression()
+	expression.PartitionBy = window.(*ast.WindowExpression).PartitionBy
+	expression.OrderBy = window.(*ast.WindowExpression).OrderBy
+
+	// fmt.Printf("parseWindow3: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
+
+	if p.peekTokenIs(token.RPAREN) {
+		p.nextToken()
+	}
+
+	return expression
+}
+
 func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 	defer untrace(trace("parseColumnList"))
 
@@ -439,8 +506,6 @@ func (p *Parser) parseWindowExpression() ast.Expression {
 		}
 	}
 	// fmt.Printf("parseWindowExpression3: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
-
-	// expression.Right = p.parseExpression(PREFIX)
 
 	return expression
 }

@@ -48,6 +48,7 @@ type SelectExpression struct {
 	Where     Expression   `json:"where,omitempty"`
 	GroupBy   []Expression `json:"group_by,omitempty"`
 	Having    Expression   `json:"having,omitempty"`
+	Window    []Expression `json:"window,omitempty"`
 	OrderBy   []Expression `json:"order_by,omitempty"`
 	Limit     Expression   `json:"limit,omitempty"`
 	Offset    Expression   `json:"offset,omitempty"`
@@ -86,6 +87,16 @@ func (se *SelectExpression) String() string {
 		tables = append(tables, t.String())
 	}
 	out.WriteString(strings.Join(tables, " "))
+
+	// Window
+	if len(se.Window) > 0 {
+		out.WriteString(" WINDOW ")
+		windows := []string{}
+		for _, w := range se.Window {
+			windows = append(windows, w.String())
+		}
+		out.WriteString(strings.Join(windows, ", "))
+	}
 
 	// Where
 	if se.Where != nil {
@@ -263,6 +274,7 @@ func (f *FetchExpression) String() string {
 
 type WindowExpression struct {
 	Token       token.Token  `json:"token,omitempty"`        // the token.OVER token
+	Alias       *Identifier  `json:"alias,omitempty"`        // the alias of the window
 	PartitionBy []Expression `json:"partition_by,omitempty"` // the columns to partition by
 	OrderBy     []Expression `json:"order_by,omitempty"`     // the columns to order by
 }
@@ -271,6 +283,10 @@ func (w *WindowExpression) expressionNode()      {}
 func (w *WindowExpression) TokenLiteral() string { return w.Token.Lit }
 func (w *WindowExpression) String() string {
 	var out bytes.Buffer
+
+	if w.Alias != nil {
+		out.WriteString(w.Alias.String() + " AS ")
+	}
 
 	out.WriteString("(")
 	if len(w.PartitionBy) > 0 {

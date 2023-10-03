@@ -92,6 +92,7 @@ const (
 	HAVING
 	OVER
 	UNION
+	WINDOW
 	INTERSECT
 	EXCEPT
 	ORDER
@@ -226,6 +227,7 @@ var Tokens = [...]string{
 	HAVING:       "HAVING",
 	OVER:         "OVER",
 	UNION:        "UNION",
+	WINDOW:       "WINDOW",
 	INTERSECT:    "INTERSECT",
 	EXCEPT:       "EXCEPT",
 	ORDER:        "ORDER",
