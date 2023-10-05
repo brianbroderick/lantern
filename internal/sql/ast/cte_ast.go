@@ -15,14 +15,14 @@ type CTEStatement struct {
 
 func (s *CTEStatement) statementNode()       {}
 func (s *CTEStatement) TokenLiteral() string { return s.Token.Lit }
-func (s *CTEStatement) String() string {
+func (s *CTEStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("(WITH ")
 
 	lenExpressions := len(s.Expressions) - 1
 	for i, e := range s.Expressions {
-		out.WriteString(e.String())
+		out.WriteString(e.String(maskParams))
 		if i < lenExpressions-1 {
 			out.WriteString(", ")
 		} else if i == lenExpressions-1 {
@@ -34,7 +34,7 @@ func (s *CTEStatement) String() string {
 
 	return out.String()
 }
-func (s *CTEStatement) Inspect() string {
+func (s *CTEStatement) Inspect(maskParams bool) string {
 	j, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)

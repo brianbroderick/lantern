@@ -7,6 +7,8 @@ import (
 )
 
 func TestString(t *testing.T) {
+	maskParams := false
+
 	program := &Program{
 		Statements: []Statement{
 			&SelectStatement{
@@ -33,7 +35,7 @@ func TestString(t *testing.T) {
 		},
 	}
 
-	if program.String() != "SELECT id FROM users;" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
+	if program.String(maskParams) != "(SELECT id FROM users);" {
+		t.Errorf("program.String() wrong. got=%q", program.String(maskParams))
 	}
 }

@@ -16,18 +16,18 @@ type SelectStatement struct {
 
 func (ss *SelectStatement) statementNode()       {}
 func (ss *SelectStatement) TokenLiteral() string { return ss.Token.Lit }
-func (ss *SelectStatement) String() string {
+func (ss *SelectStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	for _, e := range ss.Expressions {
-		out.WriteString(e.String())
+		out.WriteString(e.String(maskParams))
 	}
 
 	out.WriteString(";")
 
 	return out.String()
 }
-func (ss *SelectStatement) Inspect() string {
+func (ss *SelectStatement) Inspect(maskParams bool) string {
 	j, err := json.MarshalIndent(ss, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)
@@ -58,11 +58,11 @@ func (se *SelectExpression) expressionNode()      {}
 func (se *SelectExpression) TokenLiteral() string { return se.Token.Lit }
 
 // String() is incomplete and only returns the most basic of select statements
-func (se *SelectExpression) String() string {
+func (se *SelectExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if se.TempTable != nil {
-		out.WriteString(se.TempTable.String() + " AS ")
+		out.WriteString(se.TempTable.String(maskParams) + " AS ")
 	}
 
 	// Subqueries need to be surrounded by parentheses. A primary query may also have parentheses, so we'll add them here to be consistent.
@@ -72,13 +72,13 @@ func (se *SelectExpression) String() string {
 
 	// Distinct
 	if se.Distinct != nil {
-		out.WriteString(se.Distinct.String() + " ")
+		out.WriteString(se.Distinct.String(maskParams) + " ")
 	}
 
 	// Columns
 	columns := []string{}
 	for _, c := range se.Columns {
-		columns = append(columns, c.String())
+		columns = append(columns, c.String(maskParams))
 	}
 	out.WriteString(strings.Join(columns, ", "))
 
@@ -86,7 +86,7 @@ func (se *SelectExpression) String() string {
 	out.WriteString(" FROM ")
 	tables := []string{}
 	for _, t := range se.Tables {
-		tables = append(tables, t.String())
+		tables = append(tables, t.String(maskParams))
 	}
 	out.WriteString(strings.Join(tables, " "))
 
@@ -95,7 +95,7 @@ func (se *SelectExpression) String() string {
 		out.WriteString(" WINDOW ")
 		windows := []string{}
 		for _, w := range se.Window {
-			windows = append(windows, w.String())
+			windows = append(windows, w.String(maskParams))
 		}
 		out.WriteString(strings.Join(windows, ", "))
 	}
@@ -103,7 +103,7 @@ func (se *SelectExpression) String() string {
 	// Where
 	if se.Where != nil {
 		out.WriteString(" WHERE ")
-		out.WriteString(se.Where.String())
+		out.WriteString(se.Where.String(maskParams))
 	}
 
 	// Group By
@@ -111,7 +111,7 @@ func (se *SelectExpression) String() string {
 		out.WriteString(" GROUP BY ")
 		groupBy := []string{}
 		for _, g := range se.GroupBy {
-			groupBy = append(groupBy, g.String())
+			groupBy = append(groupBy, g.String(maskParams))
 		}
 		out.WriteString(strings.Join(groupBy, ", "))
 	}
@@ -119,7 +119,7 @@ func (se *SelectExpression) String() string {
 	// Having
 	if se.Having != nil {
 		out.WriteString(" HAVING ")
-		out.WriteString(se.Having.String())
+		out.WriteString(se.Having.String(maskParams))
 	}
 
 	// Order By
@@ -127,7 +127,7 @@ func (se *SelectExpression) String() string {
 		out.WriteString(" ORDER BY ")
 		orderBy := []string{}
 		for _, g := range se.OrderBy {
-			orderBy = append(orderBy, g.String())
+			orderBy = append(orderBy, g.String(maskParams))
 		}
 		out.WriteString(strings.Join(orderBy, ", "))
 	}
@@ -135,25 +135,25 @@ func (se *SelectExpression) String() string {
 	// Limit
 	if se.Limit != nil {
 		out.WriteString(" LIMIT ")
-		out.WriteString(se.Limit.String())
+		out.WriteString(se.Limit.String(maskParams))
 	}
 
 	// Offset
 	if se.Offset != nil {
 		out.WriteString(" OFFSET ")
-		out.WriteString(se.Offset.String())
+		out.WriteString(se.Offset.String(maskParams))
 	}
 
 	// Fetch
 	if se.Fetch != nil {
 		out.WriteString(" FETCH NEXT ")
-		out.WriteString(se.Fetch.String())
+		out.WriteString(se.Fetch.String(maskParams))
 	}
 
 	// Lock
 	if se.Lock != nil {
 		out.WriteString(" FOR ")
-		out.WriteString(se.Lock.String())
+		out.WriteString(se.Lock.String(maskParams))
 	}
 
 	out.WriteString(")")
@@ -164,12 +164,12 @@ func (se *SelectExpression) String() string {
 // func (se *SelectExpression) Inspect() string {
 // 	columns := []string{}
 // 	for _, c := range se.Columns {
-// 		columns = append(columns, c.String())
+// 		columns = append(columns, c.String(maskParams))
 // 	}
 // 	strColumns := strings.Join(columns, "\n\t\t")
 // 	strTables := []string{}
 // 	for _, t := range se.Tables {
-// 		strTables = append(strTables, t.String())
+// 		strTables = append(strTables, t.String(maskParams))
 // 	}
 
 // 	ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, strTables)
@@ -183,7 +183,7 @@ type DistinctExpression struct {
 
 func (de *DistinctExpression) expressionNode()      {}
 func (de *DistinctExpression) TokenLiteral() string { return de.Token.Lit }
-func (de *DistinctExpression) String() string {
+func (de *DistinctExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString(strings.ToUpper(de.Token.Lit))
@@ -194,7 +194,7 @@ func (de *DistinctExpression) String() string {
 		out.WriteString("(")
 		right := []string{}
 		for _, r := range de.Right {
-			right = append(right, r.String())
+			right = append(right, r.String(maskParams))
 		}
 		out.WriteString(strings.Join(right, ", "))
 		out.WriteString(")")
@@ -212,14 +212,14 @@ type ColumnExpression struct {
 
 func (c *ColumnExpression) expressionNode()      {}
 func (c *ColumnExpression) TokenLiteral() string { return c.Token.Lit }
-func (c *ColumnExpression) String() string {
+func (c *ColumnExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	val := c.Value.String()
+	val := c.Value.String(maskParams)
 	out.WriteString(val)
-	if c.Name != nil && c.Name.String() != val && c.Name.String() != "" {
+	if c.Name != nil && c.Name.String(maskParams) != val && c.Name.String(maskParams) != "" {
 		out.WriteString(" AS ")
-		out.WriteString(c.Name.String())
+		out.WriteString(c.Name.String(maskParams))
 	}
 
 	return out.String()
@@ -234,10 +234,10 @@ type SortExpression struct {
 
 func (s *SortExpression) expressionNode()      {}
 func (s *SortExpression) TokenLiteral() string { return s.Token.Lit }
-func (s *SortExpression) String() string {
+func (s *SortExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(s.Value.String())
+	out.WriteString(s.Value.String(maskParams))
 	if s.Direction.Type == token.DESC {
 		out.WriteString(" DESC")
 	}
@@ -260,10 +260,10 @@ type FetchExpression struct {
 
 func (f *FetchExpression) expressionNode()      {}
 func (f *FetchExpression) TokenLiteral() string { return f.Token.Lit }
-func (f *FetchExpression) String() string {
+func (f *FetchExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(f.Value.String())
+	out.WriteString(f.Value.String(maskParams))
 	out.WriteString(" ROWS")
 	if f.Option.Type == token.TIES {
 		out.WriteString(" WITH TIES")
@@ -283,11 +283,11 @@ type WindowExpression struct {
 
 func (w *WindowExpression) expressionNode()      {}
 func (w *WindowExpression) TokenLiteral() string { return w.Token.Lit }
-func (w *WindowExpression) String() string {
+func (w *WindowExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if w.Alias != nil {
-		out.WriteString(w.Alias.String() + " AS ")
+		out.WriteString(w.Alias.String(maskParams) + " AS ")
 	}
 
 	out.WriteString("(")
@@ -295,7 +295,7 @@ func (w *WindowExpression) String() string {
 		out.WriteString("PARTITION BY ")
 		partitionBy := []string{}
 		for _, p := range w.PartitionBy {
-			partitionBy = append(partitionBy, p.String())
+			partitionBy = append(partitionBy, p.String(maskParams))
 		}
 		out.WriteString(strings.Join(partitionBy, ", "))
 	}
@@ -306,7 +306,7 @@ func (w *WindowExpression) String() string {
 		out.WriteString("ORDER BY ")
 		orderBy := []string{}
 		for _, o := range w.OrderBy {
-			orderBy = append(orderBy, o.String())
+			orderBy = append(orderBy, o.String(maskParams))
 		}
 		out.WriteString(strings.Join(orderBy, ", "))
 	}
@@ -320,9 +320,9 @@ type WildcardLiteral struct {
 	Value string      `json:"value,omitempty"`
 }
 
-func (w *WildcardLiteral) expressionNode()      {}
-func (w *WildcardLiteral) TokenLiteral() string { return w.Token.Lit }
-func (w *WildcardLiteral) String() string       { return w.Value }
+func (w *WildcardLiteral) expressionNode()               {}
+func (w *WildcardLiteral) TokenLiteral() string          { return w.Token.Lit }
+func (w *WildcardLiteral) String(maskParams bool) string { return w.Value }
 
 // JoinType  Table     Alias JoinCondition
 // source    customers c
@@ -339,7 +339,7 @@ type TableExpression struct {
 
 func (t *TableExpression) expressionNode()      {}
 func (t *TableExpression) TokenLiteral() string { return t.Token.Lit }
-func (t *TableExpression) String() string {
+func (t *TableExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if t.JoinType != "" && t.JoinType != "source" {
@@ -352,7 +352,7 @@ func (t *TableExpression) String() string {
 	}
 
 	if t.JoinCondition != nil {
-		out.WriteString(" ON " + t.JoinCondition.String())
+		out.WriteString(" ON " + t.JoinCondition.String(maskParams))
 	}
 
 	return out.String()
@@ -367,14 +367,14 @@ type LockExpression struct {
 
 func (l *LockExpression) expressionNode()      {}
 func (l *LockExpression) TokenLiteral() string { return l.Token.Lit }
-func (l *LockExpression) String() string {
+func (l *LockExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(l.Lock)
 	if len(l.Tables) > 0 {
 		tables := []string{}
 		out.WriteString(" OF ")
 		for _, t := range l.Tables {
-			tables = append(tables, t.String())
+			tables = append(tables, t.String(maskParams))
 		}
 		out.WriteString(strings.Join(tables, ", "))
 	}
@@ -394,16 +394,16 @@ type InExpression struct {
 
 func (ie *InExpression) expressionNode()      {}
 func (ie *InExpression) TokenLiteral() string { return ie.Token.Lit }
-func (ie *InExpression) String() string {
+func (ie *InExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(ie.Left.String())
+	out.WriteString(ie.Left.String(maskParams))
 	out.WriteString(" " + strings.ToUpper(ie.Operator) + " ")
 
 	out.WriteString("(")
 	oneLess := len(ie.Right) - 1
 	for i, e := range ie.Right {
-		out.WriteString(e.String())
+		out.WriteString(e.String(maskParams))
 		if i < oneLess {
 			out.WriteString(", ")
 		}

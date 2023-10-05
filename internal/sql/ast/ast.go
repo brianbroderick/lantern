@@ -13,14 +13,14 @@ import (
 // The base Node interface
 type Node interface {
 	TokenLiteral() string
-	String() string
+	String(maskParams bool) string // maskParams is used to mask integers and strings in the output with a ?.
 }
 
 // All statement nodes implement this
 type Statement interface {
 	Node
 	statementNode()
-	Inspect() string
+	Inspect(maskParams bool) string
 }
 
 // All expression nodes implement this
@@ -41,22 +41,22 @@ func (p *Program) TokenLiteral() string {
 	}
 }
 
-func (p *Program) String() string {
+func (p *Program) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	for _, s := range p.Statements {
-		out.WriteString(s.String())
+		out.WriteString(s.String(maskParams))
 	}
 
 	return out.String()
 }
 
-func (p *Program) Inspect() string {
+func (p *Program) Inspect(maskParams bool) string {
 	var out bytes.Buffer
 
 	for i, s := range p.Statements {
 		out.WriteString(fmt.Sprintf("Statement %d:\n", i+1))
-		out.WriteString(s.Inspect())
+		out.WriteString(s.Inspect(maskParams))
 	}
 
 	return out.String()
@@ -72,14 +72,14 @@ type ExpressionStatement struct {
 
 func (es *ExpressionStatement) statementNode()       {}
 func (es *ExpressionStatement) TokenLiteral() string { return es.Token.Lit }
-func (es *ExpressionStatement) String() string {
+func (es *ExpressionStatement) String(maskParams bool) string {
 	if es.Expression != nil {
-		return es.Expression.String()
+		return es.Expression.String(maskParams)
 	}
 	return ""
 }
-func (es *ExpressionStatement) Inspect() string {
-	return es.String()
+func (es *ExpressionStatement) Inspect(maskParams bool) string {
+	return es.String(maskParams)
 }
 
 // Expressions
@@ -88,18 +88,18 @@ type Identifier struct {
 	Value string      `json:"value,omitempty"`
 }
 
-func (i *Identifier) expressionNode()      {}
-func (i *Identifier) TokenLiteral() string { return i.Token.Lit }
-func (i *Identifier) String() string       { return i.Value }
+func (i *Identifier) expressionNode()               {}
+func (i *Identifier) TokenLiteral() string          { return i.Token.Lit }
+func (i *Identifier) String(maskParams bool) string { return i.Value }
 
 type Boolean struct {
 	Token token.Token
 	Value bool
 }
 
-func (b *Boolean) expressionNode()      {}
-func (b *Boolean) TokenLiteral() string { return b.Token.Lit }
-func (b *Boolean) String() string       { return b.Token.Lit }
+func (b *Boolean) expressionNode()               {}
+func (b *Boolean) TokenLiteral() string          { return b.Token.Lit }
+func (b *Boolean) String(maskParams bool) string { return b.Token.Lit }
 
 type IntegerLiteral struct {
 	Token token.Token `json:"token,omitempty"`
@@ -108,7 +108,12 @@ type IntegerLiteral struct {
 
 func (il *IntegerLiteral) expressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Lit }
-func (il *IntegerLiteral) String() string       { return il.Token.Lit }
+func (il *IntegerLiteral) String(maskParams bool) string {
+	if maskParams {
+		return "?"
+	}
+	return il.Token.Lit
+}
 
 type KeywordExpression struct {
 	Token token.Token `json:"token,omitempty"` // The keyword token, e.g. ALL
@@ -116,7 +121,7 @@ type KeywordExpression struct {
 
 func (ke *KeywordExpression) expressionNode()      {}
 func (ke *KeywordExpression) TokenLiteral() string { return ke.Token.Lit }
-func (ke *KeywordExpression) String() string {
+func (ke *KeywordExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(strings.ToUpper(ke.Token.Lit))
 	return out.String()
@@ -130,12 +135,12 @@ type PrefixExpression struct {
 
 func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Lit }
-func (pe *PrefixExpression) String() string {
+func (pe *PrefixExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
+	out.WriteString(pe.Right.String(maskParams))
 	out.WriteString(")")
 
 	return out.String()
@@ -150,14 +155,14 @@ type InfixExpression struct {
 
 func (ie *InfixExpression) expressionNode()      {}
 func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Lit }
-func (ie *InfixExpression) String() string {
+func (ie *InfixExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(ie.Left.String())
+	out.WriteString(ie.Left.String(maskParams))
 	out.WriteString(" " + strings.ToUpper(ie.Operator) + " ")
 	if ie.Right != nil {
-		out.WriteString(ie.Right.String())
+		out.WriteString(ie.Right.String(maskParams))
 	}
 	out.WriteString(")")
 
@@ -172,15 +177,15 @@ type CallExpression struct {
 
 func (ce *CallExpression) expressionNode()      {}
 func (ce *CallExpression) TokenLiteral() string { return ce.Token.Lit }
-func (ce *CallExpression) String() string {
+func (ce *CallExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	args := []string{}
 	for _, a := range ce.Arguments {
-		args = append(args, a.String())
+		args = append(args, a.String(maskParams))
 	}
 
-	out.WriteString(ce.Function.String())
+	out.WriteString(ce.Function.String(maskParams))
 	out.WriteString("(")
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
@@ -195,8 +200,10 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Lit }
-func (sl *StringLiteral) String() string {
-	// fmt.Printf("StringLiteral: %+v, %+v, %+v\n", sl.Token, sl.Token.Lit, sl.Value)
+func (sl *StringLiteral) String(maskParams bool) string {
+	if maskParams {
+		return "?"
+	}
 	return fmt.Sprintf("'%s'", sl.Token.Lit)
 }
 
@@ -207,12 +214,12 @@ type ArrayLiteral struct {
 
 func (al *ArrayLiteral) expressionNode()      {}
 func (al *ArrayLiteral) TokenLiteral() string { return al.Token.Lit }
-func (al *ArrayLiteral) String() string {
+func (al *ArrayLiteral) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	elements := []string{}
 	for _, el := range al.Elements {
-		elements = append(elements, el.String())
+		elements = append(elements, el.String(maskParams))
 	}
 
 	out.WriteString("[")
@@ -230,13 +237,13 @@ type IndexExpression struct {
 
 func (ie *IndexExpression) expressionNode()      {}
 func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Lit }
-func (ie *IndexExpression) String() string {
+func (ie *IndexExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(ie.Left.String())
+	out.WriteString(ie.Left.String(maskParams))
 	out.WriteString("[")
-	out.WriteString(ie.Index.String())
+	out.WriteString(ie.Index.String(maskParams))
 	out.WriteString("])")
 
 	return out.String()
@@ -249,7 +256,7 @@ func (ie *IndexExpression) String() string {
 
 // func (hl *HashLiteral) expressionNode()      {}
 // func (hl *HashLiteral) TokenLiteral() string { return hl.Token.Lit }
-// func (hl *HashLiteral) String() string {
+// func (hl *HashLiteral) String(maskParams bool) string {
 // 	var out bytes.Buffer
 
 // 	pairs := []string{}

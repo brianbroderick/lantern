@@ -19,6 +19,7 @@ func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 
 	var inspect *ast.Program
+	maskParams := true
 
 	for {
 		fmt.Fprint(out, PROMPT)
@@ -35,7 +36,7 @@ func Start(in io.Reader, out io.Writer) {
 		}
 
 		if line == "inspect" {
-			io.WriteString(out, inspect.Inspect())
+			io.WriteString(out, inspect.Inspect(maskParams))
 			io.WriteString(out, "\n")
 			continue
 		}
@@ -50,9 +51,9 @@ func Start(in io.Reader, out io.Writer) {
 		}
 
 		inspect = program
-		io.WriteString(out, program.String())
+		io.WriteString(out, program.String(maskParams))
 		io.WriteString(out, "\n\n")
-		io.WriteString(out, program.Inspect())
+		io.WriteString(out, program.Inspect(maskParams))
 		io.WriteString(out, "\n")
 	}
 }

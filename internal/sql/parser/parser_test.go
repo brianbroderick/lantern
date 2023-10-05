@@ -28,6 +28,8 @@ import (
 // GROUP BY region, product;
 
 func TestCTEs(t *testing.T) {
+	maskParams := false
+
 	tests := []struct {
 		input  string
 		output string
@@ -62,13 +64,15 @@ func TestCTEs(t *testing.T) {
 
 		// program.Statements[0].Inspect()
 
-		output := program.String()
+		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
 		fmt.Printf("output: %s\n", output)
 	}
 }
 
 func TestSingleSelectStatements(t *testing.T) {
+	maskParams := false
+
 	tests := []struct {
 		input      string
 		tableCount int
@@ -190,13 +194,15 @@ func TestSingleSelectStatements(t *testing.T) {
 		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
 
 		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectExp.Tables))
-		output := program.String()
+		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
 		fmt.Printf("output: %s\n", output)
 	}
 }
 
 func TestSubSelects(t *testing.T) {
+	maskParams := false
+
 	tests := []struct {
 		input  string
 		output string
@@ -227,9 +233,7 @@ func TestSubSelects(t *testing.T) {
 		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
 		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
 
-		// program.Statements[0].Inspect()
-
-		output := program.String()
+		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
 		fmt.Printf("output: %s\n", output)
 	}
@@ -395,6 +399,8 @@ func TestParsingInfixExpressions(t *testing.T) {
 }
 
 func TestOperatorPrecedenceParsing(t *testing.T) {
+	maskParams := false
+
 	tests := []struct {
 		input    string
 		expected string
@@ -520,7 +526,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		program := p.ParseProgram()
 		checkParserErrors(t, p)
 
-		actual := program.String()
+		actual := program.String(maskParams)
 		// fmt.Println("Actual: ", actual)
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
@@ -604,6 +610,8 @@ func TestCallExpressionParsing(t *testing.T) {
 }
 
 func TestCallExpressionParameterParsing(t *testing.T) {
+	maskParams := false
+
 	tests := []struct {
 		input         string
 		expectedIdent string
@@ -649,9 +657,9 @@ func TestCallExpressionParameterParsing(t *testing.T) {
 		}
 
 		for i, arg := range tt.expectedArgs {
-			if exp.Arguments[i].String() != arg {
+			if exp.Arguments[i].String(maskParams) != arg {
 				t.Errorf("argument %d wrong. want=%q, got=%q", i,
-					arg, exp.Arguments[i].String())
+					arg, exp.Arguments[i].String(maskParams))
 			}
 		}
 	}
