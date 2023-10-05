@@ -12,11 +12,26 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 	p.nextToken()
 	stmt.Expressions = []ast.Expression{}
 	stmt.Expressions = append(stmt.Expressions, p.parseCTEExpression())
-	// if p.peekTokenIs(token.COMMA) { // handle temp table list
-	// }
 
+	// fmt.Printf("parseCTEStatement000: %s %s :: %s %s\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit)
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		stmt.Expressions = append(stmt.Expressions, p.parseCTEExpression())
+	}
+
+	iter := 0
 	for !p.peekTokenIs(token.SEMICOLON) {
+		if p.curTokenIs(token.RPAREN) {
+			p.nextToken()
+		}
 		stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST)) // Get the main query
+
+		iter++ // This is a hack to prevent an infinite loop. If we're looping 10 times, something's wrong. Bail out.
+		if iter > 10 {
+			return &ast.CTEStatement{Token: token.Token{Type: token.ILLEGAL, Lit: "ILLEGAL"}}
+		}
 	}
 
 	p.nextToken() // We're done. Move on to the next statement
@@ -52,7 +67,6 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 
 	if p.peekTokenIs(token.RPAREN) {
 		// fmt.Println("parseCTEExpression004")
-		p.nextToken()
 		p.nextToken()
 	}
 
