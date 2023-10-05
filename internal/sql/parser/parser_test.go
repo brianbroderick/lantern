@@ -9,24 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// join_type table     alias join_condition
-// source    customers c
-// inner     addresses a     Expression
-
-// select * from users join addresses on users.id = addresses.user_id;
-// select * from users u inner join addresses a on u.id = a.user_id;
-
-// Window frame_clause:
-// SELECT
-// wf1() OVER w,
-// wf2() OVER w,
-// FROM table_name
-// WINDOW w AS (PARTITION BY c1 ORDER BY c2);
-
-// Subquery:
-// SELECT	film_id, title,	rental_rate FROM film WHERE	rental_rate > (	SELECT AVG (rental_rate) FROM film);
-// SELECT film_id, title FROM	film WHERE film_id IN (SELECT inventory.film_id	FROM rental INNER JOIN inventory ON inventory.inventory_id = rental.inventory_id WHERE return_date BETWEEN '2005-05-29'	AND '2005-05-30');
-
 // Common Table Expression:
 // WITH regional_sales AS (
 // 	SELECT region, SUM(amount) AS total_sales
@@ -45,17 +27,13 @@ import (
 // WHERE region IN (SELECT region FROM top_regions)
 // GROUP BY region, product;
 
-func TestSubSelects(t *testing.T) {
+func TestCTEs(t *testing.T) {
 	tests := []struct {
 		input  string
 		output string
 	}{
 		// Select: Subqueries
-		{"select film_id, title, rental_rate from film where rental_rate > (select avg(rental_rate) from film);", "(SELECT film_id, title, rental_rate FROM film WHERE (rental_rate > (SELECT avg(rental_rate) FROM film)));"},
-		{"select id from customers where id > (select avg(id) from customers where id > (select min(id) from customers));", "(SELECT id FROM customers WHERE (id > (SELECT avg(id) FROM customers WHERE (id > (SELECT min(id) FROM customers)))));"},
-		{"select film_id from film where rental_rate > (select avg(rental_rate) from film) order by film_id;", "(SELECT film_id FROM film WHERE (rental_rate > (SELECT avg(rental_rate) FROM film)) ORDER BY film_id);"},
-		{"select id from customers where id > (select avg(id) from customers where id > 42) order by id desc;", "(SELECT id FROM customers WHERE (id > (SELECT avg(id) FROM customers WHERE (id > 42))) ORDER BY id DESC);"},
-		{"select one from table_one where one > (select two from table_two where two > (select three from table_three)) order by one desc;", "(SELECT one FROM table_one WHERE (one > (SELECT two FROM table_two WHERE (two > (SELECT three FROM table_three)))) ORDER BY one DESC);"},
+		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 	}
 
 	for _, tt := range tests {
@@ -68,13 +46,13 @@ func TestSubSelects(t *testing.T) {
 		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+		assert.Equal(t, "with", stmt.TokenLiteral(), "program.Statements[0] is not ast.CTEStatement. got=%T", stmt)
 
-		selectStmt, ok := stmt.(*ast.SelectStatement)
-		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+		cteStmt, ok := stmt.(*ast.CTEStatement)
+		assert.True(t, ok, "stmt is not *ast.CTEStatement. got=%T", stmt)
 
-		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
-		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+		cteExp, ok := cteStmt.Expressions[0].(*ast.SelectExpression)
+		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", cteExp)
 
 		// program.Statements[0].Inspect()
 
@@ -206,6 +184,45 @@ func TestSingleSelectStatements(t *testing.T) {
 		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
 
 		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectExp.Tables))
+		output := program.String()
+		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
+		fmt.Printf("output: %s\n", output)
+	}
+}
+
+func TestSubSelects(t *testing.T) {
+	tests := []struct {
+		input  string
+		output string
+	}{
+		// Select: Subqueries
+		{"select film_id, title, rental_rate from film where rental_rate > (select avg(rental_rate) from film);", "(SELECT film_id, title, rental_rate FROM film WHERE (rental_rate > (SELECT avg(rental_rate) FROM film)));"},
+		{"select id from customers where id > (select avg(id) from customers where id > (select min(id) from customers));", "(SELECT id FROM customers WHERE (id > (SELECT avg(id) FROM customers WHERE (id > (SELECT min(id) FROM customers)))));"},
+		{"select film_id from film where rental_rate > (select avg(rental_rate) from film) order by film_id;", "(SELECT film_id FROM film WHERE (rental_rate > (SELECT avg(rental_rate) FROM film)) ORDER BY film_id);"},
+		{"select id from customers where id > (select avg(id) from customers where id > 42) order by id desc;", "(SELECT id FROM customers WHERE (id > (SELECT avg(id) FROM customers WHERE (id > 42))) ORDER BY id DESC);"},
+		{"select one from table_one where one > (select two from table_two where two > (select three from table_three)) order by one desc;", "(SELECT one FROM table_one WHERE (one > (SELECT two FROM table_two WHERE (two > (SELECT three FROM table_three)))) ORDER BY one DESC);"},
+	}
+
+	for _, tt := range tests {
+		fmt.Printf("\ninput:  %s\n", tt.input)
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+
+		stmt := program.Statements[0]
+		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+
+		selectStmt, ok := stmt.(*ast.SelectStatement)
+		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+
+		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
+		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+
+		// program.Statements[0].Inspect()
+
 		output := program.String()
 		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
 		fmt.Printf("output: %s\n", output)

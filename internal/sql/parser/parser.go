@@ -245,9 +245,12 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseStatement() ast.Statement {
 	defer untrace(trace("parseStatement"))
+	// fmt.Printf("parseStatement: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 	switch p.curToken.Type {
 	case token.SELECT:
 		return p.parseSelectStatement()
+	case token.WITH:
+		return p.parseCTEStatement()
 	default:
 		return p.parseExpressionStatement()
 	}

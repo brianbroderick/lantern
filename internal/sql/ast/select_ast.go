@@ -33,8 +33,6 @@ func (ss *SelectStatement) Inspect() string {
 		fmt.Printf("Error loading data: %#v\n\n", err)
 	}
 	return string(j)
-
-	// return "Inspect method not implemented"
 }
 
 // SelectExpression is a select inside a SELECT or WITH (Common Table Expression) statement,
@@ -62,6 +60,10 @@ func (se *SelectExpression) TokenLiteral() string { return se.Token.Lit }
 // String() is incomplete and only returns the most basic of select statements
 func (se *SelectExpression) String() string {
 	var out bytes.Buffer
+
+	if se.TempTable != nil {
+		out.WriteString(se.TempTable.String() + " AS ")
+	}
 
 	// Subqueries need to be surrounded by parentheses. A primary query may also have parentheses, so we'll add them here to be consistent.
 	out.WriteString("(")
