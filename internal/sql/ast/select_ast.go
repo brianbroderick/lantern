@@ -38,20 +38,21 @@ func (ss *SelectStatement) Inspect(maskParams bool) string {
 // SelectExpression is a select inside a SELECT or WITH (Common Table Expression) statement,
 // since a select statement can have multiple select expressions. i.e. WITH clause, subqueries, and the primary select expression.
 type SelectExpression struct {
-	Token     token.Token  `json:"token,omitempty"`      // the token.SELECT token
-	TempTable *Identifier  `json:"temp_table,omitempty"` // the name of the temp table named in a WITH clause (CTE)
-	Distinct  Expression   `json:"distinct,omitempty"`   // the DISTINCT or ALL token
-	Columns   []Expression `json:"columns,omitempty"`
-	Tables    []Expression `json:"tables,omitempty"`
-	Where     Expression   `json:"where,omitempty"`
-	GroupBy   []Expression `json:"group_by,omitempty"`
-	Having    Expression   `json:"having,omitempty"`
-	Window    []Expression `json:"window,omitempty"`
-	OrderBy   []Expression `json:"order_by,omitempty"`
-	Limit     Expression   `json:"limit,omitempty"`
-	Offset    Expression   `json:"offset,omitempty"`
-	Fetch     Expression   `json:"fetch,omitempty"`
-	Lock      Expression   `json:"lock,omitempty"`
+	Token            token.Token  `json:"token,omitempty"`      // the token.SELECT token
+	TempTable        *Identifier  `json:"temp_table,omitempty"` // the name of the temp table named in a WITH clause (CTE)
+	WithMaterialized string       `json:"with_materialized,omitempty"`
+	Distinct         Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
+	Columns          []Expression `json:"columns,omitempty"`
+	Tables           []Expression `json:"tables,omitempty"`
+	Where            Expression   `json:"where,omitempty"`
+	GroupBy          []Expression `json:"group_by,omitempty"`
+	Having           Expression   `json:"having,omitempty"`
+	Window           []Expression `json:"window,omitempty"`
+	OrderBy          []Expression `json:"order_by,omitempty"`
+	Limit            Expression   `json:"limit,omitempty"`
+	Offset           Expression   `json:"offset,omitempty"`
+	Fetch            Expression   `json:"fetch,omitempty"`
+	Lock             Expression   `json:"lock,omitempty"`
 }
 
 func (se *SelectExpression) expressionNode()      {}
@@ -63,6 +64,10 @@ func (se *SelectExpression) String(maskParams bool) string {
 
 	if se.TempTable != nil {
 		out.WriteString(se.TempTable.String(maskParams) + " AS ")
+	}
+
+	if se.WithMaterialized != "" {
+		out.WriteString(strings.ToUpper(se.WithMaterialized) + " ")
 	}
 
 	// Subqueries need to be surrounded by parentheses. A primary query may also have parentheses, so we'll add them here to be consistent.

@@ -60,7 +60,19 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 
 	tempTable := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 
-	p.expectPeek(token.AS)     // expect AS and move to next token
+	p.expectPeek(token.AS) // expect AS and move to next token
+
+	materialized := ""
+	if p.peekTokenIs(token.NOT) {
+		materialized = "NOT "
+		p.nextToken()
+	}
+
+	if p.peekTokenIs(token.MATERIALIZED) {
+		materialized += "MATERIALIZED"
+		p.nextToken()
+	}
+
 	p.expectPeek(token.LPAREN) // expect LPAREN and move to next token
 	p.nextToken()
 
@@ -68,6 +80,7 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 
 	exp := p.parseExpression(LOWEST)
 	exp.(*ast.SelectExpression).TempTable = tempTable
+	exp.(*ast.SelectExpression).WithMaterialized = materialized
 
 	// fmt.Printf("parseCTEExpression003: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, exp)
 
