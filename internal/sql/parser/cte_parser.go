@@ -10,6 +10,12 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 
 	stmt := &ast.CTEStatement{Token: p.curToken}
 	p.nextToken()
+
+	if p.curTokenIs(token.RECURSIVE) {
+		stmt.Recursive = true
+		p.nextToken()
+	}
+
 	stmt.Expressions = []ast.Expression{}
 	stmt.Expressions = append(stmt.Expressions, p.parseCTEExpression())
 

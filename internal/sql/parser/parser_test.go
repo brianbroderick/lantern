@@ -42,6 +42,7 @@ func TestCTEs(t *testing.T) {
 			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (sum(total_sales) / 10) FROM regional_sales))) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders GROUP BY region, product));"},
 		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions AS (select region from regional_sales where total_sales > (select sum(total_sales)/10 from regional_sales))	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders where region in (SELECT region from top_regions) group by region, product;",
 			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (sum(total_sales) / 10) FROM regional_sales))) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders WHERE region IN ((SELECT region FROM top_regions)) GROUP BY region, product));"},
+		{"with recursive sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH RECURSIVE sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 	}
 
 	for _, tt := range tests {

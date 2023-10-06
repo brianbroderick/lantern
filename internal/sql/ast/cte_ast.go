@@ -10,6 +10,7 @@ import (
 
 type CTEStatement struct {
 	Token       token.Token  `json:"token,omitempty"`
+	Recursive   bool         `json:"recursive,omitempty"`
 	Expressions []Expression `json:"expressions,omitempty"`
 }
 
@@ -19,6 +20,10 @@ func (s *CTEStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("(WITH ")
+
+	if s.Recursive {
+		out.WriteString("RECURSIVE ")
+	}
 
 	lenExpressions := len(s.Expressions) - 1
 	for i, e := range s.Expressions {
