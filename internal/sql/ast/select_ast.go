@@ -417,3 +417,19 @@ func (ie *InExpression) String(maskParams bool) string {
 
 	return out.String()
 }
+
+type UnionExpression struct {
+	Token token.Token `json:"token,omitempty"` // The operator token, e.g. UNION, INTERSECT, EXCEPT
+	Right Expression  `json:"right,omitempty"`
+}
+
+func (ue *UnionExpression) expressionNode()      {}
+func (ue *UnionExpression) TokenLiteral() string { return ue.Token.Lit }
+func (ue *UnionExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString(strings.ToUpper(" " + ue.Token.Lit + " "))
+	out.WriteString(ue.Right.String(maskParams))
+
+	return out.String()
+}

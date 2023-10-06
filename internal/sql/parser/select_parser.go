@@ -22,6 +22,11 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	stmt.Expressions = []ast.Expression{}
 	stmt.Expressions = append(stmt.Expressions, p.parseSelectExpression())
 
+	if p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
+		p.nextToken()
+		stmt.Expressions = append(stmt.Expressions, p.parseUnionExpression())
+	}
+
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -572,32 +577,11 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 	return exp
 }
 
-// func (p *Parser) parseWhere(precedence int) ast.Expression {
-// 	defer untrace(trace("parseExpression"))
+func (p *Parser) parseUnionExpression() ast.Expression {
+	exp := &ast.UnionExpression{Token: p.curToken}
+	p.nextToken()
+	exp.Right = p.parseSelectExpression()
+	// fmt.Printf("parseUnionExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
-// 	prefix := p.prefixParseFns[p.curToken.Type]
-// 	if prefix == nil {
-// 		p.noPrefixParseFnError(p.curToken.Type)
-// 		return nil
-// 	}
-// 	leftExp := prefix()
-
-// 	// if p.peekTokenIs(token.IN) {
-// 	// 	p.nextToken()
-// 	// 	p.nextToken()
-// 	// 	infix := &ast.WhereExpression{Token: p.curToken, Left: leftExp, Right: p.parseExpressionList([]token.TokenType{token.RPAREN})}
-// 	// }
-
-// 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.SEMICOLON}) && precedence < p.peekPrecedence() {
-// 		infix := p.infixParseFns[p.peekToken.Type]
-// 		if infix == nil {
-// 			return leftExp
-// 		}
-
-// 		p.nextToken()
-
-// 		leftExp = infix(leftExp)
-// 	}
-
-// 	return leftExp
-// }
+	return exp
+}

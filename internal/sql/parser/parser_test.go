@@ -27,52 +27,6 @@ import (
 // WHERE region IN (SELECT region FROM top_regions)
 // GROUP BY region, product;
 
-func TestCTEs(t *testing.T) {
-	maskParams := false
-
-	tests := []struct {
-		input  string
-		output string
-	}{
-		// Select: Subqueries
-		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
-		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions AS (select region from regional_sales where total_sales > 42)	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders group by region, product;",
-			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > 42)) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders GROUP BY region, product));"},
-		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions AS (select region from regional_sales where total_sales > (select sum(total_sales)/10 from regional_sales))	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders group by region, product;",
-			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (sum(total_sales) / 10) FROM regional_sales))) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders GROUP BY region, product));"},
-		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions AS (select region from regional_sales where total_sales > (select sum(total_sales)/10 from regional_sales))	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders where region in (SELECT region from top_regions) group by region, product;",
-			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (sum(total_sales) / 10) FROM regional_sales))) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders WHERE region IN ((SELECT region FROM top_regions)) GROUP BY region, product));"},
-		{"with recursive sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH RECURSIVE sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
-		{"with sales as materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
-		{"with sales as not materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS NOT MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
-	}
-
-	for _, tt := range tests {
-		fmt.Printf("\ninput:  %s\n", tt.input)
-		l := lexer.New(tt.input)
-		p := New(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
-
-		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
-
-		stmt := program.Statements[0]
-		assert.Equal(t, "with", stmt.TokenLiteral(), "program.Statements[0] is not ast.CTEStatement. got=%T", stmt)
-
-		cteStmt, ok := stmt.(*ast.CTEStatement)
-		assert.True(t, ok, "stmt is not *ast.CTEStatement. got=%T", stmt)
-
-		cteExp, ok := cteStmt.Expressions[0].(*ast.SelectExpression)
-		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", cteExp)
-
-		// program.Statements[0].Inspect()
-
-		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
-		fmt.Printf("output: %s\n", output)
-	}
-}
-
 func TestSingleSelectStatements(t *testing.T) {
 	maskParams := false
 
@@ -176,6 +130,11 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Select: IN clause
 		{"select id from users where id IN ('1','2','3','4');", 1, "(SELECT id FROM users WHERE id IN ('1', '2', '3', '4'));"},
 		{"select id from users where id IN ('1','2','3','4') AND name = 'brian';", 1, "(SELECT id FROM users WHERE (id IN ('1', '2', '3', '4') AND (name = 'brian')));"},
+
+		// Select: UNION clause
+		{"select id from users union select id from customers;", 1, "(SELECT id FROM users) UNION (SELECT id FROM customers);"},
+		{"select id from users except select id from customers;", 1, "(SELECT id FROM users) EXCEPT (SELECT id FROM customers);"},
+		{"select id from users intersect select id from customers;", 1, "(SELECT id FROM users) INTERSECT (SELECT id FROM customers);"},
 	}
 
 	for _, tt := range tests {
@@ -235,6 +194,52 @@ func TestSubSelects(t *testing.T) {
 
 		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
 		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+
+		output := program.String(maskParams)
+		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
+		fmt.Printf("output: %s\n", output)
+	}
+}
+
+func TestCTEs(t *testing.T) {
+	maskParams := false
+
+	tests := []struct {
+		input  string
+		output string
+	}{
+		// Select: Subqueries
+		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
+		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions AS (select region from regional_sales where total_sales > 42)	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders group by region, product;",
+			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > 42)) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders GROUP BY region, product));"},
+		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions AS (select region from regional_sales where total_sales > (select sum(total_sales)/10 from regional_sales))	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders group by region, product;",
+			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (sum(total_sales) / 10) FROM regional_sales))) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders GROUP BY region, product));"},
+		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions AS (select region from regional_sales where total_sales > (select sum(total_sales)/10 from regional_sales))	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders where region in (SELECT region from top_regions) group by region, product;",
+			"(WITH regional_sales AS (SELECT region, sum(amount) AS total_sales FROM orders GROUP BY region), top_regions AS (SELECT region FROM regional_sales WHERE (total_sales > (SELECT (sum(total_sales) / 10) FROM regional_sales))) (SELECT region, product, sum(quantity) AS product_units, sum(amount) AS product_sales FROM orders WHERE region IN ((SELECT region FROM top_regions)) GROUP BY region, product));"},
+		{"with recursive sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH RECURSIVE sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
+		{"with sales as materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
+		{"with sales as not materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS NOT MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
+	}
+
+	for _, tt := range tests {
+		fmt.Printf("\ninput:  %s\n", tt.input)
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+
+		stmt := program.Statements[0]
+		assert.Equal(t, "with", stmt.TokenLiteral(), "program.Statements[0] is not ast.CTEStatement. got=%T", stmt)
+
+		cteStmt, ok := stmt.(*ast.CTEStatement)
+		assert.True(t, ok, "stmt is not *ast.CTEStatement. got=%T", stmt)
+
+		cteExp, ok := cteStmt.Expressions[0].(*ast.SelectExpression)
+		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", cteExp)
+
+		// program.Statements[0].Inspect()
 
 		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
