@@ -51,10 +51,11 @@ const (
 	NOT_EQ // != or <>
 
 	// Delimiters
-	COMMA     // ,
-	SEMICOLON // ;
-	COLON     // :
-	DOT       // .
+	COMMA       // ,
+	SEMICOLON   // ;
+	COLON       // :
+	DOUBLECOLON // ::
+	DOT         // .
 
 	LPAREN   // (
 	RPAREN   // )
@@ -200,10 +201,11 @@ var Tokens = [...]string{
 	BETWEEN:        "BETWEEN",
 
 	// Delimiters
-	COMMA:     "COMMA",     // ,
-	SEMICOLON: "SEMICOLON", // ;
-	COLON:     "COLON",     // :
-	DOT:       "DOT",       // .
+	COMMA:       "COMMA",       // ,
+	SEMICOLON:   "SEMICOLON",   // ;
+	COLON:       "COLON",       // :
+	DOUBLECOLON: "DOUBLECOLON", // ::
+	DOT:         "DOT",         // .
 
 	LPAREN:   "LPAREN",   // (
 	RPAREN:   "RPAREN",   // )

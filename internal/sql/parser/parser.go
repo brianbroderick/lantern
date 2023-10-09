@@ -311,7 +311,14 @@ func (p *Parser) curPrecedence() int {
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
-	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		ident.Cast = p.curToken.Lit
+	}
+	return ident
 }
 
 func (p *Parser) parseWildcardLiteral() ast.Expression {
@@ -334,11 +341,23 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 	lit.Value = value
 
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		lit.Cast = p.curToken.Lit
+	}
+
 	return lit
 }
 
 func (p *Parser) parseStringLiteral() ast.Expression {
-	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}
+	str := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		str.Cast = p.curToken.Lit
+	}
+	return str
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {

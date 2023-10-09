@@ -51,7 +51,14 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case ':':
-		tok = newToken(token.COLON, l.ch)
+		if l.peek() == ':' {
+			ch := l.ch
+			l.read()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.DOUBLECOLON, Lit: literal}
+		} else {
+			tok = newToken(token.COLON, l.ch)
+		}
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
 	case '{':

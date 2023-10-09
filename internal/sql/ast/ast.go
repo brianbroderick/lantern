@@ -86,11 +86,17 @@ func (es *ExpressionStatement) Inspect(maskParams bool) string {
 type Identifier struct {
 	Token token.Token `json:"token,omitempty"` // the token.IDENT token
 	Value string      `json:"value,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
 }
 
-func (i *Identifier) expressionNode()               {}
-func (i *Identifier) TokenLiteral() string          { return i.Token.Lit }
-func (i *Identifier) String(maskParams bool) string { return i.Value }
+func (i *Identifier) expressionNode()      {}
+func (i *Identifier) TokenLiteral() string { return i.Token.Lit }
+func (i *Identifier) String(maskParams bool) string {
+	if i.Cast != "" {
+		return fmt.Sprintf("%s::%s", i.Value, strings.ToUpper(i.Cast))
+	}
+	return i.Value
+}
 
 type Boolean struct {
 	Token token.Token
@@ -104,6 +110,7 @@ func (b *Boolean) String(maskParams bool) string { return b.Token.Lit }
 type IntegerLiteral struct {
 	Token token.Token `json:"token,omitempty"`
 	Value int64       `json:"value,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
 }
 
 func (il *IntegerLiteral) expressionNode()      {}
@@ -111,6 +118,9 @@ func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Lit }
 func (il *IntegerLiteral) String(maskParams bool) string {
 	if maskParams {
 		return "?"
+	}
+	if il.Cast != "" {
+		return fmt.Sprintf("%d::%s", il.Value, strings.ToUpper(il.Cast))
 	}
 	return il.Token.Lit
 }
@@ -196,6 +206,7 @@ func (ce *CallExpression) String(maskParams bool) string {
 type StringLiteral struct {
 	Token token.Token `json:"token,omitempty"`
 	Value string      `json:"value,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
 }
 
 func (sl *StringLiteral) expressionNode()      {}
@@ -203,6 +214,9 @@ func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Lit }
 func (sl *StringLiteral) String(maskParams bool) string {
 	if maskParams {
 		return "?"
+	}
+	if sl.Cast != "" {
+		return fmt.Sprintf("'%s'::%s", sl.Value, strings.ToUpper(sl.Cast))
 	}
 	return fmt.Sprintf("'%s'", sl.Token.Lit)
 }
