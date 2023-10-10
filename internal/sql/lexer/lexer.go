@@ -41,7 +41,17 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = newToken(token.PLUS, l.ch)
 	// TODO: Support comments --
 	case '-':
-		tok = newToken(token.MINUS, l.ch)
+		if l.peek() == '>' {
+			l.read()
+			if l.peek() == '>' {
+				l.read()
+				tok = token.Token{Type: token.JSONGETBYTEXT, Lit: "->>"}
+			} else {
+				tok = token.Token{Type: token.JSONGETBYKEY, Lit: "->"}
+			}
+		} else {
+			tok = newToken(token.MINUS, l.ch)
+		}
 	case '*':
 		tok = newToken(token.ASTERISK, l.ch)
 	case '<':
@@ -104,6 +114,21 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		pos = l.pos
 		tok = l.scanIdent()
 		return tok, pos
+	case '#': // JSON operators
+		if l.peek() == '>' {
+			l.read()
+			if l.peek() == '>' {
+				l.read()
+				tok = token.Token{Type: token.JSONGETBYPATHTEXT, Lit: "#>>"}
+			} else {
+				tok = token.Token{Type: token.JSONGETBYPATH, Lit: "#>"}
+			}
+		} else if l.peek() == '-' {
+			l.read()
+			tok = token.Token{Type: token.JSONDELETE, Lit: "#-"}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 	case 0:
 		tok = token.Token{Type: token.EOF, Lit: ""}
 	default:

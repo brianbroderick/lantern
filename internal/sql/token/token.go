@@ -57,6 +57,17 @@ const (
 	DOUBLECOLON // ::
 	DOT         // .
 
+	JSONGETBYKEY      // ->
+	JSONGETBYTEXT     // ->>
+	JSONGETBYPATH     // #>
+	JSONGETBYPATHTEXT // #>>
+	JSONCONTAINS      // @>
+	JSONCONTAINED     // <@
+	JSONHASKEY        // ?
+	JSONHASALLKEYS    // ?&
+	JSONHASANYKEYS    // ?|
+	JSONDELETE        // #-
+
 	LPAREN   // (
 	RPAREN   // )
 	LBRACE   // {
@@ -66,6 +77,8 @@ const (
 
 	// Keywords
 	keywordBeg
+	SYMBOLAND
+	SYMBOLOR
 	AND
 	OR
 	IS
@@ -190,6 +203,8 @@ var Tokens = [...]string{
 
 	AND:            "AND",
 	OR:             "OR",
+	SYMBOLAND:      "&&",
+	SYMBOLOR:       "||",
 	IS:             "IS",
 	ISNULL:         "ISNULL",
 	NOTNULL:        "NOTNULL",
@@ -199,6 +214,17 @@ var Tokens = [...]string{
 	SIMILAR:        "SIMILAR",
 	EXPONENTIATION: "EXPONENTIATION",
 	BETWEEN:        "BETWEEN",
+
+	JSONGETBYKEY:      "JSONGETBYKEY",
+	JSONGETBYTEXT:     "JSONGETBYTEXT",
+	JSONGETBYPATH:     "JSONGETBYPATH",
+	JSONGETBYPATHTEXT: "JSONGETBYPATHTEXT",
+	JSONCONTAINS:      "JSONCONTAINS",
+	JSONCONTAINED:     "JSONCONTAINED",
+	JSONHASKEY:        "JSONHASKEY",
+	JSONHASALLKEYS:    "JSONHASALLKEYS",
+	JSONHASANYKEYS:    "JSONHASANYKEYS",
+	JSONDELETE:        "JSONDELETE",
 
 	// Delimiters
 	COMMA:       "COMMA",       // ,

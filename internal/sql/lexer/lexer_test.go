@@ -48,7 +48,9 @@ func TestCodeScan(t *testing.T) {
 
 func TestSimpleScan(t *testing.T) {
 	input := ` . + - * < >
-	; , { } ( ) = == ! != / foo 12345 `
+	; , { } ( ) = == ! != / foo 12345 
+	-> ->> #> #>> #-
+	`
 
 	tests := []token.Token{
 		{Type: token.DOT, Lit: "."},
@@ -70,6 +72,11 @@ func TestSimpleScan(t *testing.T) {
 		{Type: token.SLASH, Lit: "/"},
 		{Type: token.IDENT, Lit: "foo"},
 		{Type: token.INT, Lit: "12345"},
+		{Type: token.JSONGETBYKEY, Lit: "->"},
+		{Type: token.JSONGETBYTEXT, Lit: "->>"},
+		{Type: token.JSONGETBYPATH, Lit: "#>"},
+		{Type: token.JSONGETBYPATHTEXT, Lit: "#>>"},
+		{Type: token.JSONDELETE, Lit: "#-"},
 		{Type: token.EOF, Lit: ""},
 	}
 
