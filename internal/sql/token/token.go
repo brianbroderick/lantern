@@ -67,6 +67,7 @@ const (
 	JSONHASALLKEYS    // ?&
 	JSONHASANYKEYS    // ?|
 	JSONDELETE        // #-
+	JSONCONCAT        // ||
 
 	LPAREN   // (
 	RPAREN   // )
@@ -77,8 +78,6 @@ const (
 
 	// Keywords
 	keywordBeg
-	SYMBOLAND
-	SYMBOLOR
 	AND
 	OR
 	IS
@@ -203,8 +202,6 @@ var Tokens = [...]string{
 
 	AND:            "AND",
 	OR:             "OR",
-	SYMBOLAND:      "&&",
-	SYMBOLOR:       "||",
 	IS:             "IS",
 	ISNULL:         "ISNULL",
 	NOTNULL:        "NOTNULL",
@@ -225,6 +222,7 @@ var Tokens = [...]string{
 	JSONHASALLKEYS:    "JSONHASALLKEYS",
 	JSONHASANYKEYS:    "JSONHASANYKEYS",
 	JSONDELETE:        "JSONDELETE",
+	JSONCONCAT:        "JSONCONCAT",
 
 	// Delimiters
 	COMMA:       "COMMA",       // ,

@@ -54,8 +54,13 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		}
 	case '*':
 		tok = newToken(token.ASTERISK, l.ch)
-	case '<':
-		tok = newToken(token.LT, l.ch)
+	case '<': // maybe a JSON operator
+		if l.peek() == '@' {
+			l.read()
+			tok = token.Token{Type: token.JSONCONTAINED, Lit: "<@"}
+		} else {
+			tok = newToken(token.LT, l.ch)
+		}
 	case '>':
 		tok = newToken(token.GT, l.ch)
 	case ';':
@@ -85,6 +90,29 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = newToken(token.RBRACKET, l.ch)
 	case '.':
 		tok = newToken(token.DOT, l.ch)
+	case '|':
+		if l.peek() == '|' {
+			ch := l.ch
+			l.read()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.JSONCONCAT, Lit: literal}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
+	case '?':
+		if l.peek() == '|' {
+			ch := l.ch
+			l.read()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.JSONHASANYKEYS, Lit: literal}
+		} else if l.peek() == '&' {
+			ch := l.ch
+			l.read()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.JSONHASALLKEYS, Lit: literal}
+		} else {
+			tok = newToken(token.JSONHASKEY, l.ch)
+		}
 	case '=':
 		if l.peek() == '=' {
 			ch := l.ch
@@ -126,6 +154,13 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		} else if l.peek() == '-' {
 			l.read()
 			tok = token.Token{Type: token.JSONDELETE, Lit: "#-"}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
+	case '@': // JSON operators
+		if l.peek() == '>' {
+			l.read()
+			tok = token.Token{Type: token.JSONCONTAINS, Lit: "@>"}
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}

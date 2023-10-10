@@ -46,7 +46,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select wf1() over w, wf2() over w from table_name window w as (partition by c1 order by c2);", 1, "(SELECT (wf1() OVER w), (wf2() OVER w) FROM table_name WINDOW w AS (PARTITION BY c1 ORDER BY c2));"},
 		{"select wf1() over w, wf2() over w from table_name window w as (partition by c1 order by c2), foo as (partition by c3 order by c4);", 1, "(SELECT (wf1() OVER w), (wf2() OVER w) FROM table_name WINDOW w AS (PARTITION BY c1 ORDER BY c2), foo AS (PARTITION BY c3 ORDER BY c4));"},
 
-		// // Select: joins
+		// Select: joins
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;", 2, "(SELECT c.id FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id));"},
 		{"select id from customers join addresses on id = customer_id;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id));"},
 		{"select id from customers join addresses on id = customer_id join phones on id = phone_id;", 3, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) INNER JOIN phones ON (id = phone_id));"},
@@ -62,15 +62,15 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
 		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
 
-		// // Select: group by
+		// Select: group by
 		{"select id from users group by id", 1, "(SELECT id FROM users GROUP BY id);"},
 		{"select id from users group by id, name;", 1, "(SELECT id FROM users GROUP BY id, name);"},
 
-		// // Select: combined clauses
+		// Select: combined clauses
 		{"select id from users where id = 42 group by id, name", 1, "(SELECT id FROM users WHERE (id = 42) GROUP BY id, name);"},
 		{"select id from customers join addresses on id = customer_id where id = 46 group by id;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = 46) GROUP BY id);"},
 
-		// // Select: having clause
+		// Select: having clause
 		{"select id from users group by id having id > 2;", 1, "(SELECT id FROM users GROUP BY id HAVING (id > 2));"},
 		{"select id from users group by id having id > 2 and name = 'frodo';", 1, "(SELECT id FROM users GROUP BY id HAVING ((id > 2) AND (name = 'frodo')));"},
 
@@ -122,6 +122,20 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select '100'::integer from a;", 1, "(SELECT '100'::INTEGER FROM a);"},
 		{"select 100::text from a;", 1, "(SELECT 100::TEXT FROM a);"},
 		{"select a::text from b;", 1, "(SELECT a::TEXT FROM b);"},
+
+		// Select: JSONB
+		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> 'name') = 'brian'));"},
+		{"select id from users where data->>'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data ->> 'name') = 'brian'));"},
+		{"select id from users where data#>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #> '{name}') = 'brian'));"},
+		{"select id from users where data#>>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '{name}') = 'brian'));"},
+		{"select id from users where data#>>'{name,first}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '{name,first}') = 'brian'));"},
+		{"select id from users where data#>>'{name,first}' = 'brian' and data#>>'{name,last}' = 'broderick';", 1, "(SELECT id FROM users WHERE (((data #>> '{name,first}') = 'brian') AND ((data #>> '{name,last}') = 'broderick')));"},
+		{"select * from users where metadata @> '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata @> '{\"age\": 42}'));"},
+		{"select * from users where metadata <@ '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata <@ '{\"age\": 42}'));"},
+		{"select * from users where metadata ? '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ? '{\"age\": 42}'));"},
+		{"select * from users where metadata ?| '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?| '{\"age\": 42}'));"},
+		{"select * from users where metadata ?& '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?& '{\"age\": 42}'));"},
+		{"select * from users where metadata || '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata || '{\"age\": 42}'));"},
 	}
 
 	for _, tt := range tests {

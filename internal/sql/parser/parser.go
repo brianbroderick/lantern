@@ -25,35 +25,47 @@ const (
 	PRODUCT        // *
 	EXPONENTIATION // ^
 	PREFIX         // -X or !X
+	JSON           // ->, ->>, #>, #>>, @>, <@, ?, ?&, ?|
 	CALL           // myFunction(X)
 	INDEX          // array[index]
 )
 
 var precedences = map[token.TokenType]int{
-	token.EQ:             EQUALS,
-	token.NOT_EQ:         EQUALS,
-	token.ASSIGN:         EQUALS,
-	token.LT:             LESSGREATER,
-	token.GT:             LESSGREATER,
-	token.PLUS:           SUM,
-	token.MINUS:          SUM,
-	token.SLASH:          PRODUCT,
-	token.ASTERISK:       PRODUCT,
-	token.LPAREN:         CALL,
-	token.LBRACKET:       INDEX,
-	token.AND:            AND,
-	token.OR:             OR,
-	token.NOT:            NOT,
-	token.IS:             IS,
-	token.ISNULL:         IS,
-	token.NOTNULL:        IS,
-	token.OVER:           WINDOW,
-	token.BETWEEN:        FILTER,
-	token.IN:             FILTER,
-	token.LIKE:           FILTER,
-	token.ILIKE:          FILTER,
-	token.SIMILAR:        FILTER,
-	token.EXPONENTIATION: EXPONENTIATION,
+	token.EQ:                EQUALS,
+	token.NOT_EQ:            EQUALS,
+	token.ASSIGN:            EQUALS,
+	token.LT:                LESSGREATER,
+	token.GT:                LESSGREATER,
+	token.PLUS:              SUM,
+	token.MINUS:             SUM,
+	token.SLASH:             PRODUCT,
+	token.ASTERISK:          PRODUCT,
+	token.LPAREN:            CALL,
+	token.LBRACKET:          INDEX,
+	token.AND:               AND,
+	token.OR:                OR,
+	token.NOT:               NOT,
+	token.IS:                IS,
+	token.ISNULL:            IS,
+	token.NOTNULL:           IS,
+	token.OVER:              WINDOW,
+	token.BETWEEN:           FILTER,
+	token.IN:                FILTER,
+	token.LIKE:              FILTER,
+	token.ILIKE:             FILTER,
+	token.SIMILAR:           FILTER,
+	token.EXPONENTIATION:    EXPONENTIATION,
+	token.JSONGETBYKEY:      JSON,
+	token.JSONGETBYTEXT:     JSON,
+	token.JSONGETBYPATH:     JSON,
+	token.JSONGETBYPATHTEXT: JSON,
+	token.JSONCONTAINS:      JSON,
+	token.JSONCONTAINED:     JSON,
+	token.JSONHASKEY:        JSON,
+	token.JSONHASALLKEYS:    JSON,
+	token.JSONHASANYKEYS:    JSON,
+	token.JSONDELETE:        JSON,
+	token.JSONCONCAT:        JSON,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -130,6 +142,17 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.SIMILAR, p.parseInfixExpression)
 	p.registerInfix(token.BETWEEN, p.parseInfixExpression)
 	p.registerInfix(token.OVER, p.parseInfixExpression)
+	p.registerInfix(token.JSONGETBYKEY, p.parseInfixExpression)
+	p.registerInfix(token.JSONGETBYTEXT, p.parseInfixExpression)
+	p.registerInfix(token.JSONGETBYPATH, p.parseInfixExpression)
+	p.registerInfix(token.JSONGETBYPATHTEXT, p.parseInfixExpression)
+	p.registerInfix(token.JSONCONTAINS, p.parseInfixExpression)
+	p.registerInfix(token.JSONCONTAINED, p.parseInfixExpression)
+	p.registerInfix(token.JSONHASKEY, p.parseInfixExpression)
+	p.registerInfix(token.JSONHASALLKEYS, p.parseInfixExpression)
+	p.registerInfix(token.JSONHASANYKEYS, p.parseInfixExpression)
+	p.registerInfix(token.JSONDELETE, p.parseInfixExpression)
+	p.registerInfix(token.JSONCONCAT, p.parseInfixExpression)
 
 	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
