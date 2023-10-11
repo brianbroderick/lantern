@@ -40,3 +40,5 @@ _testmain.go
 .env_test_local
 
 debug.json
+
+internal/workflow/json/*.json
