@@ -231,6 +231,15 @@ func (p *Parser) Errors() []string {
 	return p.errors
 }
 
+func (p *Parser) PrintErrors() {
+	if len(p.errors) == 0 {
+		return
+	}
+	for _, msg := range p.errors {
+		fmt.Printf("parser error: %s\n", msg)
+	}
+}
+
 func (p *Parser) peekErrorIsOne(tokens []token.TokenType) {
 	toks := []string{}
 	for _, t := range tokens {
