@@ -1,0 +1,1 @@
+This directory may contain a JSON file per workload to be parsed.
