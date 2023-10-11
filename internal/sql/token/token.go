@@ -69,6 +69,8 @@ const (
 	JSONDELETE        // #-
 	JSONCONCAT        // ||
 
+	OVERLAP // &&
+
 	LPAREN   // (
 	RPAREN   // )
 	LBRACE   // {
@@ -223,6 +225,8 @@ var Tokens = [...]string{
 	JSONHASANYKEYS:    "JSONHASANYKEYS",
 	JSONDELETE:        "JSONDELETE",
 	JSONCONCAT:        "JSONCONCAT",
+
+	OVERLAP: "OVERLAP", // && used with PG arrays
 
 	// Delimiters
 	COMMA:       "COMMA",       // ,

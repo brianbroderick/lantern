@@ -164,6 +164,13 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
+	case '&': // ARRAY OPERATORS
+		if l.peek() == '&' {
+			l.read()
+			tok = token.Token{Type: token.OVERLAP, Lit: "&&"}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 	case 0:
 		tok = token.Token{Type: token.EOF, Lit: ""}
 	default:

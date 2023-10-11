@@ -66,6 +66,7 @@ var precedences = map[token.TokenType]int{
 	token.JSONHASANYKEYS:    JSON,
 	token.JSONDELETE:        JSON,
 	token.JSONCONCAT:        JSON,
+	token.OVERLAP:           FILTER,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -154,10 +155,11 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.JSONHASANYKEYS, p.parseInfixExpression)
 	p.registerInfix(token.JSONDELETE, p.parseInfixExpression)
 	p.registerInfix(token.JSONCONCAT, p.parseInfixExpression)
+	p.registerInfix(token.OVERLAP, p.parseInfixExpression)
 
 	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
-	p.registerInfix(token.LBRACKET, p.parseIndexExpression)
+	p.registerInfix(token.LBRACKET, p.parseArrayExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -497,6 +499,14 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 
 func (p *Parser) parseArrayLiteral() ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.curToken}
+
+	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
+
+	return array
+}
+
+func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.curToken, Left: left}
 
 	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
 

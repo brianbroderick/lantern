@@ -227,6 +227,7 @@ func (sl *StringLiteral) String(maskParams bool) string {
 
 type ArrayLiteral struct {
 	Token    token.Token  `json:"token,omitempty"` // the '[' token
+	Left     Expression   `json:"left,omitempty"`
 	Elements []Expression `json:"elements,omitempty"`
 }
 
@@ -238,6 +239,10 @@ func (al *ArrayLiteral) String(maskParams bool) string {
 	elements := []string{}
 	for _, el := range al.Elements {
 		elements = append(elements, el.String(maskParams))
+	}
+
+	if al.Left != nil {
+		out.WriteString(al.Left.String(maskParams))
 	}
 
 	out.WriteString("[")
