@@ -9,6 +9,103 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMaskParams(t *testing.T) {
+	maskParams := true
+
+	tests := []struct {
+		input      string
+		tableCount int
+		output     string
+	}{
+		// Some Selects
+		{"select id from users;", 1, "(SELECT id FROM users);"},
+		{"select 1 * (2 + (6 / 4)) - 9 from users;", 1, "(SELECT (($1 * ($2 + ($3 / $4))) - $5) FROM users);"},
+		{"select id from customers join addresses on id = customer_id where id = 46;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = $1));"},
+
+		// Select: where clause
+		{"select id from users where id = 42;", 1, "(SELECT id FROM users WHERE (id = $1));"},
+		{"select id from users where id = 42 and customer_id = 74", 1, "(SELECT id FROM users WHERE ((id = $1) AND (customer_id = $2)));"},
+		{"select id from users where id = 42 and customer_id > 74;", 1, "(SELECT id FROM users WHERE ((id = $1) AND (customer_id > $2)));"},
+		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = '$1'));"},
+		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = '$1'));"},
+
+		// Select: combined clauses
+		{"select id from users where id = 42 group by id, name", 1, "(SELECT id FROM users WHERE (id = $1) GROUP BY id, name);"},
+		{"select id from customers join addresses on id = customer_id where id = 46 group by id;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = $1) GROUP BY id);"},
+
+		// Select: having clause
+		{"select id from users group by id having id > 2;", 1, "(SELECT id FROM users GROUP BY id HAVING (id > $1));"},
+		{"select id from users group by id having id > 2 and name = 'frodo';", 1, "(SELECT id FROM users GROUP BY id HAVING ((id > $1) AND (name = '$2')));"},
+
+		// Select: limit
+		{"select id from users limit 10;", 1, "(SELECT id FROM users LIMIT $1);"},
+		{"select id from users limit ALL;", 1, "(SELECT id FROM users LIMIT ALL);"},
+
+		// Select: offset
+		{"select id from users limit ALL offset 10;", 1, "(SELECT id FROM users LIMIT ALL OFFSET $1);"},
+		{"select id from users limit 10 offset 10;", 1, "(SELECT id FROM users LIMIT $1 OFFSET $2);"},
+		{"select id from users limit 10 offset 1 ROW", 1, "(SELECT id FROM users LIMIT $1 OFFSET $2);"},
+		{"select id from users limit 10 offset 2 ROWS;", 1, "(SELECT id FROM users LIMIT $1 OFFSET $2);"},
+
+		// Select: combined order by, limit, offset
+		{"select id from users order by id desc limit 10 offset 10;", 1, "(SELECT id FROM users ORDER BY id DESC LIMIT $1 OFFSET $2);"},
+		{"select id from users order by id desc nulls last limit 10 offset 10;", 1, "(SELECT id FROM users ORDER BY id DESC NULLS LAST LIMIT $1 OFFSET $2);"},
+
+		// Select: fetch
+		{"select a from users order by a fetch first row only;", 1, "(SELECT a FROM users ORDER BY a FETCH NEXT $1 ROWS ONLY);"},
+		{"select b from users order by b fetch first 3 rows only;", 1, "(SELECT b FROM users ORDER BY b FETCH NEXT $1 ROWS ONLY);"},
+		{"select c from users order by c fetch first 10 rows with ties;", 1, "(SELECT c FROM users ORDER BY c FETCH NEXT $1 ROWS WITH TIES);"},
+
+		// Select: IN clause
+		{"select id from users where id IN ('7','8','9','14');", 1, "(SELECT id FROM users WHERE id IN ('$1', '$2', '$3', '$4'));"},
+		{"select id from users where id IN ('17','21','34','48') AND name = 'brian';", 1, "(SELECT id FROM users WHERE (id IN ('$1', '$2', '$3', '$4') AND (name = '$5')));"},
+
+		// Select: Cast literals
+		{"select '100'::integer from a;", 1, "(SELECT '$1'::INTEGER FROM a);"},
+		{"select 100::text from a;", 1, "(SELECT $1::TEXT FROM a);"},
+		{"select a::text from b;", 1, "(SELECT a::TEXT FROM b);"},
+
+		// Select: JSONB
+		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> '$1') = '$2'));"},
+		{"select id from users where data->>'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data ->> '$1') = '$2'));"},
+		{"select id from users where data#>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #> '$1') = '$2'));"},
+		{"select id from users where data#>>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '$1') = '$2'));"},
+		{"select id from users where data#>>'{name,first}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '$1') = '$2'));"},
+		{"select id from users where data#>>'{name,first}' = 'brian' and data#>>'{name,last}' = 'broderick';", 1, "(SELECT id FROM users WHERE (((data #>> '$1') = '$2') AND ((data #>> '$3') = '$4')));"},
+		{"select * from users where metadata @> '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata @> '$1'));"},
+		{"select * from users where metadata <@ '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata <@ '$1'));"},
+		{"select * from users where metadata ? '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ? '$1'));"},
+		{"select * from users where metadata ?| '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?| '$1'));"},
+		{"select * from users where metadata ?& '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?& '$1'));"},
+		{"select * from users where metadata || '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata || '$1'));"},
+	}
+
+	for _, tt := range tests {
+		fmt.Printf("\ninput:  %s\n", tt.input)
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+
+		stmt := program.Statements[0]
+		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+
+		selectStmt, ok := stmt.(*ast.SelectStatement)
+		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+
+		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
+		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+
+		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectExp.Tables))
+		output := program.String(maskParams)
+		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
+		fmt.Printf("output: %s\n", output)
+	}
+
+}
+
 func TestSingleSelectStatements(t *testing.T) {
 	maskParams := false
 

@@ -89,8 +89,9 @@ type (
 )
 
 type Parser struct {
-	l      *lexer.Lexer
-	errors []string
+	l           *lexer.Lexer
+	errors      []string
+	paramOffset int
 
 	curToken  token.Token
 	peekToken token.Token
@@ -353,7 +354,9 @@ func (p *Parser) parseKeywordExpression() ast.Expression {
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
-	lit := &ast.IntegerLiteral{Token: p.curToken}
+	// Incrementing the offset is to help when masking parameters in the AST
+	p.paramOffset++
+	lit := &ast.IntegerLiteral{Token: p.curToken, ParamOffset: p.paramOffset}
 
 	value, err := strconv.ParseInt(p.curToken.Lit, 0, 64)
 	if err != nil {
@@ -374,7 +377,8 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *Parser) parseStringLiteral() ast.Expression {
-	str := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}
+	p.paramOffset++
+	str := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit, ParamOffset: p.paramOffset}
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
@@ -427,14 +431,6 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	if p.peekTokenIs(token.RPAREN) {
 		p.nextToken()
 	}
-
-	// fmt.Printf("parseGroupedExpression2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
-	// if !p.curTokenIs(token.RPAREN) {
-	// 	msg := fmt.Sprintf("GroupedExpression: expected token to be %s, got %s: %s instead. peek token is: %s: %s",
-	// 		token.RPAREN, p.curToken.Type, p.curToken.Lit, p.curToken.Type, p.peekToken.Lit)
-	// 	p.errors = append(p.errors, msg)
-	// 	return nil
-	// }
 
 	return exp
 }

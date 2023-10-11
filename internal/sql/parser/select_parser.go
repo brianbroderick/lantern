@@ -281,7 +281,7 @@ func (p *Parser) parseFetch() ast.Expression {
 	}
 
 	fetch := &ast.FetchExpression{Token: p.curToken,
-		Value:  &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1},
+		Value:  &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset},
 		Option: token.Token{Type: token.NIL, Lit: ""}}
 
 	if p.curTokenIsOne([]token.TokenType{token.NEXT, token.FIRST}) {
@@ -291,6 +291,10 @@ func (p *Parser) parseFetch() ast.Expression {
 	if p.curTokenIs(token.INT) {
 		fetch.Value = p.parseExpression(LOWEST)
 		p.nextToken()
+	} else {
+		// Integer is suppressed, so we need to increment the param offset manually instead of in the IntegerLiteral
+		p.paramOffset++
+		fetch.Value = &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset}
 	}
 
 	if p.curTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {

@@ -108,21 +108,23 @@ func (b *Boolean) TokenLiteral() string          { return b.Token.Lit }
 func (b *Boolean) String(maskParams bool) string { return b.Token.Lit }
 
 type IntegerLiteral struct {
-	Token token.Token `json:"token,omitempty"`
-	Value int64       `json:"value,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Token       token.Token `json:"token,omitempty"`
+	Value       int64       `json:"value,omitempty"`
+	Cast        string      `json:"cast,omitempty"`
+	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
 func (il *IntegerLiteral) expressionNode()      {}
 func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Lit }
 func (il *IntegerLiteral) String(maskParams bool) string {
+	literal := il.Token.Lit
 	if maskParams {
-		return "?"
+		literal = fmt.Sprintf("$%d", il.ParamOffset)
 	}
 	if il.Cast != "" {
-		return fmt.Sprintf("%d::%s", il.Value, strings.ToUpper(il.Cast))
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(il.Cast))
 	}
-	return il.Token.Lit
+	return literal
 }
 
 type KeywordExpression struct {
@@ -204,21 +206,23 @@ func (ce *CallExpression) String(maskParams bool) string {
 }
 
 type StringLiteral struct {
-	Token token.Token `json:"token,omitempty"`
-	Value string      `json:"value,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Token       token.Token `json:"token,omitempty"`
+	Value       string      `json:"value,omitempty"`
+	Cast        string      `json:"cast,omitempty"`
+	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
 func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Lit }
 func (sl *StringLiteral) String(maskParams bool) string {
+	literal := sl.Token.Lit
 	if maskParams {
-		return "?"
+		literal = fmt.Sprintf("$%d", sl.ParamOffset)
 	}
 	if sl.Cast != "" {
-		return fmt.Sprintf("'%s'::%s", sl.Value, strings.ToUpper(sl.Cast))
+		return fmt.Sprintf("'%s'::%s", literal, strings.ToUpper(sl.Cast))
 	}
-	return fmt.Sprintf("'%s'", sl.Token.Lit)
+	return fmt.Sprintf("'%s'", literal)
 }
 
 type ArrayLiteral struct {
