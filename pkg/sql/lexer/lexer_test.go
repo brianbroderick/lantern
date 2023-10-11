@@ -3,7 +3,7 @@ package lexer
 import (
 	"testing"
 
-	"github.com/brianbroderick/lantern/internal/sql/token"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/brianbroderick/lantern/internal/sql/token"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 type CTEStatement struct {

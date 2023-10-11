@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/brianbroderick/lantern/internal/sql/ast"
-	"github.com/brianbroderick/lantern/internal/sql/lexer"
+	"github.com/brianbroderick/lantern/pkg/sql/ast"
+	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/stretchr/testify/assert"
 )
 

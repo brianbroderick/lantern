@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/brianbroderick/lantern/internal/sql/token"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 // Describes the Abstract Syntax Tree (AST) for the SQL language.

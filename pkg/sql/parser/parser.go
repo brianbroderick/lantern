@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/brianbroderick/lantern/internal/sql/ast"
-	"github.com/brianbroderick/lantern/internal/sql/lexer"
-	"github.com/brianbroderick/lantern/internal/sql/token"
+	"github.com/brianbroderick/lantern/pkg/sql/ast"
+	"github.com/brianbroderick/lantern/pkg/sql/lexer"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 const (

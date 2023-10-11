@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/brianbroderick/lantern/internal/sql/token"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 type Lexer struct {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/user"
 
-	"github.com/brianbroderick/lantern/internal/sql/repl"
+	"github.com/brianbroderick/lantern/pkg/sql/repl"
 )
 
 func main() {
