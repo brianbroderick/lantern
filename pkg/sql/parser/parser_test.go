@@ -9,6 +9,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMultipleStatements(t *testing.T) {
+	maskParams := false
+
+	tests := []struct {
+		input          string
+		statementCount int
+		output         string
+	}{
+		// Multiple Statements
+		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
+	}
+
+	for _, tt := range tests {
+		fmt.Printf("\ninput:  %s\n", tt.input)
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		assert.Equal(t, tt.statementCount, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", tt.statementCount, len(program.Statements))
+
+		output := program.String(maskParams)
+		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
+		fmt.Printf("output: %s\n", output)
+	}
+}
+
 func TestSingleSelectStatements(t *testing.T) {
 	maskParams := false
 
