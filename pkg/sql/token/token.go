@@ -174,6 +174,10 @@ const (
 	CONFLICT
 	TRUE
 	FALSE
+	SESSION
+	LOCAL
+	TIME
+	ZONE
 	keywordEnd
 )
 
@@ -325,6 +329,10 @@ var Tokens = [...]string{
 	CONFLICT:     "CONFLICT",
 	TRUE:         "TRUE",
 	FALSE:        "FALSE",
+	SESSION:      "SESSION",
+	LOCAL:        "LOCAL",
+	TIME:         "TIME",
+	ZONE:         "ZONE",
 }
 
 var keywords map[string]TokenType

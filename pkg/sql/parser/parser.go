@@ -34,6 +34,7 @@ var precedences = map[token.TokenType]int{
 	token.EQ:                EQUALS,
 	token.NOT_EQ:            EQUALS,
 	token.ASSIGN:            EQUALS,
+	token.TO:                EQUALS,
 	token.LT:                LESSGREATER,
 	token.GT:                LESSGREATER,
 	token.PLUS:              SUM,
@@ -124,6 +125,11 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.ALL, p.parseKeywordExpression)
 	p.registerPrefix(token.SELECT, p.parseSelectExpression)
 
+	// Some tokens don't need special parse rules and can function as an identifier
+	// If this becomes a problem, we can create a generic struct for these cases
+	p.registerPrefix(token.LOCAL, p.parseIdentifier)
+	p.registerPrefix(token.DEFAULT, p.parseIdentifier)
+
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
 	p.registerInfix(token.MINUS, p.parseInfixExpression)
@@ -156,6 +162,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.JSONDELETE, p.parseInfixExpression)
 	p.registerInfix(token.JSONCONCAT, p.parseInfixExpression)
 	p.registerInfix(token.OVERLAP, p.parseInfixExpression)
+	p.registerInfix(token.TO, p.parseInfixExpression)
 
 	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
@@ -286,6 +293,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseSelectStatement()
 	case token.WITH:
 		return p.parseCTEStatement()
+	case token.SET:
+		return p.parseSetStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
