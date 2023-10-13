@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
@@ -22,17 +21,15 @@ func TestMultipleStatements(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		fmt.Printf("\ninput:  %s\n", tt.input)
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
 		checkParserErrors(t, p)
 
-		assert.Equal(t, tt.statementCount, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", tt.statementCount, len(program.Statements))
+		assert.Equal(t, tt.statementCount, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, tt.statementCount, len(program.Statements))
 
 		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
-		fmt.Printf("output: %s\n", output)
+		assert.Equal(t, tt.output, output, "input: %s\n\noutput: %s\n\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 	}
 }
 
@@ -177,27 +174,27 @@ func TestSingleSelectStatements(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		fmt.Printf("\ninput:  %s\n", tt.input)
+		// fmt.Printf("\ninput:  %s\n", tt.input)
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
 		checkParserErrors(t, p)
 
-		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+		assert.Equal(t, "select", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectStmt, ok := stmt.(*ast.SelectStatement)
-		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
-		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectExpression. got=%T", tt.input, selectExp)
 
-		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectExp.Tables))
+		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "input: %s\nlen(selectStmt.Tables) not %d. got=%d", tt.input, tt.tableCount, len(selectExp.Tables))
 		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
-		fmt.Printf("output: %s\n", output)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
+		// fmt.Printf("output: %s\n", output)
 	}
 }
 
@@ -217,26 +214,26 @@ func TestSubSelects(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		fmt.Printf("\ninput:  %s\n", tt.input)
+		// fmt.Printf("\ninput:  %s\n", tt.input)
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
 		checkParserErrors(t, p)
 
-		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+		assert.Equal(t, "select", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectStmt, ok := stmt.(*ast.SelectStatement)
-		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
-		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectExpression. got=%T", tt.input, selectExp)
 
 		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
-		fmt.Printf("output: %s\n", output)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
+		// fmt.Printf("output: %s\n", output)
 	}
 }
 
@@ -261,28 +258,28 @@ func TestCTEs(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		fmt.Printf("\ninput:  %s\n", tt.input)
+		// fmt.Printf("\ninput:  %s\n", tt.input)
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
 		checkParserErrors(t, p)
 
-		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "with", stmt.TokenLiteral(), "program.Statements[0] is not ast.CTEStatement. got=%T", stmt)
+		assert.Equal(t, "with", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.CTEStatement. got=%T", tt.input, stmt)
 
 		cteStmt, ok := stmt.(*ast.CTEStatement)
-		assert.True(t, ok, "stmt is not *ast.CTEStatement. got=%T", stmt)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.CTEStatement. got=%T", tt.input, stmt)
 
 		cteExp, ok := cteStmt.Expressions[0].(*ast.SelectExpression)
-		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", cteExp)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectExpression. got=%T", tt.input, cteExp)
 
 		// program.Statements[0].Inspect()
 
 		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
-		fmt.Printf("output: %s\n", output)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
+		// fmt.Printf("output: %s\n", output)
 	}
 }
 
@@ -358,26 +355,26 @@ func TestMaskParams(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		fmt.Printf("\ninput:  %s\n", tt.input)
+		// fmt.Printf("\ninput:  %s\n", tt.input)
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
 		checkParserErrors(t, p)
 
-		assert.Equal(t, 1, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", 1, len(program.Statements))
+		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "select", stmt.TokenLiteral(), "program.Statements[0] is not ast.SelectStatement. got=%T", stmt)
+		assert.Equal(t, "select", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectStmt, ok := stmt.(*ast.SelectStatement)
-		assert.True(t, ok, "stmt is not *ast.SelectStatement. got=%T", stmt)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
-		assert.True(t, ok, "stmt is not *ast.SelectExpression. got=%T", selectExp)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectExpression. got=%T", tt.input, selectExp)
 
-		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "len(selectStmt.Tables) not %d. got=%d", tt.tableCount, len(selectExp.Tables))
+		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "input: %s\nlen(selectStmt.Tables) not %d. got=%d", tt.input, tt.tableCount, len(selectExp.Tables))
 		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
-		fmt.Printf("output: %s\n", output)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
+		// fmt.Printf("output: %s\n", output)
 	}
 }
