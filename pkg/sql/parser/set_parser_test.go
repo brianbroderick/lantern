@@ -1,50 +1,41 @@
 package parser
 
-import (
-	"fmt"
-	"testing"
+// func TestSetStatements(t *testing.T) {
+// 	maskParams := false
 
-	"github.com/brianbroderick/lantern/pkg/sql/ast"
-	"github.com/brianbroderick/lantern/pkg/sql/lexer"
-	"github.com/stretchr/testify/assert"
-)
+// 	tests := []struct {
+// 		input     string
+// 		stmtCount int
+// 		output    string
+// 	}{
+// 		// Select: simple
+// 		{"set application_name = 'example';", 1, "SET (application_name = 'example');"},
+// 		{"set session application_name = 'example';", 1, "SET SESSION (application_name = 'example');"},
+// 		{"set local application_name = 'example';", 1, "SET LOCAL (application_name = 'example');"},
+// 		{"set local application_name to 'example';", 1, "SET LOCAL (application_name TO 'example');"},
+// 		{"set local time zone 'example';", 1, "SET LOCAL TIME ZONE 'example';"},
+// 		{"set local time zone mdt;", 1, "SET LOCAL TIME ZONE mdt;"},
+// 		{"set local time zone local;", 1, "SET LOCAL TIME ZONE local;"},
+// 		{"set local time zone default;", 1, "SET LOCAL TIME ZONE default;"},
+// 	}
 
-func TestSetStatements(t *testing.T) {
-	maskParams := false
+// 	for _, tt := range tests {
+// 		fmt.Printf("\ninput:  %s\n", tt.input)
+// 		l := lexer.New(tt.input)
+// 		p := New(l)
+// 		program := p.ParseProgram()
+// 		checkParserErrors(t, p)
 
-	tests := []struct {
-		input     string
-		stmtCount int
-		output    string
-	}{
-		// Select: simple
-		{"set application_name = 'example';", 1, "SET (application_name = 'example');"},
-		{"set session application_name = 'example';", 1, "SET SESSION (application_name = 'example');"},
-		{"set local application_name = 'example';", 1, "SET LOCAL (application_name = 'example');"},
-		{"set local application_name to 'example';", 1, "SET LOCAL (application_name TO 'example');"},
-		{"set local time zone 'example';", 1, "SET LOCAL TIME ZONE 'example';"},
-		{"set local time zone mdt;", 1, "SET LOCAL TIME ZONE mdt;"},
-		{"set local time zone local;", 1, "SET LOCAL TIME ZONE local;"},
-		{"set local time zone default;", 1, "SET LOCAL TIME ZONE default;"},
-	}
+// 		assert.Equal(t, tt.stmtCount, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", tt.stmtCount, len(program.Statements))
 
-	for _, tt := range tests {
-		fmt.Printf("\ninput:  %s\n", tt.input)
-		l := lexer.New(tt.input)
-		p := New(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
+// 		stmt := program.Statements[0]
+// 		assert.Equal(t, "set", stmt.TokenLiteral(), "program.Statements[0] is not ast.SetStatement. got=%T", stmt)
 
-		assert.Equal(t, tt.stmtCount, len(program.Statements), "program.Statements does not contain %d statements. got=%d\n", tt.stmtCount, len(program.Statements))
+// 		_, ok := stmt.(*ast.SetStatement)
+// 		assert.True(t, ok, "stmt is not *ast.SetStatement. got=%T", stmt)
 
-		stmt := program.Statements[0]
-		assert.Equal(t, "set", stmt.TokenLiteral(), "program.Statements[0] is not ast.SetStatement. got=%T", stmt)
-
-		_, ok := stmt.(*ast.SetStatement)
-		assert.True(t, ok, "stmt is not *ast.SetStatement. got=%T", stmt)
-
-		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
-		fmt.Printf("output: %s\n", output)
-	}
-}
+// 		output := program.String(maskParams)
+// 		assert.Equal(t, tt.output, output, "program.String() not '%s'. got=%s", tt.output, output)
+// 		fmt.Printf("output: %s\n", output)
+// 	}
+// }

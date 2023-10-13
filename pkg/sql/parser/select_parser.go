@@ -533,7 +533,7 @@ func (p *Parser) parseLock() ast.Expression {
 		p.nextToken()
 	}
 
-	if p.curTokenIs(token.KEY) {
+	if p.curTokenIs(token.IDENT) && strings.ToUpper(p.curToken.Lit) == "KEY" {
 		p.nextToken()
 		if p.curTokenIs(token.SHARE) {
 			expression.Lock = "KEY SHARE"
@@ -542,7 +542,7 @@ func (p *Parser) parseLock() ast.Expression {
 
 	if p.curTokenIs(token.NO) {
 		p.nextToken()
-		if p.curTokenIs(token.KEY) {
+		if p.curTokenIs(token.IDENT) && strings.ToUpper(p.curToken.Lit) == "KEY" {
 			p.nextToken()
 			if p.curTokenIs(token.UPDATE) {
 				p.nextToken()
@@ -567,6 +567,25 @@ func (p *Parser) parseLock() ast.Expression {
 	p.nextToken()
 
 	return expression
+}
+
+func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
+	exp := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	p.nextToken()
+
+	// If we're missing another NOT expression, add it here.
+	if p.curTokenIsOne([]token.TokenType{token.IN, token.LIKE, token.ILIKE, token.BETWEEN}) {
+		exp.Operator = "NOT " + p.curToken.Lit
+		p.nextToken()
+	}
+
+	if p.curTokenIs(token.LPAREN) {
+		// p.nextToken()
+		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+	}
+	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
+
+	return exp
 }
 
 func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {

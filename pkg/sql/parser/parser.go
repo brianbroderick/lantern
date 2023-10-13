@@ -164,6 +164,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.OVERLAP, p.parseInfixExpression)
 	p.registerInfix(token.TO, p.parseInfixExpression)
 
+	p.registerInfix(token.NOT, p.parseNotExpression)
+
 	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseArrayExpression)
@@ -533,18 +535,20 @@ func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 	return array
 }
 
-func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
-	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
+// This would parse an index lookup such as array[0], but PG uses this form to define an array
+// that looks like array[1,2,3]. For that reason, parseArrayExpression is used instead.
+// func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+// 	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
 
-	p.nextToken()
-	exp.Index = p.parseExpression(LOWEST)
+// 	p.nextToken()
+// 	exp.Index = p.parseExpression(LOWEST)
 
-	if !p.expectPeek(token.RBRACKET) {
-		return nil
-	}
+// 	if !p.expectPeek(token.RBRACKET) {
+// 		return nil
+// 	}
 
-	return exp
-}
+// 	return exp
+// }
 
 func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn

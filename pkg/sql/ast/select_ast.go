@@ -391,7 +391,7 @@ func (l *LockExpression) String(maskParams bool) string {
 }
 
 type InExpression struct {
-	Token    token.Token  `json:"token,omitempty"` // The operator token, e.g. +
+	Token    token.Token  `json:"token,omitempty"` // The operator token, e.g. IN, NOT IN
 	Left     Expression   `json:"left,omitempty"`
 	Operator string       `json:"operator,omitempty"`
 	Right    []Expression `json:"right,omitempty"`

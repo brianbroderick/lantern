@@ -80,103 +80,101 @@ const (
 
 	// Keywords
 	keywordBeg
+	ALL
 	AND
-	OR
+	AS
+	ASC
+	BETWEEN
+	BREADTH
+	BY
+	CONFLICT
+	CROSS
+	CUBE
+	CURRENT
+	DEFAULT
+	DELETE
+	DEPTH
+	DESC
+	DISTINCT
+	EXCEPT
+	EXCLUDE
+	EXPONENTIATION
+	FALSE
+	FETCH
+	FIRST
+	FOLLOWING
+	FOR
+	FROM
+	FULL
+	GROUP
+	GROUPING
+	GROUPS
+	HAVING
+	ILIKE
+	IN
+	INNER
+	INSERT
+	INTERSECT
+	INTO
 	IS
 	ISNULL
-	NOTNULL
-	IN
-	LIKE
-	ILIKE
-	SIMILAR
-	EXPONENTIATION
-	BETWEEN
-	NOT
-
-	WITH
-	RECURSIVE
-	SELECT
-	ALL
-	DISTINCT
-	ON
-	AS
-	FROM
-	WHERE
-	GROUP
-	BY
-	HAVING
-	OVER
-	UNION
-	WINDOW
-	INTERSECT
-	EXCEPT
-	ORDER
-	ASC
-	DESC
-	USING
-	NULLS
-	FIRST
+	JOIN
 	LAST
+	LATERAL
+	LEFT
+	LIKE
 	LIMIT
+	LOCAL
+	LOCKED
+	MATERIALIZED
+	NATURAL
+	NEXT
+	NO
+	NOT
+	NOTNULL
+	NOWAIT
+	NULLS
+	OF
 	OFFSET
+	ON
+	ONLY
+	OR
+	ORDER
+	ORDINALITY
+	OTHERS
+	OUTER
+	OVER
+	PARTITION
+	PRECEDING
+	RANGE
+	RECURSIVE
+	REPEATABLE
+	RIGHT
+	ROLLUP
 	ROW
 	ROWS
-	FETCH
-	NEXT
-	ONLY
-	TIES
-	FOR
-	UPDATE
-	NO
-	KEY
-	SHARE
-	OF
-	NOWAIT
-	SKIP
-	LOCKED
-	TABLESAMPLE
-	REPEATABLE
-	LATERAL
-	ORDINALITY
-	NATURAL
-	CROSS
-	ROLLUP
-	CUBE
-	GROUPING
-	SETS
-	MATERIALIZED
 	SEARCH
-	BREADTH
-	DEPTH
-	SET
-	TO
-	DEFAULT
-	TABLE
-	JOIN
-	INNER
-	LEFT
-	OUTER
-	FULL
-	RIGHT
-	PARTITION
-	RANGE
-	GROUPS
-	UNBOUNDED
-	PRECEDING
-	CURRENT
-	FOLLOWING
-	EXCLUDE
-	OTHERS
-	INSERT
-	DELETE
-	INTO
-	VALUES
-	CONFLICT
-	TRUE
-	FALSE
+	SELECT
 	SESSION
-	LOCAL
+	SET
+	SETS
+	SHARE
+	SIMILAR
+	SKIP
+	TABLE
+	TABLESAMPLE
+	TIES
 	TIME
+	TO
+	TRUE
+	UNBOUNDED
+	UNION
+	UPDATE
+	USING
+	VALUES
+	WHERE
+	WINDOW
+	WITH
 	ZONE
 	keywordEnd
 )
@@ -205,18 +203,6 @@ var Tokens = [...]string{
 
 	EQ:     "EQ",     // ==
 	NOT_EQ: "NOT_EQ", // != or <>
-
-	AND:            "AND",
-	OR:             "OR",
-	IS:             "IS",
-	ISNULL:         "ISNULL",
-	NOTNULL:        "NOTNULL",
-	IN:             "IN",
-	LIKE:           "LIKE",
-	ILIKE:          "ILIKE",
-	SIMILAR:        "SIMILAR",
-	EXPONENTIATION: "EXPONENTIATION",
-	BETWEEN:        "BETWEEN",
 
 	JSONGETBYKEY:      "JSONGETBYKEY",
 	JSONGETBYTEXT:     "JSONGETBYTEXT",
@@ -247,92 +233,102 @@ var Tokens = [...]string{
 	RBRACKET: "RBRACKET", // ]
 
 	// Keywords
-	WITH:         "WITH",
-	RECURSIVE:    "RECURSIVE",
-	SELECT:       "SELECT",
-	ALL:          "ALL",
-	DISTINCT:     "DISTINCT",
-	ON:           "ON",
-	AS:           "AS",
-	FROM:         "FROM",
-	WHERE:        "WHERE",
-	GROUP:        "GROUP",
-	BY:           "BY",
-	HAVING:       "HAVING",
-	OVER:         "OVER",
-	UNION:        "UNION",
-	WINDOW:       "WINDOW",
-	INTERSECT:    "INTERSECT",
-	EXCEPT:       "EXCEPT",
-	ORDER:        "ORDER",
-	ASC:          "ASC",
-	DESC:         "DESC",
-	USING:        "USING",
-	NULLS:        "NULLS",
-	FIRST:        "FIRST",
-	LAST:         "LAST",
-	LIMIT:        "LIMIT",
-	OFFSET:       "OFFSET",
-	ROW:          "ROW",
-	ROWS:         "ROWS",
-	FETCH:        "FETCH",
-	NEXT:         "NEXT",
-	ONLY:         "ONLY",
-	TIES:         "TIES",
-	FOR:          "FOR",
-	UPDATE:       "UPDATE",
-	NO:           "NO",
-	KEY:          "KEY",
-	SHARE:        "SHARE",
-	OF:           "OF",
-	NOWAIT:       "NOWAIT",
-	SKIP:         "SKIP",
-	LOCKED:       "LOCKED",
-	TABLESAMPLE:  "TABLESAMPLE",
-	REPEATABLE:   "REPEATABLE",
-	LATERAL:      "LATERAL",
-	ORDINALITY:   "ORDINALITY",
-	NATURAL:      "NATURAL",
-	CROSS:        "CROSS",
-	ROLLUP:       "ROLLUP",
-	CUBE:         "CUBE",
-	GROUPING:     "GROUPING",
-	SETS:         "SETS",
-	NOT:          "NOT",
-	MATERIALIZED: "MATERIALIZED",
-	SEARCH:       "SEARCH",
-	BREADTH:      "BREADTH",
-	DEPTH:        "DEPTH",
-	SET:          "SET",
-	TO:           "TO",
-	DEFAULT:      "DEFAULT",
-	TABLE:        "TABLE",
-	JOIN:         "JOIN",
-	INNER:        "INNER",
-	LEFT:         "LEFT",
-	OUTER:        "OUTER",
-	FULL:         "FULL",
-	RIGHT:        "RIGHT",
-	PARTITION:    "PARTITION",
-	RANGE:        "RANGE",
-	GROUPS:       "GROUPS",
-	UNBOUNDED:    "UNBOUNDED",
-	PRECEDING:    "PRECEDING",
-	CURRENT:      "CURRENT",
-	FOLLOWING:    "FOLLOWING",
-	EXCLUDE:      "EXCLUDE",
-	OTHERS:       "OTHERS",
-	INSERT:       "INSERT",
-	DELETE:       "DELETE",
-	INTO:         "INTO",
-	VALUES:       "VALUES",
-	CONFLICT:     "CONFLICT",
-	TRUE:         "TRUE",
-	FALSE:        "FALSE",
-	SESSION:      "SESSION",
-	LOCAL:        "LOCAL",
-	TIME:         "TIME",
-	ZONE:         "ZONE",
+	ALL:            "ALL",
+	AND:            "AND",
+	AS:             "AS",
+	ASC:            "ASC",
+	BETWEEN:        "BETWEEN",
+	BREADTH:        "BREADTH",
+	BY:             "BY",
+	CONFLICT:       "CONFLICT",
+	CROSS:          "CROSS",
+	CUBE:           "CUBE",
+	CURRENT:        "CURRENT",
+	DEFAULT:        "DEFAULT",
+	DELETE:         "DELETE",
+	DEPTH:          "DEPTH",
+	DESC:           "DESC",
+	DISTINCT:       "DISTINCT",
+	EXCEPT:         "EXCEPT",
+	EXCLUDE:        "EXCLUDE",
+	EXPONENTIATION: "EXPONENTIATION",
+	FALSE:          "FALSE",
+	FETCH:          "FETCH",
+	FIRST:          "FIRST",
+	FOLLOWING:      "FOLLOWING",
+	FOR:            "FOR",
+	FROM:           "FROM",
+	FULL:           "FULL",
+	GROUP:          "GROUP",
+	GROUPING:       "GROUPING",
+	GROUPS:         "GROUPS",
+	HAVING:         "HAVING",
+	ILIKE:          "ILIKE",
+	IN:             "IN",
+	INNER:          "INNER",
+	INSERT:         "INSERT",
+	INTERSECT:      "INTERSECT",
+	INTO:           "INTO",
+	IS:             "IS",
+	ISNULL:         "ISNULL",
+	JOIN:           "JOIN",
+	LAST:           "LAST",
+	LATERAL:        "LATERAL",
+	LEFT:           "LEFT",
+	LIKE:           "LIKE",
+	LIMIT:          "LIMIT",
+	LOCAL:          "LOCAL",
+	LOCKED:         "LOCKED",
+	MATERIALIZED:   "MATERIALIZED",
+	NATURAL:        "NATURAL",
+	NEXT:           "NEXT",
+	NO:             "NO",
+	NOT:            "NOT",
+	NOTNULL:        "NOTNULL",
+	NOWAIT:         "NOWAIT",
+	NULLS:          "NULLS",
+	OF:             "OF",
+	OFFSET:         "OFFSET",
+	ON:             "ON",
+	ONLY:           "ONLY",
+	OR:             "OR",
+	ORDER:          "ORDER",
+	ORDINALITY:     "ORDINALITY",
+	OTHERS:         "OTHERS",
+	OUTER:          "OUTER",
+	OVER:           "OVER",
+	PARTITION:      "PARTITION",
+	PRECEDING:      "PRECEDING",
+	RANGE:          "RANGE",
+	RECURSIVE:      "RECURSIVE",
+	REPEATABLE:     "REPEATABLE",
+	RIGHT:          "RIGHT",
+	ROLLUP:         "ROLLUP",
+	ROW:            "ROW",
+	ROWS:           "ROWS",
+	SEARCH:         "SEARCH",
+	SELECT:         "SELECT",
+	SESSION:        "SESSION",
+	SET:            "SET",
+	SETS:           "SETS",
+	SHARE:          "SHARE",
+	SIMILAR:        "SIMILAR",
+	SKIP:           "SKIP",
+	TABLE:          "TABLE",
+	TABLESAMPLE:    "TABLESAMPLE",
+	TIES:           "TIES",
+	TIME:           "TIME",
+	TO:             "TO",
+	TRUE:           "TRUE",
+	UNBOUNDED:      "UNBOUNDED",
+	UNION:          "UNION",
+	UPDATE:         "UPDATE",
+	USING:          "USING",
+	VALUES:         "VALUES",
+	WHERE:          "WHERE",
+	WINDOW:         "WINDOW",
+	WITH:           "WITH",
+	ZONE:           "ZONE",
 }
 
 var keywords map[string]TokenType
