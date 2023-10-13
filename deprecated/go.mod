@@ -1,4 +1,4 @@
-module github.com/brianbroderick/lantern
+module github.com/brianbroderick/lantern/deprecated
 
 go 1.20
 
