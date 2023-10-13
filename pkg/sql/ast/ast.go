@@ -95,6 +95,7 @@ func (i *Identifier) String(maskParams bool) string {
 	if i.Cast != "" {
 		return fmt.Sprintf("%s::%s", i.Value, strings.ToUpper(i.Cast))
 	}
+
 	return i.Value
 }
 

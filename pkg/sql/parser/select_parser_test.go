@@ -19,6 +19,7 @@ func TestMultipleStatements(t *testing.T) {
 	}{
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
+		{"select u.id from users u;", 1, "(SELECT u.id FROM users u);"},
 	}
 
 	for _, tt := range tests {
@@ -45,18 +46,20 @@ func TestSingleSelectStatements(t *testing.T) {
 		output     string
 	}{
 		// Select: simple
-		{"select id from users;", 1, "(SELECT id FROM users);"},
-		{"select 1 * (2 + (6 / 4)) - 9 from users;", 1, "(SELECT ((1 * (2 + (6 / 4))) - 9) FROM users);"},
-		{"select id, name from users", 1, "(SELECT id, name FROM users);"},
-		{"select id, first_name from users;", 1, "(SELECT id, first_name FROM users);"},
-		{"select id, first_name as name from users", 1, "(SELECT id, first_name AS name FROM users);"},
-		{"select u.id, u.first_name as name from users u;", 1, "(SELECT u.id, u.first_name AS name FROM users u);"},
-		{"select id from no_semi_colons", 1, "(SELECT id FROM no_semi_colons);"},
-		{"select 1 + 2 as math, foo + 7 as seven from foo", 1, "(SELECT (1 + 2) AS math, (foo + 7) AS seven FROM foo);"},
-		{"select 1 + 2 * 3 / value as math from foo", 1, "(SELECT (1 + ((2 * 3) / value)) AS math FROM foo);"},
-		{"select id from addresses a;", 1, "(SELECT id FROM addresses a);"},
-		{"select \"blah\".id from users", 1, "(SELECT blah.id FROM users);"},
-		{"select sum(a,b) from users;", 1, "(SELECT sum(a, b) FROM users);"},
+		{"select id from users;", 1, "(SELECT id FROM users);"},                                                          // super basic select
+		{"select u.* from users u;", 1, "(SELECT u.* FROM users u);"},                                                    // check for a wildcard with a table alias
+		{"select 2*3 from users;", 1, "(SELECT (2 * 3) FROM users);"},                                                    // check that the asterisk is not treated as a wildcard
+		{"select \"blah\".id from users", 1, "(SELECT blah.id FROM users);"},                                             // check for double quotes around the table name
+		{"select 1 * (2 + (6 / 4)) - 9 from users;", 1, "(SELECT ((1 * (2 + (6 / 4))) - 9) FROM users);"},                // math expression
+		{"select id, name from users", 1, "(SELECT id, name FROM users);"},                                               // multiple columns
+		{"select id, first_name from users;", 1, "(SELECT id, first_name FROM users);"},                                  // underscore in a column name
+		{"select id, first_name as name from users", 1, "(SELECT id, first_name AS name FROM users);"},                   // column alias
+		{"select u.id, u.first_name as name from users u;", 1, "(SELECT u.id, u.first_name AS name FROM users u);"},      // column alias with table alias
+		{"select id from no_semi_colons", 1, "(SELECT id FROM no_semi_colons);"},                                         // no semicolon
+		{"select 1 + 2 as math, foo + 7 as seven from foo", 1, "(SELECT (1 + 2) AS math, (foo + 7) AS seven FROM foo);"}, // multiple column aliases with expressions
+		{"select 1 + 2 * 3 / value as math from foo", 1, "(SELECT (1 + ((2 * 3) / value)) AS math FROM foo);"},           // more complex math expression
+		{"select id from addresses a;", 1, "(SELECT id FROM addresses a);"},                                              // table alias
+		{"select sum(a,b) from users;", 1, "(SELECT sum(a, b) FROM users);"},                                             // function call
 
 		// Select: distinct & all tokens
 		{"select distinct id from users;", 1, "(SELECT DISTINCT id FROM users);"},

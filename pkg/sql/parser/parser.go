@@ -357,6 +357,8 @@ func (p *Parser) curPrecedence() int {
 func (p *Parser) parseIdentifier() ast.Expression {
 	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 
+	// fmt.Printf("parseIdentifier: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()

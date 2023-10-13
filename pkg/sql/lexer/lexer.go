@@ -251,18 +251,41 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) scanIdent() token.Token {
 	var buf bytes.Buffer
+	dot := false
+
 	for {
 		l.read()
-		// Allow '.' in identifiers.
-		if !isIdentChar(l.ch) && l.ch != '.' {
-			l.unread()
-			break
+		if isIdentChar(l.ch) {
+			dot = false
+			_, _ = buf.WriteRune(l.ch)
+			continue
+		} else if l.ch == '.' {
+			dot = true
+			_, _ = buf.WriteRune(l.ch)
+			continue
+		} else if l.ch == '*' && dot {
+			dot = false
+			_, _ = buf.WriteRune(l.ch)
 		} else if l.ch == '"' {
+			dot = false
 			// Allow double quotes in identifiers, but don't include them in the token.
 			// They can be used to escape reserved words.
 		} else {
-			_, _ = buf.WriteRune(l.ch)
+			l.unread()
+			break
 		}
+
+		// // Allow '.' in identifiers.
+		// // Allow '*' in identifiers.
+		// if !isIdentChar(l.ch) && l.ch != '.' && l.ch != '*' {
+		// 	l.unread()
+		// 	break
+		// } else if l.ch == '"' {
+		// 	// Allow double quotes in identifiers, but don't include them in the token.
+		// 	// They can be used to escape reserved words.
+		// } else {
+		// 	_, _ = buf.WriteRune(l.ch)
+		// }
 	}
 	lit := buf.String()
 	return token.Token{Type: token.Lookup(lit), Lit: lit}
@@ -308,4 +331,4 @@ func isDigit(ch rune) bool { return (ch >= '0' && ch <= '9') }
 
 // isIdentChar returns true if the rune can be used in an unquoted identifier.
 // identities can be surrounded by double quotes and can contain any character.
-func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' || ch == '"' }
+func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' }
