@@ -140,6 +140,7 @@ func (ke *KeywordExpression) String(maskParams bool) string {
 	return out.String()
 }
 
+// Prefix Expressions are assumed to be unary operators such as -5 or !true
 type PrefixExpression struct {
 	Token    token.Token `json:"token,omitempty"` // The prefix token, e.g. !
 	Operator string      `json:"operator,omitempty"`
@@ -153,6 +154,29 @@ func (pe *PrefixExpression) String(maskParams bool) string {
 
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String(maskParams))
+	out.WriteString(")")
+
+	return out.String()
+}
+
+// Prefix Keyword Expressions are assumed to be separate keywords such as NOT
+// some prefix keyword expressions, such as DISTINCT have special handling (i.e the keyword use of ON with DISTINCT)
+// so they have their own struct.
+type PrefixKeywordExpression struct {
+	Token    token.Token `json:"token,omitempty"` // The prefix token, e.g. !
+	Operator string      `json:"operator,omitempty"`
+	Right    Expression  `json:"right,omitempty"`
+}
+
+func (pe *PrefixKeywordExpression) expressionNode()      {}
+func (pe *PrefixKeywordExpression) TokenLiteral() string { return pe.Token.Lit }
+func (pe *PrefixKeywordExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(strings.ToUpper(pe.Operator))
+	out.WriteString(" ")
 	out.WriteString(pe.Right.String(maskParams))
 	out.WriteString(")")
 

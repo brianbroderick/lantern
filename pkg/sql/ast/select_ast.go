@@ -39,7 +39,7 @@ func (ss *SelectStatement) Inspect(maskParams bool) string {
 // since a select statement can have multiple select expressions. i.e. WITH clause, subqueries, and the primary select expression.
 type SelectExpression struct {
 	Token            token.Token  `json:"token,omitempty"`      // the token.SELECT token
-	TempTable        *Identifier  `json:"temp_table,omitempty"` // the name of the temp table named in a WITH clause (CTE)
+	TempTable        Expression   `json:"temp_table,omitempty"` // the name of the temp table named in a WITH clause (CTE)
 	WithMaterialized string       `json:"with_materialized,omitempty"`
 	Distinct         Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
 	Columns          []Expression `json:"columns,omitempty"`

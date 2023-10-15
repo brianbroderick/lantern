@@ -118,6 +118,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.EXPONENTIATION, p.parsePrefixExpression)
+	p.registerPrefix(token.NOT, p.parsePrefixKeywordExpression)
 
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
@@ -419,6 +420,19 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	expression := &ast.PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Lit,
+	}
+
+	p.nextToken()
+
+	expression.Right = p.parseExpression(PREFIX)
+
+	return expression
+}
+
+func (p *Parser) parsePrefixKeywordExpression() ast.Expression {
+	expression := &ast.PrefixKeywordExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Lit,
 	}

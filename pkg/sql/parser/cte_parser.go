@@ -66,7 +66,8 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 
 	// fmt.Printf("parseCTEExpression001: %s %s :: %s %s\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit)
 
-	tempTable := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+	// tempTable := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+	tempTable := p.parseExpression(LOWEST)
 
 	p.expectPeek(token.AS) // expect AS and move to next token
 

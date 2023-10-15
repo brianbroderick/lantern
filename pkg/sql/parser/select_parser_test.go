@@ -92,6 +92,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users where id = 42 and customer_id > 74;", 1, "(SELECT id FROM users WHERE ((id = 42) AND (customer_id > 74)));"},
 		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
 		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
+		{"select id from users where name is null", 1, "(SELECT id FROM users WHERE (name IS null));"},
+		{"select id from users where name is not null", 1, "(SELECT id FROM users WHERE (name IS (NOT null)));"},
 
 		// Select: group by
 		{"select id from users group by id", 1, "(SELECT id FROM users GROUP BY id);"},
@@ -258,6 +260,7 @@ func TestCTEs(t *testing.T) {
 		{"with sales as materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 		{"with sales as not materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS NOT MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales union select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales) UNION (SELECT total_sales FROM sales));"},
+		{"with recursive parts(part) as (select part from parts) select count(part) from parts;", "(WITH RECURSIVE parts(part) AS (SELECT part FROM parts) (SELECT count(part) FROM parts));"},
 	}
 
 	for _, tt := range tests {
