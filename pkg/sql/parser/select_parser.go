@@ -52,10 +52,11 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	stmt.Columns = p.parseColumnList([]token.TokenType{token.COMMA, token.FROM, token.AS})
 
 	// FROM CLAUSE: if the next token is FROM, advance the token and move on. Otherwise, return the statement.
-	if !p.expectPeek(token.FROM) {
-		return nil
+	if p.peekTokenIs(token.FROM) {
+		p.nextToken()
+		p.nextToken()
 	} else {
-		p.nextToken() // skip past FROM
+		return stmt
 	}
 
 	// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
