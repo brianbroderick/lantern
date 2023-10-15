@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
@@ -41,7 +42,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		tableCount int
 		output     string
 	}{
-		{"SELECT id FROM addresses a JOIN states AS s ON (s.id = a.state_id AND s.code > 'ut')", 2, ""},
+		{"select c.id, string_agg ( distinct c.name, ', ' ) as value FROM companies c", 1, "(SELECT c.id, string_agg(DISTINCT, ', ') AS value FROM companies c);"},
 
 		// Select: simple
 		{"select id from users;", 1, "(SELECT id FROM users);"},                                                                                                             // super basic select
@@ -83,6 +84,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from customers join addresses on id = customer_id where id = 46;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = 46));"},
 		{"select id from customers left join addresses on id = customer_id;", 2, "(SELECT id FROM customers LEFT JOIN addresses ON (id = customer_id));"},
 		{"select id from customers left outer join addresses on id = customer_id;", 2, "(SELECT id FROM customers LEFT JOIN addresses ON (id = customer_id));"},
+		{"select id from addresses AS a JOIN states AS s ON (s.id = a.state_id AND s.code > 'ut')", 2, "(SELECT id FROM addresses a INNER JOIN states s ON ((s.id = a.state_id) AND (s.code > 'ut')));"},
 
 		// Select: where clause
 		{"select id from users where id = 42;", 1, "(SELECT id FROM users WHERE (id = 42));"},
@@ -183,7 +185,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "select", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
+		assert.Equal(t, "SELECT", strings.ToUpper(stmt.TokenLiteral()), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectStmt, ok := stmt.(*ast.SelectStatement)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectStatement. got=%T", tt.input, stmt)
@@ -255,6 +257,7 @@ func TestCTEs(t *testing.T) {
 		{"with recursive sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH RECURSIVE sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 		{"with sales as materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 		{"with sales as not materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS NOT MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
+		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales union select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales) UNION (SELECT total_sales FROM sales));"},
 	}
 
 	for _, tt := range tests {

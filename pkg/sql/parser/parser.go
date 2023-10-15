@@ -112,23 +112,29 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
+	p.registerPrefix(token.TRUE, p.parseBoolean)
+	p.registerPrefix(token.FALSE, p.parseBoolean)
+
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.EXPONENTIATION, p.parsePrefixExpression)
-	p.registerPrefix(token.TRUE, p.parseBoolean)
-	p.registerPrefix(token.FALSE, p.parseBoolean)
+
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
-	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
 	p.registerPrefix(token.PARTITION, p.parseWindowExpression)
 	p.registerPrefix(token.ORDER, p.parseWindowExpression)
-	p.registerPrefix(token.ALL, p.parseKeywordExpression)
 	p.registerPrefix(token.SELECT, p.parseSelectExpression)
+	p.registerPrefix(token.DISTINCT, p.parseDistinct)
+	p.registerPrefix(token.ALL, p.parseDistinct)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
 	p.registerPrefix(token.LOCAL, p.parseIdentifier)
 	p.registerPrefix(token.DEFAULT, p.parseIdentifier)
+
+	// This might be doing the same thing as parseIdentifier. TODO: check this out
+	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
+	p.registerPrefix(token.ALL, p.parseKeywordExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -494,6 +500,8 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 
 func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 	list := []ast.Expression{}
+
+	// fmt.Printf()
 
 	if p.peekTokenIsOne(end) {
 		p.nextToken()

@@ -25,14 +25,40 @@ func (s *CTEStatement) String(maskParams bool) string {
 		out.WriteString("RECURSIVE ")
 	}
 
-	lenExpressions := len(s.Expressions) - 1
-	for i, e := range s.Expressions {
+	// CTEs are a little different. We need to split the expressions into two groups. The first group is the CTEs consisting of temp tables
+	// and the second group is the main query. The main query is the last statement, but that can consist of multiple
+	// expressions such as SELECT and UNION. We need to split them up and put the CTEs first so that we can comma separate the query appropriately.
+
+	tmpTables := []Expression{}
+	primaryExpressions := []Expression{}
+
+	inCTE := true
+
+	for _, e := range s.Expressions {
+		if stmt, ok := e.(*SelectExpression); ok {
+			if stmt.TempTable == nil {
+				inCTE = false
+			}
+		}
+		if inCTE {
+			tmpTables = append(tmpTables, e)
+		} else {
+			primaryExpressions = append(primaryExpressions, e)
+		}
+	}
+
+	lenTmpTables := len(tmpTables) - 1
+	for i, e := range tmpTables {
 		out.WriteString(e.String(maskParams))
-		if i < lenExpressions-1 {
+		if i < lenTmpTables {
 			out.WriteString(", ")
-		} else if i == lenExpressions-1 {
+		} else if i == lenTmpTables {
 			out.WriteString(" ")
 		}
+	}
+
+	for _, e := range primaryExpressions {
+		out.WriteString(e.String(maskParams))
 	}
 
 	out.WriteString(");")

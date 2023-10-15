@@ -22,7 +22,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	stmt.Expressions = []ast.Expression{}
 	stmt.Expressions = append(stmt.Expressions, p.parseSelectExpression())
 
-	if p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
+	for p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
 		p.nextToken()
 		stmt.Expressions = append(stmt.Expressions, p.parseUnionExpression())
 	}
@@ -204,6 +204,10 @@ func (p *Parser) parseFirstTable() ast.Expression {
 	if p.curTokenIs(token.IDENT) {
 		table.Table = p.curToken.Lit
 
+		if p.peekTokenIs(token.AS) {
+			p.nextToken()
+		}
+
 		// Do we have an alias
 		if p.peekTokenIs(token.IDENT) {
 			p.nextToken()
@@ -254,6 +258,10 @@ func (p *Parser) parseTable() ast.Expression {
 	}
 
 	// fmt.Printf("parseTable3: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
+
+	if p.peekTokenIs(token.AS) {
+		p.nextToken()
+	}
 
 	// Do we have an alias?
 	if p.peekTokenIs(token.IDENT) {
