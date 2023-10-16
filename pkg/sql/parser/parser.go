@@ -187,7 +187,12 @@ func New(l *lexer.Lexer) *Parser {
 
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
-	p.peekToken, _ = p.l.Scan() // TODO: surface the position
+	newToken, _ := p.l.Scan()
+	// Skip comments
+	if newToken.Type == token.COMMENT {
+		newToken, _ = p.l.Scan()
+	}
+	p.peekToken = newToken // TODO: surface the position
 }
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {

@@ -166,6 +166,10 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		expected string
 	}{
 		{
+			"a / b",
+			"(a / b)",
+		},
+		{
 			"1 * (2 + (6 / 4)) - 9",
 			"((1 * (2 + (6 / 4))) - 9)",
 		},
@@ -284,6 +288,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		// fmt.Println("Input: ", tt.input)
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
@@ -293,6 +298,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}
+		// fmt.Println("Output: ", actual)
 	}
 }
 

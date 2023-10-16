@@ -49,6 +49,16 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 			} else {
 				tok = token.Token{Type: token.JSONGETBYKEY, Lit: "->"}
 			}
+		} else if l.peek() == '-' {
+			for {
+				l.read()
+				if l.ch == eof {
+					break
+				} else if l.ch == eol {
+					break
+				}
+			}
+			tok = token.Token{Type: token.COMMENT, Lit: ""}
 		} else {
 			tok = newToken(token.MINUS, l.ch)
 		}
@@ -58,6 +68,9 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		if l.peek() == '@' {
 			l.read()
 			tok = token.Token{Type: token.JSONCONTAINED, Lit: "<@"}
+		} else if l.peek() == '>' {
+			l.read()
+			tok = token.Token{Type: token.NOT_EQ, Lit: "<>"}
 		} else {
 			tok = newToken(token.LT, l.ch)
 		}
@@ -131,9 +144,25 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		} else {
 			tok = newToken(token.BANG, l.ch)
 		}
-	// TODO: Support comments /* and //
 	case '/':
-		tok = newToken(token.SLASH, l.ch)
+		// This is a comment; however, it should be skipped by skipWhitespace()
+		if l.peek() == '*' {
+			l.read()
+			for {
+				l.read()
+				if l.ch == eof {
+					break
+				} else if l.ch == '*' {
+					if l.peek() == '/' {
+						l.read()
+						break
+					}
+				}
+			}
+			tok = token.Token{Type: token.COMMENT, Lit: ""}
+		} else {
+			tok = newToken(token.SLASH, l.ch)
+		}
 	case '\'':
 		pos = l.pos
 		tok = l.scanString()
