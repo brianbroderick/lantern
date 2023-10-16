@@ -44,6 +44,7 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 		iter++ // This is a hack to prevent an infinite loop. If we're looping 10 times, something's wrong. Bail out.
 		if iter > 10 {
 			fmt.Println("parseCTEStatement: Infinite loop detected")
+			fmt.Printf("parseCTEStatement: %s %s :: %s %s\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit)
 			return &ast.CTEStatement{Token: token.Token{Type: token.ILLEGAL, Lit: "ILLEGAL"}}
 		}
 	}

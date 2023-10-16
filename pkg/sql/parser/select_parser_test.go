@@ -175,6 +175,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select array['John'] from users;", 1, "(SELECT array['John'] FROM users);"},
 		{"select array['John', 'Joseph'] from users;", 1, "(SELECT array['John', 'Joseph'] FROM users);"},
 		{"select array['John', 'Joseph', 'Anna', 'Henry'] && array['Henry', 'John'] from users;", 1, "(SELECT (array['John', 'Joseph', 'Anna', 'Henry'] && array['Henry', 'John']) FROM users);"},
+
+		// Select: CASE
+		{"select case when id = 1 then 'one' when id = 2 then 'two' else 'other' end from users;", 1, "(SELECT CASE WHEN (id = 1) THEN 'one' WHEN (id = 2) THEN 'two' ELSE 'other' END FROM users);"},
 	}
 
 	for _, tt := range tests {

@@ -127,6 +127,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.SELECT, p.parseSelectExpression)
 	p.registerPrefix(token.DISTINCT, p.parseDistinct)
 	p.registerPrefix(token.ALL, p.parseDistinct)
+	p.registerPrefix(token.CASE, p.parseCaseExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -197,6 +198,7 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
+// This is essentially an OR on curTokenIs
 func (p *Parser) curTokenIsOne(tokens []token.TokenType) bool {
 	found := false
 	for _, t := range tokens {
@@ -207,6 +209,17 @@ func (p *Parser) curTokenIsOne(tokens []token.TokenType) bool {
 	return found
 }
 
+// This is essentially !curTokenIsOne, but it can't match any token in the list
+func (p *Parser) curTokenIsNot(tokens []token.TokenType) bool {
+	for _, t := range tokens {
+		if p.curTokenIs(t) { // The token matches one of the tokens in the list
+			return false
+		}
+	}
+
+	return true
+}
+
 func (p *Parser) peekTokenIsOne(tokens []token.TokenType) bool {
 	found := false
 	for _, t := range tokens {
@@ -215,6 +228,17 @@ func (p *Parser) peekTokenIsOne(tokens []token.TokenType) bool {
 		}
 	}
 	return found
+}
+
+// This is essentially !curTokenIsOne, but it can't match any token in the list
+func (p *Parser) peekTokenIsNot(tokens []token.TokenType) bool {
+	for _, t := range tokens {
+		if p.peekTokenIs(t) { // The token matches one of the tokens in the list
+			return false
+		}
+	}
+
+	return true
 }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
@@ -315,7 +339,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	stmt.Expression = p.parseExpression(LOWEST)
 
-	if p.peekTokenIs(token.SEMICOLON) {
+	if p.peekTokenIsOne([]token.TokenType{token.SEMICOLON}) {
 		p.nextToken()
 	}
 

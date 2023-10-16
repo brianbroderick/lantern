@@ -40,7 +40,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	stmt := &ast.SelectExpression{Token: p.curToken}
 
 	// COLUMNS
-	if !p.expectPeekIsOne([]token.TokenType{token.LPAREN, token.IDENT, token.INT, token.STRING, token.ASTERISK, token.ALL, token.DISTINCT}) {
+	if !p.expectPeekIsOne([]token.TokenType{token.LPAREN, token.IDENT, token.INT, token.STRING, token.ASTERISK, token.ALL, token.DISTINCT, token.CASE}) {
 		return nil
 	}
 

@@ -87,6 +87,7 @@ const (
 	BETWEEN
 	BREADTH
 	BY
+	CASE
 	CONFLICT
 	CROSS
 	CUBE
@@ -96,6 +97,8 @@ const (
 	DEPTH
 	DESC
 	DISTINCT
+	ELSE
+	END
 	EXCEPT
 	EXCLUDE
 	EXPONENTIATION
@@ -163,6 +166,7 @@ const (
 	SKIP
 	TABLE
 	TABLESAMPLE
+	THEN
 	TIES
 	TIME
 	TO
@@ -172,6 +176,7 @@ const (
 	UPDATE
 	USING
 	VALUES
+	WHEN
 	WHERE
 	WINDOW
 	WITH
@@ -240,6 +245,7 @@ var Tokens = [...]string{
 	BETWEEN:        "BETWEEN",
 	BREADTH:        "BREADTH",
 	BY:             "BY",
+	CASE:           "CASE",
 	CONFLICT:       "CONFLICT",
 	CROSS:          "CROSS",
 	CUBE:           "CUBE",
@@ -249,6 +255,8 @@ var Tokens = [...]string{
 	DEPTH:          "DEPTH",
 	DESC:           "DESC",
 	DISTINCT:       "DISTINCT",
+	ELSE:           "ELSE",
+	END:            "END",
 	EXCEPT:         "EXCEPT",
 	EXCLUDE:        "EXCLUDE",
 	EXPONENTIATION: "EXPONENTIATION",
@@ -316,6 +324,7 @@ var Tokens = [...]string{
 	SKIP:           "SKIP",
 	TABLE:          "TABLE",
 	TABLESAMPLE:    "TABLESAMPLE",
+	THEN:           "THEN",
 	TIES:           "TIES",
 	TIME:           "TIME",
 	TO:             "TO",
@@ -325,6 +334,7 @@ var Tokens = [...]string{
 	UPDATE:         "UPDATE",
 	USING:          "USING",
 	VALUES:         "VALUES",
+	WHEN:           "WHEN",
 	WHERE:          "WHERE",
 	WINDOW:         "WINDOW",
 	WITH:           "WITH",
