@@ -25,7 +25,7 @@ func TestMultipleStatements(t *testing.T) {
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		checkParserErrors(t, p, tt.input)
 
 		assert.Equal(t, tt.statementCount, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, tt.statementCount, len(program.Statements))
 
@@ -42,7 +42,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		tableCount int
 		output     string
 	}{
-		{"select c.id, string_agg ( distinct c.name, ', ' ) as value FROM companies c", 1, "(SELECT c.id, string_agg(DISTINCT, ', ') AS value FROM companies c);"},
+		{"select array_agg(distinct sub.id) from a", 1, "(SELECT array_agg(DISTINCT sub.id) FROM a);"},
 
 		// Select: simple
 		{"select id from users;", 1, "(SELECT id FROM users);"},                                                                                                             // super basic select
@@ -65,6 +65,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select distinct id from users;", 1, "(SELECT DISTINCT id FROM users);"},
 		{"select all id from users", 1, "(SELECT ALL id FROM users);"},
 		{"select distinct on (location) reported_at, report from weather_reports;", 1, "(SELECT DISTINCT ON (location) reported_at, report FROM weather_reports);"},
+		{"select c.id, string_agg ( distinct c.name, ', ' ) as value FROM companies c", 1, "(SELECT c.id, string_agg(DISTINCT c.name, ', ') AS value FROM companies c);"},
 
 		// Select: window functions
 		{"select avg(salary) over (partition by depname) from empsalary;", 1, "(SELECT (avg(salary) OVER (PARTITION BY depname)) FROM empsalary);"},
@@ -156,6 +157,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select '100'::integer from a;", 1, "(SELECT '100'::INTEGER FROM a);"},
 		{"select 100::text from a;", 1, "(SELECT 100::TEXT FROM a);"},
 		{"select a::text from b;", 1, "(SELECT a::TEXT FROM b);"},
+		{"select load( array[ 1 ], array[ 2] ) from a", 1, "(SELECT load(array[1], array[2]) FROM a);"},
+		{"select array[2]::integer from a", 1, "(SELECT array[2]::INTEGER FROM a);"},
+		{"select load( array[ 1 ]::integer[], array[ 2]::integer[] ) from a", 1, "(SELECT load(array[1]::INTEGER[], array[2]::INTEGER[]) FROM a);"},
 
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> 'name') = 'brian'));"},
@@ -178,6 +182,9 @@ func TestSingleSelectStatements(t *testing.T) {
 
 		// Select: CASE
 		{"select case when id = 1 then 'one' when id = 2 then 'two' else 'other' end from users;", 1, "(SELECT CASE WHEN (id = 1) THEN 'one' WHEN (id = 2) THEN 'two' ELSE 'other' END FROM users);"},
+
+		// Select: Functions
+		{"select w() from a", 1, "(SELECT w() FROM a);"},
 	}
 
 	for _, tt := range tests {
@@ -185,7 +192,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		checkParserErrors(t, p, tt.input)
 
 		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
@@ -200,7 +207,7 @@ func TestSingleSelectStatements(t *testing.T) {
 
 		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "input: %s\nlen(selectStmt.Tables) not %d. got=%d", tt.input, tt.tableCount, len(selectExp.Tables))
 		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s\nJSON:\n%s", tt.input, tt.output, output, program.Inspect(maskParams))
 		// fmt.Printf("output: %s\n", output)
 	}
 }
@@ -225,7 +232,7 @@ func TestSubSelects(t *testing.T) {
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		checkParserErrors(t, p, tt.input)
 
 		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
@@ -271,7 +278,7 @@ func TestCTEs(t *testing.T) {
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		checkParserErrors(t, p, tt.input)
 
 		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
@@ -368,7 +375,7 @@ func TestMaskParams(t *testing.T) {
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		checkParserErrors(t, p, tt.input)
 
 		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 

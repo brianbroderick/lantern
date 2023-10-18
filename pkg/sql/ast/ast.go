@@ -208,6 +208,7 @@ func (ie *InfixExpression) String(maskParams bool) string {
 
 type CallExpression struct {
 	Token     token.Token  `json:"token,omitempty"`    // The '(' token
+	Distinct  Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
 	Function  Expression   `json:"function,omitempty"` // Identifier or FunctionLiteral
 	Arguments []Expression `json:"arguments,omitempty"`
 }
@@ -224,6 +225,12 @@ func (ce *CallExpression) String(maskParams bool) string {
 
 	out.WriteString(ce.Function.String(maskParams))
 	out.WriteString("(")
+
+	// Distinct, used in aggregate functions
+	if ce.Distinct != nil {
+		out.WriteString(ce.Distinct.String(maskParams) + " ")
+	}
+
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
 
@@ -254,6 +261,7 @@ type ArrayLiteral struct {
 	Token    token.Token  `json:"token,omitempty"` // the '[' token
 	Left     Expression   `json:"left,omitempty"`
 	Elements []Expression `json:"elements,omitempty"`
+	Cast     string       `json:"cast,omitempty"`
 }
 
 func (al *ArrayLiteral) expressionNode()      {}
@@ -273,6 +281,11 @@ func (al *ArrayLiteral) String(maskParams bool) string {
 	out.WriteString("[")
 	out.WriteString(strings.Join(elements, ", "))
 	out.WriteString("]")
+
+	if al.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(al.Cast))
+	}
 
 	return out.String()
 }

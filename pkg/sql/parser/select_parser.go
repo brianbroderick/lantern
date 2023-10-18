@@ -162,6 +162,7 @@ func (p *Parser) parseDistinct() ast.Expression {
 			p.nextToken()
 
 			if p.curTokenIs(token.LPAREN) {
+				p.nextToken()
 				distinct.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 				if p.curTokenIs(token.RPAREN) {
 					p.nextToken()
@@ -561,6 +562,7 @@ func (p *Parser) parseLock() ast.Expression {
 	}
 
 	if p.curTokenIs(token.OF) {
+		p.nextToken()
 		expression.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF})
 	}
 
@@ -589,7 +591,7 @@ func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
 	}
 
 	if p.curTokenIs(token.LPAREN) {
-		// p.nextToken()
+		p.nextToken()
 		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
 	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
@@ -601,7 +603,7 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 	exp := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
 	p.nextToken()
 	if p.curTokenIs(token.LPAREN) {
-		// p.nextToken()
+		p.nextToken()
 		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
 	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)

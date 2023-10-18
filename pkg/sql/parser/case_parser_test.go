@@ -28,7 +28,7 @@ func TestCaseExpressions(t *testing.T) {
 		l := lexer.New(tt.input)
 		p := New(l)
 		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		checkParserErrors(t, p, tt.input)
 
 		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.ExpressionStatement. got=%T", tt.input, stmt)

@@ -537,6 +537,15 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+
+	// fmt.Printf("parseCallExpression: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+	p.nextToken()
+
+	// DISTINCT CLAUSE
+	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
+		exp.Distinct = p.parseDistinct()
+	}
+
 	exp.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	return exp
 }
@@ -544,14 +553,11 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 	list := []ast.Expression{}
 
-	// fmt.Printf()
-
-	if p.peekTokenIsOne(end) {
-		p.nextToken()
+	if p.curTokenIsOne(end) {
 		return list
 	}
 
-	p.nextToken()
+	// p.nextToken()
 	// fmt.Printf("parseExpressionList: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, list)
 	list = append(list, p.parseExpression(LOWEST))
 
@@ -572,7 +578,7 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 
 func (p *Parser) parseArrayLiteral() ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.curToken}
-
+	p.nextToken()
 	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
 
 	return array
@@ -580,8 +586,14 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 
 func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.curToken, Left: left}
-
+	p.nextToken()
 	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
+
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		array.Cast = p.curToken.Lit
+	}
 
 	return array
 }

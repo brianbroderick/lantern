@@ -7,6 +7,5 @@ TODO:
 VALUES: https://www.postgresql.org/docs/current/queries-values.html
 "values" provides a way to generate a constant table, with an example being used in a CTE
 
-Comments: /* */ and -- 
-
-Not Eq Operator: <>
+Check this one: 
+select count(*) as total_rows, count(*) filter( where id is not null) as id_set_count from table;
