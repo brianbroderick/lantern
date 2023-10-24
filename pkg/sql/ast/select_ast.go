@@ -347,8 +347,12 @@ func (t *TableExpression) TokenLiteral() string { return t.Token.Lit }
 func (t *TableExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	if t.JoinType != "" && t.JoinType != "source" {
+	if t.JoinType != "" && t.JoinType != "CROSS" {
 		out.WriteString(t.JoinType + " JOIN ")
+	}
+
+	if t.JoinType == "CROSS" {
+		out.WriteString(", ")
 	}
 
 	out.WriteString(t.Table.String(maskParams))

@@ -17,6 +17,7 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
+
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -87,6 +88,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from customers left join addresses on id = customer_id;", 2, "(SELECT id FROM customers LEFT JOIN addresses ON (id = customer_id));"},
 		{"select id from customers left outer join addresses on id = customer_id;", 2, "(SELECT id FROM customers LEFT JOIN addresses ON (id = customer_id));"},
 		{"select id from addresses AS a JOIN states AS s ON (s.id = a.state_id AND s.code > 'ut')", 2, "(SELECT id FROM addresses a INNER JOIN states s ON ((s.id = a.state_id) AND (s.code > 'ut')));"},
+		{"SELECT r.* FROM roles r, rights ri WHERE r.id = ri.role_id AND ri.deleted_by IS NULL AND ri.id = 12;", 2, "(SELECT r.* FROM roles r , rights ri WHERE (((r.id = ri.role_id) AND (ri.deleted_by IS NULL)) AND (ri.id = 12)));"},
 
 		// Select: where clause
 		{"select id from users where id = 42;", 1, "(SELECT id FROM users WHERE (id = 42));"},
@@ -187,6 +189,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Select: Functions
 		{"select w() from a", 1, "(SELECT w() FROM a);"},
 		{"select id from load(1,2)", 1, "(SELECT id FROM load(1, 2));"},
+
+		// Subqueries
+		{"select * from (select id from a) b order by id", 1, "(SELECT * FROM (SELECT id FROM a) b ORDER BY id);"},
 	}
 
 	for _, tt := range tests {

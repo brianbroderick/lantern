@@ -187,7 +187,7 @@ func (p *Parser) parseTables() []ast.Expression {
 
 	tables = append(tables, p.parseFirstTable())
 
-	for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
+	for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL, token.COMMA}) {
 		tables = append(tables, p.parseTable())
 	}
 
@@ -249,6 +249,13 @@ func (p *Parser) parseTable() ast.Expression {
 			table.JoinType = "INNER"
 		}
 		// fmt.Printf("parseTable simple join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
+	}
+
+	if p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		if table.JoinType == "" {
+			table.JoinType = "CROSS"
+		}
 	}
 
 	p.nextToken()
