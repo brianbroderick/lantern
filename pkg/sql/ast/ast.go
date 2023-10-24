@@ -247,7 +247,7 @@ type StringLiteral struct {
 func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Lit }
 func (sl *StringLiteral) String(maskParams bool) string {
-	literal := sl.Token.Lit
+	literal := strings.Replace(sl.Token.Lit, "'", "''", -1)
 	if maskParams {
 		literal = fmt.Sprintf("$%d", sl.ParamOffset)
 	}

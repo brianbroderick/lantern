@@ -44,8 +44,6 @@ func TestSingleSelectStatements(t *testing.T) {
 		output     string
 	}{
 
-		{"select array_agg(distinct sub.id) from a", 1, "(SELECT array_agg(DISTINCT sub.id) FROM a);"},
-
 		// Select: simple
 		{"select id from users;", 1, "(SELECT id FROM users);"},                                                                                                             // super basic select
 		{"select u.* from users u;", 1, "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
@@ -62,12 +60,14 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from addresses a;", 1, "(SELECT id FROM addresses a);"},                                                                                                 // table alias
 		{"select sum(a,b) from users;", 1, "(SELECT sum(a, b) FROM users);"},                                                                                                // function call
 		{"select key, value from example where id = 20 AND key IN ( 'a', 'b', 'c' );", 1, "(SELECT key, value FROM example WHERE ((id = 20) AND key IN ('a', 'b', 'c')));"}, // removed the token KEY since it's not a PG reserved key word: https://www.postgresql.org/docs/13/sql-keywords-appendix.html
+		{"SELECT translate(name, '''', '' ) as name FROM people WHERE id = 0;", 1, "(SELECT translate(name, '''', '') AS name FROM people WHERE (id = 0));"},                // escaped apostrophes
 
 		// Select: distinct & all tokens
 		{"select distinct id from users;", 1, "(SELECT DISTINCT id FROM users);"},
 		{"select all id from users", 1, "(SELECT ALL id FROM users);"},
 		{"select distinct on (location) reported_at, report from weather_reports;", 1, "(SELECT DISTINCT ON (location) reported_at, report FROM weather_reports);"},
 		{"select c.id, string_agg ( distinct c.name, ', ' ) as value FROM companies c", 1, "(SELECT c.id, string_agg(DISTINCT c.name, ', ') AS value FROM companies c);"},
+		{"select array_agg(distinct sub.id) from a", 1, "(SELECT array_agg(DISTINCT sub.id) FROM a);"},
 
 		// Select: window functions
 		{"select avg(salary) over (partition by depname) from empsalary;", 1, "(SELECT (avg(salary) OVER (PARTITION BY depname)) FROM empsalary);"},

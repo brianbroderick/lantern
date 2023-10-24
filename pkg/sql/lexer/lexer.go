@@ -326,7 +326,13 @@ func (l *Lexer) scanString() token.Token {
 	for {
 		l.read()
 		if l.ch == '\'' {
-			break
+			l.read()
+			if l.ch == '\'' {
+				_, _ = buf.WriteRune(l.ch)
+			} else {
+				l.unread()
+				break
+			}
 		} else {
 			_, _ = buf.WriteRune(l.ch)
 		}
