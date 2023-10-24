@@ -235,10 +235,15 @@ func (p *Parser) parseTable() ast.Expression {
 		p.nextToken()
 		table.JoinType = strings.ToUpper(p.curToken.Lit)
 
-		// Skip the JOIN and OUTER keywords
-		for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.OUTER}) {
+		if p.peekTokenIs(token.JOIN) {
+			p.nextToken()
+			table.JoinType = table.JoinType + " JOIN"
+		}
+		// Skip the OUTER keyword
+		if p.peekTokenIs(token.OUTER) {
 			p.nextToken()
 		}
+
 		// fmt.Printf("parseTable compound join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 	}
 
@@ -246,15 +251,22 @@ func (p *Parser) parseTable() ast.Expression {
 	if p.peekTokenIs(token.JOIN) {
 		p.nextToken()
 		if table.JoinType == "" {
-			table.JoinType = "INNER"
+			table.JoinType = "INNER JOIN"
+		} else {
+			table.JoinType = table.JoinType + " JOIN"
 		}
 		// fmt.Printf("parseTable simple join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
+	}
+
+	if p.peekTokenIs(token.LATERAL) {
+		p.nextToken()
+		table.JoinType = table.JoinType + " LATERAL"
 	}
 
 	if p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		if table.JoinType == "" {
-			table.JoinType = "CROSS"
+			table.JoinType = ","
 		}
 	}
 
