@@ -337,7 +337,7 @@ type TableExpression struct {
 	Token         token.Token `json:"token,omitempty"`          // the token.JOIN token
 	JoinType      string      `json:"join_type,omitempty"`      // the type of join: source, inner, left, right, full, etc
 	Schema        string      `json:"schema,omitempty"`         // the name of the schema
-	Table         string      `json:"table,omitempty"`          // the name of the table
+	Table         Expression  `json:"table,omitempty"`          // the name of the table
 	Alias         string      `json:"alias,omitempty"`          // the alias of the table
 	JoinCondition Expression  `json:"join_condition,omitempty"` // the ON clause
 }
@@ -351,7 +351,7 @@ func (t *TableExpression) String(maskParams bool) string {
 		out.WriteString(t.JoinType + " JOIN ")
 	}
 
-	out.WriteString(t.Table)
+	out.WriteString(t.Table.String(maskParams))
 	if t.Alias != "" {
 		out.WriteString(" " + t.Alias)
 	}

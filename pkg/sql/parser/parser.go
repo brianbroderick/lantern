@@ -94,6 +94,7 @@ type Parser struct {
 	l           *lexer.Lexer
 	errors      []string
 	paramOffset int
+	pos         lexer.Pos
 
 	curToken  token.Token
 	peekToken token.Token
@@ -187,12 +188,13 @@ func New(l *lexer.Lexer) *Parser {
 
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
-	newToken, _ := p.l.Scan()
+	newToken, pos := p.l.Scan()
 	// Skip comments
 	if newToken.Type == token.COMMENT {
-		newToken, _ = p.l.Scan()
+		newToken, pos = p.l.Scan()
 	}
 	p.peekToken = newToken // TODO: surface the position
+	p.pos = pos
 }
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {
@@ -303,7 +305,7 @@ func (p *Parser) peekError(t token.TokenType) {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	msg := fmt.Sprintf("no prefix parse function for %s found at line %d char %d", t, p.pos.Line, p.pos.Char)
 	p.errors = append(p.errors, msg)
 }
 

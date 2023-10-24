@@ -202,19 +202,20 @@ func (p *Parser) parseFirstTable() ast.Expression {
 
 	// fmt.Printf("parseFirstTable1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
+	table.Table = p.parseExpression(LOWEST)
+
 	// Get the first table
-	if p.curTokenIs(token.IDENT) {
-		table.Table = p.curToken.Lit
+	//if p.curTokenIs(token.IDENT) {
+	//table.Table = &ast.Identifier{Token: token.Token{Type: token.IDENT, Lit: p.curToken.Lit}, Value: p.curToken.Lit}
 
-		if p.peekTokenIs(token.AS) {
-			p.nextToken()
-		}
+	if p.peekTokenIs(token.AS) {
+		p.nextToken()
+	}
 
-		// Do we have an alias
-		if p.peekTokenIs(token.IDENT) {
-			p.nextToken()
-			table.Alias = p.curToken.Lit
-		}
+	// Do we have an alias
+	if p.peekTokenIs(token.IDENT) {
+		p.nextToken()
+		table.Alias = p.curToken.Lit
 	}
 
 	// fmt.Printf("parseFirstTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
@@ -255,9 +256,11 @@ func (p *Parser) parseTable() ast.Expression {
 	// fmt.Printf("parseTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	// Get the table name
-	if p.curTokenIs(token.IDENT) {
-		table.Table = p.curToken.Lit
-	}
+	table.Table = p.parseExpression(LOWEST)
+
+	// if p.curTokenIs(token.IDENT) {
+	// 	table.Table = &ast.Identifier{Token: token.Token{Type: token.IDENT, Lit: p.curToken.Lit}, Value: p.curToken.Lit}
+	// }
 
 	// fmt.Printf("parseTable3: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 

@@ -42,6 +42,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		tableCount int
 		output     string
 	}{
+
 		{"select array_agg(distinct sub.id) from a", 1, "(SELECT array_agg(DISTINCT sub.id) FROM a);"},
 
 		// Select: simple
@@ -185,6 +186,7 @@ func TestSingleSelectStatements(t *testing.T) {
 
 		// Select: Functions
 		{"select w() from a", 1, "(SELECT w() FROM a);"},
+		{"select id from load(1,2)", 1, "(SELECT id FROM load(1, 2));"},
 	}
 
 	for _, tt := range tests {
