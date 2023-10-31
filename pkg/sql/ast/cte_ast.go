@@ -27,7 +27,7 @@ func (s *CTEStatement) String(maskParams bool) string {
 
 	// CTEs are a little different. We need to split the expressions into two groups. The first group is the CTEs consisting of temp tables
 	// and the second group is the main query. The main query is the last statement, but that can consist of multiple
-	// expressions such as SELECT and UNION. We need to split them up and put the CTEs first so that we can comma separate the query appropriately.
+	// expressions such as SELECT. We need to split them up and put the CTEs first so that we can comma separate the query appropriately.
 
 	tmpTables := []Expression{}
 	primaryExpressions := []Expression{}

@@ -13,6 +13,7 @@ import (
 const (
 	_ int = iota
 	LOWEST
+	UNION          // UNION
 	OR             // OR
 	AND            // AND
 	NOT            // NOT
@@ -31,6 +32,9 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
+	token.UNION:             UNION,
+	token.INTERSECT:         UNION,
+	token.EXCEPT:            UNION,
 	token.EQ:                EQUALS,
 	token.NOT_EQ:            EQUALS,
 	token.ASSIGN:            EQUALS,

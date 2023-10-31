@@ -18,6 +18,8 @@ func TestMultipleStatements(t *testing.T) {
 		output         string
 	}{
 
+		{"SELECT id FROM ( SELECT id FROM users u UNION SELECT id FROM users u ) as SubQ ;", 1, "(SELECT id FROM (SELECT id FROM users u UNION (SELECT id FROM users u)) SubQ);"},
+
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -152,9 +154,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users where id IN (1,2,3,4);", 1, "(SELECT id FROM users WHERE id IN (1, 2, 3, 4));"},
 
 		// Select: UNION clause
-		{"select id from users union select id from customers;", 1, "(SELECT id FROM users) UNION (SELECT id FROM customers);"},
-		{"select id from users except select id from customers;", 1, "(SELECT id FROM users) EXCEPT (SELECT id FROM customers);"},
-		{"select id from users intersect select id from customers;", 1, "(SELECT id FROM users) INTERSECT (SELECT id FROM customers);"},
+		{"select id from users union select id from customers;", 1, "(SELECT id FROM users UNION (SELECT id FROM customers));"},
+		{"select id from users except select id from customers;", 1, "(SELECT id FROM users EXCEPT (SELECT id FROM customers));"},
+		{"select id from users intersect select id from customers;", 1, "(SELECT id FROM users INTERSECT (SELECT id FROM customers));"},
 
 		// Select: Cast literals
 		{"select '100'::integer from a;", 1, "(SELECT '100'::INTEGER FROM a);"},
@@ -276,7 +278,7 @@ func TestCTEs(t *testing.T) {
 		{"with recursive sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH RECURSIVE sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 		{"with sales as materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 		{"with sales as not materialized (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS NOT MATERIALIZED (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
-		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales union select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales) UNION (SELECT total_sales FROM sales));"},
+		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales union select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales UNION (SELECT total_sales FROM sales)));"},
 		{"with recursive parts(part) as (select part from parts) select count(part) from parts;", "(WITH RECURSIVE parts(part) AS (SELECT part FROM parts) (SELECT count(part) FROM parts));"},
 	}
 

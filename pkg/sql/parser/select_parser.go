@@ -22,11 +22,6 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	stmt.Expressions = []ast.Expression{}
 	stmt.Expressions = append(stmt.Expressions, p.parseSelectExpression())
 
-	for p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
-		p.nextToken()
-		stmt.Expressions = append(stmt.Expressions, p.parseUnionExpression())
-	}
-
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
@@ -138,6 +133,13 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		p.nextToken()
 		p.nextToken()
 		stmt.Lock = p.parseLock()
+	}
+
+	if p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
+		p.nextToken()
+		stmt.CompoundToken = p.curToken
+		p.nextToken()
+		stmt.CompoundExpression = p.parseExpression(LOWEST)
 	}
 
 	// fmt.Printf("parseSelectExpressionEnd: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
@@ -629,15 +631,6 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
 	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
-
-	return exp
-}
-
-func (p *Parser) parseUnionExpression() ast.Expression {
-	exp := &ast.UnionExpression{Token: p.curToken}
-	p.nextToken()
-	exp.Right = p.parseSelectExpression()
-	// fmt.Printf("parseUnionExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
 	return exp
 }

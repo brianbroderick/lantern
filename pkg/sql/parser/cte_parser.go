@@ -36,11 +36,6 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 		}
 		stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST)) // Get the main query
 
-		for p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
-			p.nextToken()
-			stmt.Expressions = append(stmt.Expressions, p.parseUnionExpression())
-		}
-
 		iter++ // This is a hack to prevent an infinite loop. If we're looping 10 times, something's wrong. Bail out.
 		if iter > 10 {
 			fmt.Println("parseCTEStatement: Infinite loop detected")
