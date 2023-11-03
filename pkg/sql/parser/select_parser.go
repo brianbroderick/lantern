@@ -500,7 +500,7 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 
 	// fmt.Printf("parseColumn: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
 
-	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.FROM, token.AS}) && precedence < p.peekPrecedence() {
+	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.FROM, token.AS, token.IDENT}) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
 			return leftExp
@@ -513,8 +513,12 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 
 	colExp := &ast.ColumnExpression{Token: p.curToken, Value: leftExp}
 
+	// AS is optional
 	if p.peekTokenIs(token.AS) {
 		p.nextToken()
+	}
+
+	if p.peekTokenIs(token.IDENT) {
 		p.nextToken()
 		alias := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 		colExp = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}

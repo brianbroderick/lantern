@@ -17,7 +17,6 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
-		{"select jsonb_array_length ( ( options ->> 'country_codes' ) :: jsonb ) from modules", 1, "(SELECT jsonb_array_length((options ->> 'country_codes')::JSONB) FROM modules);"},
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -53,6 +52,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id, name from users", 1, "(SELECT id, name FROM users);"},                                                                                                  // multiple columns
 		{"select id, first_name from users;", 1, "(SELECT id, first_name FROM users);"},                                                                                     // underscore in a column name
 		{"select id, first_name as name from users", 1, "(SELECT id, first_name AS name FROM users);"},                                                                      // column alias
+		{"select id, first_name name from users", 1, "(SELECT id, first_name AS name FROM users);"},                                                                         // column alias
 		{"select u.id, u.first_name as name from users u;", 1, "(SELECT u.id, u.first_name AS name FROM users u);"},                                                         // column alias with table alias
 		{"select id from no_semi_colons", 1, "(SELECT id FROM no_semi_colons);"},                                                                                            // no semicolon
 		{"select 1 + 2 as math, foo + 7 as seven from foo", 1, "(SELECT (1 + 2) AS math, (foo + 7) AS seven FROM foo);"},                                                    // multiple column aliases with expressions
@@ -166,6 +166,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select load( array[ 1 ], array[ 2] ) from a", 1, "(SELECT load(array[1], array[2]) FROM a);"},
 		{"select array[2]::integer from a", 1, "(SELECT array[2]::INTEGER FROM a);"},
 		{"select load( array[ 1 ]::integer[], array[ 2]::integer[] ) from a", 1, "(SELECT load(array[1]::INTEGER[], array[2]::INTEGER[]) FROM a);"},
+		{"select jsonb_array_length ( ( options ->> 'country_codes' ) :: jsonb ) from modules", 1, "(SELECT jsonb_array_length((options ->> 'country_codes')::JSONB) FROM modules);"},
 
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> 'name') = 'brian'));"},
