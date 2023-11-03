@@ -366,7 +366,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExp := prefix()
-	// fmt.Printf("parseExpression: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
 
 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
@@ -377,6 +376,13 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		p.nextToken()
 
 		leftExp = infix(leftExp)
+	}
+
+	// This is why all expressions must have a SetCast method
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		leftExp.SetCast(p.curToken.Lit)
 	}
 
 	return leftExp
@@ -491,7 +497,6 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	precedence := p.curPrecedence()
 	p.nextToken()
 
-	// fmt.Printf("parseInfixExpression: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 	expression.Right = p.parseExpression(precedence)
 
 	return expression

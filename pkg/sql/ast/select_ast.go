@@ -55,6 +55,7 @@ type SelectExpression struct {
 	Lock               Expression   `json:"lock,omitempty"`
 	CompoundToken      token.Token  `json:"compound_token,omitempty"` // the token.UNION, token.INTERSECT, or token.EXCEPT token
 	CompoundExpression Expression   `json:"union,omitempty"`          // the select expression to union with
+	Cast               string       `json:"cast,omitempty"`           // probably not needed, but used for the interface
 }
 
 func (se *SelectExpression) expressionNode()      {}
@@ -171,7 +172,15 @@ func (se *SelectExpression) String(maskParams bool) string {
 
 	out.WriteString(")")
 
+	if se.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(se.Cast)
+	}
+
 	return out.String()
+}
+func (se *SelectExpression) SetCast(cast string) {
+	se.Cast = cast
 }
 
 // func (se *SelectExpression) Inspect() string {
@@ -192,6 +201,7 @@ func (se *SelectExpression) String(maskParams bool) string {
 type DistinctExpression struct {
 	Token token.Token  `json:"token,omitempty"` // The keyword token, e.g. DISTINCT
 	Right []Expression `json:"right,omitempty"` // The columns to be distinct
+	Cast  string       `json:"cast,omitempty"`  // probably not needed, but used for the interface
 }
 
 func (de *DistinctExpression) expressionNode()      {}
@@ -213,13 +223,22 @@ func (de *DistinctExpression) String(maskParams bool) string {
 		out.WriteString(")")
 	}
 
+	if de.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(de.Cast)
+	}
+
 	return out.String()
+}
+func (de *DistinctExpression) SetCast(cast string) {
+	de.Cast = cast
 }
 
 type ColumnExpression struct {
 	Token token.Token `json:"token,omitempty"` // the token.AS token
 	Name  *Identifier `json:"name,omitempty"`  // the name of the column or alias
 	Value Expression  `json:"value,omitempty"` // the complete expression including all of the columns
+	Cast  string      `json:"cast,omitempty"`
 	// Columns []*Identifier `json:"columns,omitempty"` // the columns that make up the expression for ease of reporting
 }
 
@@ -235,7 +254,15 @@ func (c *ColumnExpression) String(maskParams bool) string {
 		out.WriteString(c.Name.String(maskParams))
 	}
 
+	if c.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(c.Cast)
+	}
+
 	return out.String()
+}
+func (c *ColumnExpression) SetCast(cast string) {
+	c.Cast = cast
 }
 
 type SortExpression struct {
@@ -243,6 +270,7 @@ type SortExpression struct {
 	Value     Expression  `json:"value,omitempty"`     // the column to sort on
 	Direction token.Token `json:"direction,omitempty"` // the direction to sort
 	Nulls     token.Token `json:"nulls,omitempty"`     // first or last
+	Cast      string      `json:"cast,omitempty"`
 }
 
 func (s *SortExpression) expressionNode()      {}
@@ -260,7 +288,15 @@ func (s *SortExpression) String(maskParams bool) string {
 		out.WriteString(" NULLS LAST")
 	}
 
+	if s.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(s.Cast)
+	}
+
 	return out.String()
+}
+func (s *SortExpression) SetCast(cast string) {
+	s.Cast = cast
 }
 
 type FetchExpression struct {
@@ -269,6 +305,7 @@ type FetchExpression struct {
 	Value Expression `json:"value,omitempty"` // the number of rows to fetch
 	// We also don't need to store "row" or "rows" since these are synonyms. We'll convert everything to "rows" when printing in .String()
 	Option token.Token `json:"option,omitempty"` // the token.ONLY or token.TIES token (don't need to store "with ties", just "ties" will do)
+	Cast   string      `json:"cast,omitempty"`
 }
 
 func (f *FetchExpression) expressionNode()      {}
@@ -284,7 +321,15 @@ func (f *FetchExpression) String(maskParams bool) string {
 		out.WriteString(" ONLY")
 	}
 
+	if f.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(f.Cast)
+	}
+
 	return out.String()
+}
+func (f *FetchExpression) SetCast(cast string) {
+	f.Cast = cast
 }
 
 type WindowExpression struct {
@@ -292,6 +337,7 @@ type WindowExpression struct {
 	Alias       *Identifier  `json:"alias,omitempty"`        // the alias of the window
 	PartitionBy []Expression `json:"partition_by,omitempty"` // the columns to partition by
 	OrderBy     []Expression `json:"order_by,omitempty"`     // the columns to order by
+	Cast        string       `json:"cast,omitempty"`
 }
 
 func (w *WindowExpression) expressionNode()      {}
@@ -325,17 +371,40 @@ func (w *WindowExpression) String(maskParams bool) string {
 	}
 
 	out.WriteString(")")
+
+	if w.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(w.Cast)
+	}
+
 	return out.String()
+}
+func (w *WindowExpression) SetCast(cast string) {
+	w.Cast = cast
 }
 
 type WildcardLiteral struct {
 	Token token.Token `json:"token,omitempty"` // the token.ASTERISK token
 	Value string      `json:"value,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
 }
 
-func (w *WildcardLiteral) expressionNode()               {}
-func (w *WildcardLiteral) TokenLiteral() string          { return w.Token.Lit }
-func (w *WildcardLiteral) String(maskParams bool) string { return w.Value }
+func (w *WildcardLiteral) expressionNode()      {}
+func (w *WildcardLiteral) TokenLiteral() string { return w.Token.Lit }
+func (w *WildcardLiteral) String(maskParams bool) string {
+	var out bytes.Buffer
+	out.WriteString(w.Value)
+
+	if w.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(w.Cast)
+	}
+
+	return out.String()
+}
+func (w *WildcardLiteral) SetCast(cast string) {
+	w.Cast = cast
+}
 
 // JoinType  Table     Alias JoinCondition
 // source    customers c
@@ -348,20 +417,13 @@ type TableExpression struct {
 	Table         Expression  `json:"table,omitempty"`          // the name of the table
 	Alias         string      `json:"alias,omitempty"`          // the alias of the table
 	JoinCondition Expression  `json:"join_condition,omitempty"` // the ON clause
+	Cast          string      `json:"cast,omitempty"`
 }
 
 func (t *TableExpression) expressionNode()      {}
 func (t *TableExpression) TokenLiteral() string { return t.Token.Lit }
 func (t *TableExpression) String(maskParams bool) string {
 	var out bytes.Buffer
-
-	// if t.JoinType != "" && t.JoinType != "CROSS" {
-	// 	out.WriteString(t.JoinType + " JOIN ")
-	// }
-
-	// if t.JoinType == "CROSS" {
-	// 	out.WriteString(", ")
-	// }
 
 	if t.JoinType != "" {
 		out.WriteString(t.JoinType + " ")
@@ -376,7 +438,15 @@ func (t *TableExpression) String(maskParams bool) string {
 		out.WriteString(" ON " + t.JoinCondition.String(maskParams))
 	}
 
+	if t.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(t.Cast)
+	}
+
 	return out.String()
+}
+func (t *TableExpression) SetCast(cast string) {
+	t.Cast = cast
 }
 
 type LockExpression struct {
@@ -384,6 +454,7 @@ type LockExpression struct {
 	Lock    string       `json:"lock,omitempty"`    // the type of lock: update, share, key share, no key update
 	Tables  []Expression `json:"tables,omitempty"`  // the tables to lock
 	Options string       `json:"options,omitempty"` // the options: NOWAIT, SKIP LOCKED
+	Cast    string       `json:"cast,omitempty"`
 }
 
 func (l *LockExpression) expressionNode()      {}
@@ -403,7 +474,15 @@ func (l *LockExpression) String(maskParams bool) string {
 		out.WriteString(" " + l.Options)
 	}
 
+	if l.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(l.Cast)
+	}
+
 	return out.String()
+}
+func (l *LockExpression) SetCast(cast string) {
+	l.Cast = cast
 }
 
 type InExpression struct {
@@ -411,6 +490,7 @@ type InExpression struct {
 	Left     Expression   `json:"left,omitempty"`
 	Operator string       `json:"operator,omitempty"`
 	Right    []Expression `json:"right,omitempty"`
+	Cast     string       `json:"cast,omitempty"`
 }
 
 func (ie *InExpression) expressionNode()      {}
@@ -431,21 +511,13 @@ func (ie *InExpression) String(maskParams bool) string {
 	}
 	out.WriteString(")")
 
+	if ie.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(ie.Cast)
+	}
+
 	return out.String()
 }
-
-// type UnionExpression struct {
-// 	Token token.Token `json:"token,omitempty"` // The operator token, e.g. UNION, INTERSECT, EXCEPT
-// 	Right Expression  `json:"right,omitempty"`
-// }
-
-// func (ue *UnionExpression) expressionNode()      {}
-// func (ue *UnionExpression) TokenLiteral() string { return ue.Token.Lit }
-// func (ue *UnionExpression) String(maskParams bool) string {
-// 	var out bytes.Buffer
-
-// 	out.WriteString(strings.ToUpper(" " + ue.Token.Lit + " "))
-// 	out.WriteString(ue.Right.String(maskParams))
-
-// 	return out.String()
-// }
+func (ie *InExpression) SetCast(cast string) {
+	ie.Cast = cast
+}

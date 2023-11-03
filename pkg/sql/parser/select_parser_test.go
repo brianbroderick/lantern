@@ -17,6 +17,7 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
+		{"select jsonb_array_length ( ( options ->> 'country_codes' ) :: jsonb ) from modules", 1, "(SELECT jsonb_array_length((options ->> 'country_codes')::JSONB) FROM modules);"},
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}

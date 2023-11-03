@@ -10,6 +10,7 @@ type CaseExpression struct {
 	Token       token.Token            `json:"token,omitempty"` // the token.CASE token
 	Conditions  []*ConditionExpression `json:"conditions,omitempty"`
 	Alternative Expression             `json:"alternative,omitempty"`
+	Cast        string                 `json:"cast,omitempty"`
 }
 
 func (ce *CaseExpression) expressionNode()      {}
@@ -31,11 +32,15 @@ func (ce *CaseExpression) String(maskParams bool) string {
 
 	return out.String()
 }
+func (ce *CaseExpression) SetCast(cast string) {
+	ce.Cast = cast
+}
 
 type ConditionExpression struct {
 	Token       token.Token `json:"token,omitempty"`
 	Condition   Expression  `json:"condition,omitempty"`
 	Consequence Expression  `json:"consequence,omitempty"`
+	Cast        string      `json:"cast,omitempty"`
 }
 
 func (ce *ConditionExpression) expressionNode()      {}
@@ -53,5 +58,13 @@ func (ce *ConditionExpression) String(maskParams bool) string {
 		out.WriteString(ce.Consequence.String(maskParams))
 	}
 
+	if ce.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(ce.Cast)
+	}
+
 	return out.String()
+}
+func (ce *ConditionExpression) SetCast(cast string) {
+	ce.Cast = cast
 }

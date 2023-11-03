@@ -27,6 +27,7 @@ type Statement interface {
 type Expression interface {
 	Node
 	expressionNode()
+	SetCast(cast string)
 }
 
 type Program struct {
@@ -98,15 +99,22 @@ func (i *Identifier) String(maskParams bool) string {
 
 	return i.Value
 }
+func (i *Identifier) SetCast(cast string) {
+	i.Cast = cast
+}
 
 type Boolean struct {
 	Token token.Token
 	Value bool
+	Cast  string
 }
 
 func (b *Boolean) expressionNode()               {}
 func (b *Boolean) TokenLiteral() string          { return b.Token.Lit }
 func (b *Boolean) String(maskParams bool) string { return b.Token.Lit }
+func (b *Boolean) SetCast(cast string) {
+	b.Cast = cast
+}
 
 type IntegerLiteral struct {
 	Token       token.Token `json:"token,omitempty"`
@@ -127,9 +135,13 @@ func (il *IntegerLiteral) String(maskParams bool) string {
 	}
 	return literal
 }
+func (il *IntegerLiteral) SetCast(cast string) {
+	il.Cast = cast
+}
 
 type KeywordExpression struct {
 	Token token.Token `json:"token,omitempty"` // The keyword token, e.g. ALL
+	Cast  string      `json:"cast,omitempty"`
 }
 
 func (ke *KeywordExpression) expressionNode()      {}
@@ -137,7 +149,14 @@ func (ke *KeywordExpression) TokenLiteral() string { return ke.Token.Lit }
 func (ke *KeywordExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(strings.ToUpper(ke.Token.Lit))
+	if ke.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(ke.Cast))
+	}
 	return out.String()
+}
+func (ke *KeywordExpression) SetCast(cast string) {
+	ke.Cast = cast
 }
 
 // Prefix Expressions are assumed to be unary operators such as -5 or !true
@@ -145,6 +164,7 @@ type PrefixExpression struct {
 	Token    token.Token `json:"token,omitempty"` // The prefix token, e.g. !
 	Operator string      `json:"operator,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
+	Cast     string      `json:"cast,omitempty"`
 }
 
 func (pe *PrefixExpression) expressionNode()      {}
@@ -156,8 +176,15 @@ func (pe *PrefixExpression) String(maskParams bool) string {
 	out.WriteString(pe.Operator)
 	out.WriteString(pe.Right.String(maskParams))
 	out.WriteString(")")
+	if pe.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(pe.Cast))
+	}
 
 	return out.String()
+}
+func (pe *PrefixExpression) SetCast(cast string) {
+	pe.Cast = cast
 }
 
 // Prefix Keyword Expressions are assumed to be separate keywords such as NOT
@@ -167,6 +194,7 @@ type PrefixKeywordExpression struct {
 	Token    token.Token `json:"token,omitempty"` // The prefix token, e.g. !
 	Operator string      `json:"operator,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
+	Cast     string      `json:"cast,omitempty"`
 }
 
 func (pe *PrefixKeywordExpression) expressionNode()      {}
@@ -180,7 +208,15 @@ func (pe *PrefixKeywordExpression) String(maskParams bool) string {
 	out.WriteString(pe.Right.String(maskParams))
 	out.WriteString(")")
 
+	if pe.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(pe.Cast))
+	}
+
 	return out.String()
+}
+func (pe *PrefixKeywordExpression) SetCast(cast string) {
+	pe.Cast = cast
 }
 
 type InfixExpression struct {
@@ -188,6 +224,7 @@ type InfixExpression struct {
 	Left     Expression  `json:"left,omitempty"`
 	Operator string      `json:"operator,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
+	Cast     string      `json:"cast,omitempty"`
 }
 
 func (ie *InfixExpression) expressionNode()      {}
@@ -203,12 +240,21 @@ func (ie *InfixExpression) String(maskParams bool) string {
 	}
 	out.WriteString(")")
 
+	if ie.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(ie.Cast))
+	}
+
 	return out.String()
+}
+func (ie *InfixExpression) SetCast(cast string) {
+	ie.Cast = cast
 }
 
 type GroupedExpression struct {
 	Token    token.Token  `json:"token,omitempty"` // The '(' token
 	Elements []Expression `json:"elements,omitempty"`
+	Cast     string       `json:"cast,omitempty"`
 }
 
 func (ge *GroupedExpression) expressionNode()      {}
@@ -230,7 +276,15 @@ func (ge *GroupedExpression) String(maskParams bool) string {
 		out.WriteString(")")
 	}
 
+	if ge.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(ge.Cast))
+	}
+
 	return out.String()
+}
+func (ge *GroupedExpression) SetCast(cast string) {
+	ge.Cast = cast
 }
 
 type CallExpression struct {
@@ -238,6 +292,7 @@ type CallExpression struct {
 	Distinct  Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
 	Function  Expression   `json:"function,omitempty"` // Identifier or FunctionLiteral
 	Arguments []Expression `json:"arguments,omitempty"`
+	Cast      string       `json:"cast,omitempty"`
 }
 
 func (ce *CallExpression) expressionNode()      {}
@@ -261,7 +316,15 @@ func (ce *CallExpression) String(maskParams bool) string {
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
 
+	if ce.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(ce.Cast))
+	}
+
 	return out.String()
+}
+func (ce *CallExpression) SetCast(cast string) {
+	ce.Cast = cast
 }
 
 type StringLiteral struct {
@@ -282,6 +345,9 @@ func (sl *StringLiteral) String(maskParams bool) string {
 		return fmt.Sprintf("'%s'::%s", literal, strings.ToUpper(sl.Cast))
 	}
 	return fmt.Sprintf("'%s'", literal)
+}
+func (sl *StringLiteral) SetCast(cast string) {
+	sl.Cast = cast
 }
 
 type ArrayLiteral struct {
@@ -316,11 +382,15 @@ func (al *ArrayLiteral) String(maskParams bool) string {
 
 	return out.String()
 }
+func (al *ArrayLiteral) SetCast(cast string) {
+	al.Cast = cast
+}
 
 type IndexExpression struct {
 	Token token.Token `json:"token,omitempty"` // The [ token
 	Left  Expression  `json:"left,omitempty"`
 	Index Expression  `json:"index,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
 }
 
 func (ie *IndexExpression) expressionNode()      {}
@@ -334,7 +404,15 @@ func (ie *IndexExpression) String(maskParams bool) string {
 	out.WriteString(ie.Index.String(maskParams))
 	out.WriteString("])")
 
+	if ie.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(ie.Cast))
+	}
+
 	return out.String()
+}
+func (ie *IndexExpression) SetCast(cast string) {
+	ie.Cast = cast
 }
 
 // type HashLiteral struct {
