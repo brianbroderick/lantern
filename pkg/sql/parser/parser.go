@@ -505,13 +505,16 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	// fmt.Printf("parseGroupedExpression1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 	p.nextToken()
 
-	exp := p.parseExpression(LOWEST)
+	expression := &ast.GroupedExpression{Token: p.curToken}
+	expression.Elements = p.parseExpressionList([]token.TokenType{token.RPAREN})
 
-	if p.peekTokenIs(token.RPAREN) {
-		p.nextToken()
-	}
+	// exp := p.parseExpression(LOWEST)
 
-	return exp
+	// if p.peekTokenIs(token.RPAREN) {
+	// 	p.nextToken()
+	// }
+
+	return expression
 }
 
 // func (p *Parser) parseFunctionParameters() []*ast.Identifier {

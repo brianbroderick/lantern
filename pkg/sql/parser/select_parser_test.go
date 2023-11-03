@@ -17,9 +17,6 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
-
-		{"SELECT id FROM ( SELECT id FROM users u UNION SELECT id FROM users u ) as SubQ ;", 1, "(SELECT id FROM (SELECT id FROM users u UNION (SELECT id FROM users u)) SubQ);"},
-
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -152,6 +149,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users where id IN ('1','2','3','4');", 1, "(SELECT id FROM users WHERE id IN ('1', '2', '3', '4'));"},
 		{"select id from users where id IN ('1','2','3','4') AND name = 'brian';", 1, "(SELECT id FROM users WHERE (id IN ('1', '2', '3', '4') AND (name = 'brian')));"},
 		{"select id from users where id IN (1,2,3,4);", 1, "(SELECT id FROM users WHERE id IN (1, 2, 3, 4));"},
+		{"select id from modules where (option_id, external_id) IN ((1, 7))", 1, "(SELECT id FROM modules WHERE (option_id, external_id) IN ((1, 7)));"},                 // single tuple
+		{"select id from modules where (option_id, external_id) IN ((1, 7), (2, 9))", 1, "(SELECT id FROM modules WHERE (option_id, external_id) IN ((1, 7), (2, 9)));"}, // multiple tuples
+		{"select option_id, external_id from modules group by option_id, external_id having (option_id, external_id) IN ((1, 7), (2, 9))", 1, "(SELECT option_id, external_id FROM modules GROUP BY option_id, external_id HAVING (option_id, external_id) IN ((1, 7), (2, 9)));"},
 
 		// Select: UNION clause
 		{"select id from users union select id from customers;", 1, "(SELECT id FROM users UNION (SELECT id FROM customers));"},
@@ -194,6 +194,7 @@ func TestSingleSelectStatements(t *testing.T) {
 
 		// Subqueries
 		{"select * from (select id from a) b order by id", 1, "(SELECT * FROM (SELECT id FROM a) b ORDER BY id);"},
+		{"SELECT id FROM ( SELECT id FROM users u UNION SELECT id FROM users u ) as SubQ ;", 1, "(SELECT id FROM (SELECT id FROM users u UNION (SELECT id FROM users u)) SubQ);"}, // with union
 	}
 
 	for _, tt := range tests {

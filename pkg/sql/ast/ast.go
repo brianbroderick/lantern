@@ -206,6 +206,33 @@ func (ie *InfixExpression) String(maskParams bool) string {
 	return out.String()
 }
 
+type GroupedExpression struct {
+	Token    token.Token  `json:"token,omitempty"` // The '(' token
+	Elements []Expression `json:"elements,omitempty"`
+}
+
+func (ge *GroupedExpression) expressionNode()      {}
+func (ge *GroupedExpression) TokenLiteral() string { return ge.Token.Lit }
+func (ge *GroupedExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	elements := []string{}
+	for _, a := range ge.Elements {
+		elements = append(elements, a.String(maskParams))
+	}
+
+	if len(elements) > 1 {
+		out.WriteString("(")
+	}
+	out.WriteString(strings.Join(elements, ", "))
+
+	if len(elements) > 1 {
+		out.WriteString(")")
+	}
+
+	return out.String()
+}
+
 type CallExpression struct {
 	Token     token.Token  `json:"token,omitempty"`    // The '(' token
 	Distinct  Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
