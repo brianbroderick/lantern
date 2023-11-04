@@ -161,7 +161,7 @@ const (
 	SELECT
 	SESSION
 	SET
-	SETS
+	// SETS // Not a reserverd word in PG
 	SHARE
 	SIMILAR
 	SKIP
@@ -320,27 +320,27 @@ var Tokens = [...]string{
 	SELECT:         "SELECT",
 	SESSION:        "SESSION",
 	SET:            "SET",
-	SETS:           "SETS",
-	SHARE:          "SHARE",
-	SIMILAR:        "SIMILAR",
-	SKIP:           "SKIP",
-	TABLE:          "TABLE",
-	TABLESAMPLE:    "TABLESAMPLE",
-	THEN:           "THEN",
-	TIES:           "TIES",
-	TIME:           "TIME",
-	TO:             "TO",
-	TRUE:           "TRUE",
-	UNBOUNDED:      "UNBOUNDED",
-	UNION:          "UNION",
-	UPDATE:         "UPDATE",
-	USING:          "USING",
-	VALUES:         "VALUES",
-	WHEN:           "WHEN",
-	WHERE:          "WHERE",
-	WINDOW:         "WINDOW",
-	WITH:           "WITH",
-	ZONE:           "ZONE",
+	// SETS:           "SETS", // Not a reserverd word in PG
+	SHARE:       "SHARE",
+	SIMILAR:     "SIMILAR",
+	SKIP:        "SKIP",
+	TABLE:       "TABLE",
+	TABLESAMPLE: "TABLESAMPLE",
+	THEN:        "THEN",
+	TIES:        "TIES",
+	TIME:        "TIME",
+	TO:          "TO",
+	TRUE:        "TRUE",
+	UNBOUNDED:   "UNBOUNDED",
+	UNION:       "UNION",
+	UPDATE:      "UPDATE",
+	USING:       "USING",
+	VALUES:      "VALUES",
+	WHEN:        "WHEN",
+	WHERE:       "WHERE",
+	WINDOW:      "WINDOW",
+	WITH:        "WITH",
+	ZONE:        "ZONE",
 }
 
 var keywords map[string]TokenType
