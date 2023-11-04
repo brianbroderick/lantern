@@ -94,6 +94,20 @@ var precedences = map[token.TokenType]int{
 type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(ast.Expression) ast.Expression
+	parseContext  int
+)
+
+const (
+	XNIL parseContext = iota
+	XCALL
+	XLISTITEM
+	XARRAY
+	LITARRAY
+	XGROUPED
+	XDISTINCT
+	XLOCK
+	XNOT
+	XIN
 )
 
 // We may want to add the caller to the parser, to allow for context in conditions
@@ -111,6 +125,8 @@ type Parser struct {
 
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
+
+	context parseContext
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -396,8 +412,9 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExp
 }
 
-func (p *Parser) parseExpressionListItem(precedence int, caller string) ast.Expression {
+func (p *Parser) parseExpressionListItem(precedence int) ast.Expression {
 	defer untrace(trace("parseExpression"))
+	defer p.setContext(XLISTITEM)
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -406,7 +423,7 @@ func (p *Parser) parseExpressionListItem(precedence int, caller string) ast.Expr
 	}
 	leftExp := prefix()
 
-	if caller == "parseCallExpression" { // Allow order by to denote an aggregate function
+	if p.context == XCALL { // Allow order by to denote an aggregate function
 		for !p.peekTokenIsOne([]token.TokenType{token.COMMA}) && precedence < p.peekPrecedence() {
 			infix := p.infixParseFns[p.peekToken.Type]
 			if infix == nil {
@@ -560,10 +577,11 @@ func (p *Parser) parseBoolean() ast.Expression {
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.setContext(XGROUPED) // sets the context for the parseExpressionListItem function
 	p.nextToken()
 
 	expression := &ast.GroupedExpression{Token: p.curToken}
-	expression.Elements = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseGroupedExpression")
+	expression.Elements = p.parseExpressionList([]token.TokenType{token.RPAREN})
 
 	// exp := p.parseExpression(LOWEST)
 
@@ -602,6 +620,8 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 // }
 
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	p.setContext(XCALL) // sets the context for the parseExpressionListItem function
+
 	exp := &ast.CallExpression{Token: p.curToken, Function: function}
 
 	// fmt.Printf("parseCallExpression: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
@@ -612,11 +632,11 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 		exp.Distinct = p.parseDistinct()
 	}
 
-	exp.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseCallExpression")
+	exp.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	return exp
 }
 
-func (p *Parser) parseExpressionList(end []token.TokenType, caller string) []ast.Expression {
+func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 	list := []ast.Expression{}
 
 	if p.curTokenIsOne(end) {
@@ -625,12 +645,12 @@ func (p *Parser) parseExpressionList(end []token.TokenType, caller string) []ast
 
 	// p.nextToken()
 	// fmt.Printf("parseExpressionList: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, list)
-	list = append(list, p.parseExpressionListItem(LOWEST, caller))
+	list = append(list, p.parseExpressionListItem(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		list = append(list, p.parseExpressionListItem(LOWEST, caller))
+		list = append(list, p.parseExpressionListItem(LOWEST))
 	}
 
 	if !p.peekTokenIsOne(end) {
@@ -643,17 +663,19 @@ func (p *Parser) parseExpressionList(end []token.TokenType, caller string) []ast
 }
 
 func (p *Parser) parseArrayLiteral() ast.Expression {
+	p.context = LITARRAY // sets the context for the parseExpressionListItem function
 	array := &ast.ArrayLiteral{Token: p.curToken}
 	p.nextToken()
-	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET}, "parseArrayLiteral")
+	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
 
 	return array
 }
 
 func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
+	p.setContext(XARRAY) // sets the context for the parseExpressionListItem function
 	array := &ast.ArrayLiteral{Token: p.curToken, Left: left}
 	p.nextToken()
-	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET}, "parseArrayExpression")
+	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
 
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
@@ -685,4 +707,15 @@ func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 
 func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
+}
+
+// This allows the parser to know what context it's currently in.
+// These two functions fire before and after the parseExpression function via a defer
+func (p *Parser) resetContext(context parseContext) {
+	p.context = context
+}
+
+func (p *Parser) setContext(context parseContext) parseContext {
+	p.context = context
+	return p.context
 }

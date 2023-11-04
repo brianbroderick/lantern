@@ -149,6 +149,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 
 func (p *Parser) parseDistinct() ast.Expression {
 	defer untrace(trace("parseDistinct"))
+	p.context = XDISTINCT
 
 	if p.curTokenIs(token.ALL) {
 		all := &ast.DistinctExpression{Token: p.curToken}
@@ -165,7 +166,7 @@ func (p *Parser) parseDistinct() ast.Expression {
 
 			if p.curTokenIs(token.LPAREN) {
 				p.nextToken()
-				distinct.Right = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseDistinct")
+				distinct.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 				if p.curTokenIs(token.RPAREN) {
 					p.nextToken()
 				}
@@ -556,6 +557,7 @@ func (p *Parser) parseWindowExpression() ast.Expression {
 }
 
 func (p *Parser) parseLock() ast.Expression {
+	p.context = XLOCK // sets the context for the parseExpressionListItem function
 	expression := &ast.LockExpression{
 		Token: p.curToken,
 	}
@@ -589,7 +591,7 @@ func (p *Parser) parseLock() ast.Expression {
 
 	if p.curTokenIs(token.OF) {
 		p.nextToken()
-		expression.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF}, "parseLock")
+		expression.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF})
 	}
 
 	if p.curTokenIs(token.NOWAIT) {
@@ -607,6 +609,7 @@ func (p *Parser) parseLock() ast.Expression {
 }
 
 func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
+	p.context = XNOT // sets the context for the parseExpressionListItem function
 	exp := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
 	p.nextToken()
 
@@ -618,7 +621,7 @@ func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
 
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()
-		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseNotExpression")
+		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
 	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
@@ -626,11 +629,12 @@ func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
+	p.context = XIN // sets the context for the parseExpressionListItem function
 	exp := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
 	p.nextToken()
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()
-		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseInExpression")
+		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
 	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
