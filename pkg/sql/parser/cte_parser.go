@@ -30,14 +30,14 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 	}
 
 	iter := 0
-	for !p.peekTokenIs(token.SEMICOLON) {
+	for p.peekTokenIsNot([]token.TokenType{token.SEMICOLON, token.EOF}) {
 		if p.curTokenIs(token.RPAREN) {
 			p.nextToken()
 		}
 		stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST)) // Get the main query
 
 		iter++ // This is a hack to prevent an infinite loop. If we're looping 10 times, something's wrong. Bail out.
-		if iter > 10 {
+		if iter > 1000 {
 			fmt.Println("parseCTEStatement: Infinite loop detected")
 			fmt.Printf("parseCTEStatement: %s %s :: %s %s\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit)
 			return &ast.CTEStatement{Token: token.Token{Type: token.ILLEGAL, Lit: "ILLEGAL"}}

@@ -139,6 +139,10 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		p.nextToken()
 		stmt.CompoundToken = p.curToken
 		p.nextToken()
+		if p.curTokenIs(token.ALL) {
+			stmt.CompoundTokenModifier = p.curToken
+			p.nextToken()
+		}
 		stmt.CompoundExpression = p.parseExpression(LOWEST)
 	}
 

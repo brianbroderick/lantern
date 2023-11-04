@@ -17,8 +17,6 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
-		{"select json_object_agg(foo order by id) from bar", 1, "(SELECT json_object_agg(foo ORDER BY id) FROM bar);"},
-
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -160,6 +158,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users union select id from customers;", 1, "(SELECT id FROM users UNION (SELECT id FROM customers));"},
 		{"select id from users except select id from customers;", 1, "(SELECT id FROM users EXCEPT (SELECT id FROM customers));"},
 		{"select id from users intersect select id from customers;", 1, "(SELECT id FROM users INTERSECT (SELECT id FROM customers));"},
+		{"select id from users union all select id from customers;", 1, "(SELECT id FROM users UNION ALL (SELECT id FROM customers));"},
+		{"select id from users except all select id from customers;", 1, "(SELECT id FROM users EXCEPT ALL (SELECT id FROM customers));"},
+		{"select id from users intersect all select id from customers;", 1, "(SELECT id FROM users INTERSECT ALL (SELECT id FROM customers));"},
 
 		// Select: Cast literals
 		{"select '100'::integer from a;", 1, "(SELECT '100'::INTEGER FROM a);"},
@@ -195,6 +196,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Select: Functions
 		{"select w() from a", 1, "(SELECT w() FROM a);"},
 		{"select id from load(1,2)", 1, "(SELECT id FROM load(1, 2));"},
+		{"select json_object_agg(foo order by id) from bar", 1, "(SELECT json_object_agg(foo ORDER BY id) FROM bar);"}, // aggregate function with order by
 
 		// Subqueries
 		{"select * from (select id from a) b order by id", 1, "(SELECT * FROM (SELECT id FROM a) b ORDER BY id);"},
