@@ -458,9 +458,10 @@ type TableExpression struct {
 	JoinType      string      `json:"join_type,omitempty"`      // the type of join: source, inner, left, right, full, etc
 	Schema        string      `json:"schema,omitempty"`         // the name of the schema
 	Table         Expression  `json:"table,omitempty"`          // the name of the table
-	Alias         string      `json:"alias,omitempty"`          // the alias of the table
+	Alias         Expression  `json:"alias,omitempty"`          // the alias of the table
 	JoinCondition Expression  `json:"join_condition,omitempty"` // the ON clause
-	Cast          string      `json:"cast,omitempty"`
+	Cast          string      `json:"cast,omitempty"`           // :: to cast the table
+	Ordinality    bool        `json:"ordinality,omitempty"`     // the WITH ORDINALITY clause
 }
 
 func (t *TableExpression) expressionNode()      {}
@@ -473,8 +474,12 @@ func (t *TableExpression) String(maskParams bool) string {
 	}
 
 	out.WriteString(t.Table.String(maskParams))
-	if t.Alias != "" {
-		out.WriteString(" " + t.Alias)
+	if t.Ordinality {
+		out.WriteString(" WITH ORDINALITY")
+	}
+
+	if t.Alias != nil && t.Alias.String(maskParams) != "" {
+		out.WriteString(" " + t.Alias.String(maskParams))
 	}
 
 	if t.JoinCondition != nil {
