@@ -391,39 +391,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 	leftExp := prefix()
 
-	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}) && precedence < p.peekPrecedence() {
-		infix := p.infixParseFns[p.peekToken.Type]
-		if infix == nil {
-			return leftExp
-		}
-
-		p.nextToken()
-
-		leftExp = infix(leftExp)
-	}
-
-	// This is why all expressions must have a SetCast method
-	if p.peekTokenIs(token.DOUBLECOLON) {
-		p.nextToken()
-		p.nextToken()
-		leftExp.SetCast(p.curToken.Lit)
-	}
-
-	return leftExp
-}
-
-func (p *Parser) parseExpressionListItem(precedence int) ast.Expression {
-	defer untrace(trace("parseExpression"))
-	defer p.setContext(XLISTITEM)
-
-	prefix := p.prefixParseFns[p.curToken.Type]
-	if prefix == nil {
-		p.noPrefixParseFnError(p.curToken.Type)
-		return nil
-	}
-	leftExp := prefix()
-
-	if p.context == XCALL { // Allow order by to denote an aggregate function
+	switch p.context {
+	case XCALL: // Allow order by to denote an aggregate function
 		for !p.peekTokenIsOne([]token.TokenType{token.COMMA}) && precedence < p.peekPrecedence() {
 			infix := p.infixParseFns[p.peekToken.Type]
 			if infix == nil {
@@ -434,7 +403,7 @@ func (p *Parser) parseExpressionListItem(precedence int) ast.Expression {
 
 			leftExp = infix(leftExp)
 		}
-	} else {
+	default:
 
 		for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}) && precedence < p.peekPrecedence() {
 			infix := p.infixParseFns[p.peekToken.Type]
@@ -457,6 +426,52 @@ func (p *Parser) parseExpressionListItem(precedence int) ast.Expression {
 
 	return leftExp
 }
+
+// func (p *Parser) parseExpressionListItem(precedence int) ast.Expression {
+// 	defer untrace(trace("parseExpression"))
+// 	defer p.setContext(XLISTITEM)
+
+// 	prefix := p.prefixParseFns[p.curToken.Type]
+// 	if prefix == nil {
+// 		p.noPrefixParseFnError(p.curToken.Type)
+// 		return nil
+// 	}
+// 	leftExp := prefix()
+
+// 	if p.context == XCALL { // Allow order by to denote an aggregate function
+// 		for !p.peekTokenIsOne([]token.TokenType{token.COMMA}) && precedence < p.peekPrecedence() {
+// 			infix := p.infixParseFns[p.peekToken.Type]
+// 			if infix == nil {
+// 				return leftExp
+// 			}
+
+// 			p.nextToken()
+
+// 			leftExp = infix(leftExp)
+// 		}
+// 	} else {
+
+// 		for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}) && precedence < p.peekPrecedence() {
+// 			infix := p.infixParseFns[p.peekToken.Type]
+// 			if infix == nil {
+// 				return leftExp
+// 			}
+
+// 			p.nextToken()
+
+// 			leftExp = infix(leftExp)
+// 		}
+// 	}
+
+// 	// This is why all expressions must have a SetCast method
+// 	if p.peekTokenIs(token.DOUBLECOLON) {
+// 		p.nextToken()
+// 		p.nextToken()
+// 		leftExp.SetCast(p.curToken.Lit)
+// 	}
+
+// 	return leftExp
+// }
 
 func (p *Parser) peekPrecedence() int {
 	if p, ok := precedences[p.peekToken.Type]; ok {
@@ -645,12 +660,12 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 
 	// p.nextToken()
 	// fmt.Printf("parseExpressionList: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, list)
-	list = append(list, p.parseExpressionListItem(LOWEST))
+	list = append(list, p.parseExpression(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		list = append(list, p.parseExpressionListItem(LOWEST))
+		list = append(list, p.parseExpression(LOWEST))
 	}
 
 	if !p.peekTokenIsOne(end) {
