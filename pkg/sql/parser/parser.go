@@ -22,6 +22,7 @@ const (
 	EQUALS         // ==
 	LESSGREATER    // > or <
 	FILTER         // BETWEEN, IN, LIKE, ILIKE, SIMILAR
+	ORDINALITY     // WITH ORDINALITY
 	WINDOW         // OVER
 	SUM            // +
 	PRODUCT        // *
@@ -74,6 +75,7 @@ var precedences = map[token.TokenType]int{
 	token.JSONCONCAT:        JSON,
 	token.OVERLAP:           FILTER,
 	token.ORDER:             AGGREGATE,
+	token.WITH:              ORDINALITY,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -206,6 +208,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LBRACKET, p.parseArrayExpression)
 	// p.registerInfix(token.DOUBLECOLON, p.parseCastExpression) // this is a thought instead of the kludge below
 	p.registerInfix(token.ORDER, p.parseAggregateExpression)
+	p.registerInfix(token.WITH, p.parseWithInfixExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -390,6 +393,8 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExp := prefix()
+
+	// fmt.Printf("parseExpression: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, p.context)
 
 	switch p.context {
 	case XCALL: // Allow order by to denote an aggregate function
@@ -587,6 +592,22 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return expression
 }
 
+func (p *Parser) parseWithInfixExpression(left ast.Expression) ast.Expression {
+	defer untrace(trace("parseWithInfixExpression"))
+	expression := &ast.InfixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Lit,
+		Left:     left,
+	}
+	if p.peekTokenIs(token.ORDINALITY) {
+		expression.Operator = "WITH"
+		p.nextToken()
+		expression.Right = &ast.Identifier{Token: p.curToken, Value: strings.ToUpper(p.curToken.Lit)}
+	}
+
+	return expression
+}
+
 func (p *Parser) parseBoolean() ast.Expression {
 	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }
@@ -687,7 +708,9 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 }
 
 func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
-	p.setContext(XARRAY) // sets the context for the parseExpressionListItem function
+	context := p.context
+	p.setContext(XARRAY)          // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
 	array := &ast.ArrayLiteral{Token: p.curToken, Left: left}
 	p.nextToken()
 	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})

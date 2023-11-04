@@ -37,7 +37,7 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 		stmt.Expressions = append(stmt.Expressions, p.parseExpression(LOWEST)) // Get the main query
 
 		iter++ // This is a hack to prevent an infinite loop. If we're looping 10 times, something's wrong. Bail out.
-		if iter > 1000 {
+		if iter > 10 {
 			fmt.Println("parseCTEStatement: Infinite loop detected")
 			fmt.Printf("parseCTEStatement: %s %s :: %s %s\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit)
 			return &ast.CTEStatement{Token: token.Token{Type: token.ILLEGAL, Lit: "ILLEGAL"}}
@@ -53,6 +53,8 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 
 func (p *Parser) parseCTEExpression() ast.Expression {
 	defer untrace(trace("parseCTEExpression " + p.curToken.Lit))
+
+	// fmt.Printf("parseCTEExpression: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, p.context)
 
 	// fmt.Printf("parseCTEExpression000: %s %s :: %s %s\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit)
 

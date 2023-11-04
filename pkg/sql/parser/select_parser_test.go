@@ -201,6 +201,10 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Subqueries
 		{"select * from (select id from a) b order by id", 1, "(SELECT * FROM (SELECT id FROM a) b ORDER BY id);"},
 		{"SELECT id FROM ( SELECT id FROM users u UNION SELECT id FROM users u ) as SubQ ;", 1, "(SELECT id FROM (SELECT id FROM users u UNION (SELECT id FROM users u)) SubQ);"}, // with union
+
+		// Select: With Ordinality
+		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) ;", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]));"},
+		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality;", 1, "(SELECT * FROM (unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY));"},
 	}
 
 	for _, tt := range tests {

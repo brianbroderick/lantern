@@ -35,15 +35,17 @@ func (s *CTEStatement) String(maskParams bool) string {
 	inCTE := true
 
 	for _, e := range s.Expressions {
-		if stmt, ok := e.(*SelectExpression); ok {
-			if stmt.TempTable == nil {
-				inCTE = false
+		if e != nil {
+			if stmt, ok := e.(*SelectExpression); ok {
+				if stmt.TempTable == nil {
+					inCTE = false
+				}
 			}
-		}
-		if inCTE {
-			tmpTables = append(tmpTables, e)
-		} else {
-			primaryExpressions = append(primaryExpressions, e)
+			if inCTE {
+				tmpTables = append(tmpTables, e)
+			} else {
+				primaryExpressions = append(primaryExpressions, e)
+			}
 		}
 	}
 
