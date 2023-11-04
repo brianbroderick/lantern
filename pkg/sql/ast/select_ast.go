@@ -332,6 +332,45 @@ func (f *FetchExpression) SetCast(cast string) {
 	f.Cast = cast
 }
 
+type AggregateExpression struct {
+	Token    token.Token  `json:"token,omitempty"`
+	Left     Expression   `json:"expression,omitempty"`
+	Operator string       `json:"operator,omitempty"`
+	Right    []Expression `json:"order_by,omitempty"` // the columns to order by
+	Cast     string       `json:"cast,omitempty"`
+}
+
+func (x *AggregateExpression) expressionNode()      {}
+func (x *AggregateExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *AggregateExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString(x.Left.String(maskParams))
+	if x.Operator != "" {
+		out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
+	}
+	if len(x.Right) > 1 {
+		out.WriteString("(")
+	}
+
+	if len(x.Right) > 0 {
+		right := []string{}
+		for _, r := range x.Right {
+			right = append(right, r.String(maskParams))
+		}
+		out.WriteString(strings.Join(right, ", "))
+	}
+
+	if len(x.Right) > 1 {
+		out.WriteString(")")
+	}
+
+	return out.String()
+}
+func (x *AggregateExpression) SetCast(cast string) {
+	x.Cast = cast
+}
+
 type WindowExpression struct {
 	Token       token.Token  `json:"token,omitempty"`        // the token.OVER token
 	Alias       *Identifier  `json:"alias,omitempty"`        // the alias of the window

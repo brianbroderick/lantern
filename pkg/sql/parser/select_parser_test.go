@@ -17,6 +17,8 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
+		{"select json_object_agg(foo order by id) from bar", 1, "(SELECT json_object_agg(foo ORDER BY id) FROM bar);"},
+
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}

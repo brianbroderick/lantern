@@ -165,7 +165,7 @@ func (p *Parser) parseDistinct() ast.Expression {
 
 			if p.curTokenIs(token.LPAREN) {
 				p.nextToken()
-				distinct.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+				distinct.Right = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseDistinct")
 				if p.curTokenIs(token.RPAREN) {
 					p.nextToken()
 				}
@@ -498,8 +498,6 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 	}
 	leftExp := prefix()
 
-	// fmt.Printf("parseColumn: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
-
 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.FROM, token.AS, token.IDENT}) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
 		if infix == nil {
@@ -591,7 +589,7 @@ func (p *Parser) parseLock() ast.Expression {
 
 	if p.curTokenIs(token.OF) {
 		p.nextToken()
-		expression.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF})
+		expression.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF}, "parseLock")
 	}
 
 	if p.curTokenIs(token.NOWAIT) {
@@ -620,7 +618,7 @@ func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
 
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()
-		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseNotExpression")
 	}
 	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
@@ -632,9 +630,25 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 	p.nextToken()
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()
-		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseInExpression")
 	}
 	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
+
+	return exp
+}
+
+func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
+	exp := &ast.AggregateExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	// fmt.Printf("parseAggregateExpression1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
+
+	if p.curTokenIs(token.ORDER) {
+		exp.Operator = "ORDER BY"
+		p.nextToken()
+		if p.curTokenIs(token.BY) {
+			p.nextToken()
+		}
+		exp.Right = p.parseSortList([]token.TokenType{token.RPAREN})
+	}
 
 	return exp
 }

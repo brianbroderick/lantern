@@ -14,6 +14,7 @@ const (
 	_ int = iota
 	LOWEST
 	UNION          // UNION
+	AGGREGATE      // ORDER BY in a function call
 	OR             // OR
 	AND            // AND
 	NOT            // NOT
@@ -72,6 +73,7 @@ var precedences = map[token.TokenType]int{
 	token.JSONDELETE:        JSON,
 	token.JSONCONCAT:        JSON,
 	token.OVERLAP:           FILTER,
+	token.ORDER:             AGGREGATE,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -93,6 +95,10 @@ type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(ast.Expression) ast.Expression
 )
+
+// We may want to add the caller to the parser, to allow for context in conditions
+// For example, an ORDER BY can show up in a select, but also in function calls
+// For now, we're just passing the caller as a string in certain functions
 
 type Parser struct {
 	l           *lexer.Lexer
@@ -182,6 +188,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseArrayExpression)
+	// p.registerInfix(token.DOUBLECOLON, p.parseCastExpression) // this is a thought instead of the kludge below
+	p.registerInfix(token.ORDER, p.parseAggregateExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -388,6 +396,51 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExp
 }
 
+func (p *Parser) parseExpressionListItem(precedence int, caller string) ast.Expression {
+	defer untrace(trace("parseExpression"))
+
+	prefix := p.prefixParseFns[p.curToken.Type]
+	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
+		return nil
+	}
+	leftExp := prefix()
+
+	if caller == "parseCallExpression" { // Allow order by to denote an aggregate function
+		for !p.peekTokenIsOne([]token.TokenType{token.COMMA}) && precedence < p.peekPrecedence() {
+			infix := p.infixParseFns[p.peekToken.Type]
+			if infix == nil {
+				return leftExp
+			}
+
+			p.nextToken()
+
+			leftExp = infix(leftExp)
+		}
+	} else {
+
+		for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}) && precedence < p.peekPrecedence() {
+			infix := p.infixParseFns[p.peekToken.Type]
+			if infix == nil {
+				return leftExp
+			}
+
+			p.nextToken()
+
+			leftExp = infix(leftExp)
+		}
+	}
+
+	// This is why all expressions must have a SetCast method
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		leftExp.SetCast(p.curToken.Lit)
+	}
+
+	return leftExp
+}
+
 func (p *Parser) peekPrecedence() int {
 	if p, ok := precedences[p.peekToken.Type]; ok {
 		return p
@@ -507,11 +560,10 @@ func (p *Parser) parseBoolean() ast.Expression {
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
-	// fmt.Printf("parseGroupedExpression1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 	p.nextToken()
 
 	expression := &ast.GroupedExpression{Token: p.curToken}
-	expression.Elements = p.parseExpressionList([]token.TokenType{token.RPAREN})
+	expression.Elements = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseGroupedExpression")
 
 	// exp := p.parseExpression(LOWEST)
 
@@ -560,11 +612,11 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 		exp.Distinct = p.parseDistinct()
 	}
 
-	exp.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
+	exp.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN}, "parseCallExpression")
 	return exp
 }
 
-func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
+func (p *Parser) parseExpressionList(end []token.TokenType, caller string) []ast.Expression {
 	list := []ast.Expression{}
 
 	if p.curTokenIsOne(end) {
@@ -573,12 +625,12 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 
 	// p.nextToken()
 	// fmt.Printf("parseExpressionList: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, list)
-	list = append(list, p.parseExpression(LOWEST))
+	list = append(list, p.parseExpressionListItem(LOWEST, caller))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		list = append(list, p.parseExpression(LOWEST))
+		list = append(list, p.parseExpressionListItem(LOWEST, caller))
 	}
 
 	if !p.peekTokenIsOne(end) {
@@ -593,7 +645,7 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 func (p *Parser) parseArrayLiteral() ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.curToken}
 	p.nextToken()
-	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
+	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET}, "parseArrayLiteral")
 
 	return array
 }
@@ -601,7 +653,7 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 	array := &ast.ArrayLiteral{Token: p.curToken, Left: left}
 	p.nextToken()
-	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
+	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET}, "parseArrayExpression")
 
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
