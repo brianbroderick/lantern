@@ -45,8 +45,10 @@ const (
 	ASTERISK // *
 	SLASH    // /
 
-	LT // <
-	GT // >
+	LT  // <
+	GT  // >
+	GTE // >=
+	LTE // <=
 
 	EQ     // ==
 	NOT_EQ // != or <>
@@ -205,8 +207,10 @@ var Tokens = [...]string{
 	ASTERISK: "ASTERISK", // *
 	SLASH:    "SLASH",    // /
 
-	LT: "LT", // <
-	GT: "GT", // >
+	LT:  "LT",  // <
+	GT:  "GT",  // >
+	GTE: "GTE", // >=
+	LTE: "LTE", // <=
 
 	EQ:     "EQ",     // ==
 	NOT_EQ: "NOT_EQ", // != or <>

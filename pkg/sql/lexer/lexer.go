@@ -65,17 +65,27 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 	case '*':
 		tok = newToken(token.ASTERISK, l.ch)
 	case '<': // maybe a JSON operator
-		if l.peek() == '@' {
+		switch l.peek() {
+		case '=':
+			l.read()
+			tok = token.Token{Type: token.LTE, Lit: "<="}
+		case '@':
 			l.read()
 			tok = token.Token{Type: token.JSONCONTAINED, Lit: "<@"}
-		} else if l.peek() == '>' {
+		case '>':
 			l.read()
 			tok = token.Token{Type: token.NOT_EQ, Lit: "<>"}
-		} else {
+		default:
 			tok = newToken(token.LT, l.ch)
 		}
 	case '>':
-		tok = newToken(token.GT, l.ch)
+		switch l.peek() {
+		case '=':
+			l.read()
+			tok = token.Token{Type: token.GTE, Lit: ">="}
+		default:
+			tok = newToken(token.GT, l.ch)
+		}
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case ':':
