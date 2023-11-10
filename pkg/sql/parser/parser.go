@@ -101,6 +101,8 @@ type (
 	parseContext  int
 )
 
+// These are different contexts that the parser can be in. This is because some
+// expressions can be used in multiple contexts, but have different meanings.
 const (
 	XNIL parseContext = iota
 	XCALL
@@ -368,6 +370,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseCTEStatement()
 	case token.SET:
 		return p.parseSetStatement()
+	case token.DROP:
+		return p.parseDropStatement()
 	default:
 		return p.parseExpressionStatement()
 	}

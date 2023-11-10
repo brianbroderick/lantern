@@ -17,10 +17,8 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
-		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality as t(key, index);", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY t(key, index));"},
-		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality ;", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY);"},
 		// Multiple Statements
-		// {"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
+		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
 	for _, tt := range tests {
@@ -207,6 +205,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Select: With Ordinality
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) ;", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]));"},
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality;", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY);"},
+		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality as t(key, index);", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY t(key, index));"},
 	}
 
 	for _, tt := range tests {

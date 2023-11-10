@@ -100,6 +100,7 @@ const (
 	DEPTH
 	DESC
 	DISTINCT
+	DROP
 	ELSE
 	END
 	EXCEPT
@@ -261,6 +262,7 @@ var Tokens = [...]string{
 	DEPTH:          "DEPTH",
 	DESC:           "DESC",
 	DISTINCT:       "DISTINCT",
+	DROP:           "DROP",
 	ELSE:           "ELSE",
 	END:            "END",
 	EXCEPT:         "EXCEPT",
