@@ -20,6 +20,7 @@ func TestDropStatements(t *testing.T) {
 		{"drop table if exists my_table;", "(DROP TABLE IF EXISTS my_table);"},
 		{"drop table IF EXISTS my_table;", "(DROP TABLE IF EXISTS my_table);"},
 		{"DROP table my_table;", "(DROP TABLE my_table);"},
+		{"DROP table my_table, my_other_table;", "(DROP TABLE my_table, my_other_table);"},
 		{"drop table my_table; select 1 from other;", "(DROP TABLE my_table);(SELECT 1 FROM other);"},
 	}
 
