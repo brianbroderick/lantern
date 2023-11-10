@@ -36,7 +36,7 @@ func (x *DropStatement) String(maskParams bool) string {
 	}
 
 	if x.Options != "" {
-		out.WriteString(" " + x.Options)
+		out.WriteString(" " + strings.ToUpper(x.Options))
 	}
 
 	out.WriteString(");")

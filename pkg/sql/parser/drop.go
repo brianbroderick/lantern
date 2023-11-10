@@ -25,7 +25,12 @@ func (p *Parser) parseDropStatement() *ast.DropStatement {
 	}
 
 	if p.curTokenIs(token.IDENT) {
-		stmt.Tables = p.parseColumnList([]token.TokenType{token.COMMA})
+		stmt.Tables = p.parseDropTableList()
+	}
+
+	if p.curTokenIs(token.IDENT) && (strings.ToLower(p.curToken.Lit) == "cascade" || strings.ToLower(p.curToken.Lit) == "restrict") {
+		stmt.Options = p.curToken.Lit
+		p.nextToken()
 	}
 
 	if p.peekTokenIs(token.SEMICOLON) {
@@ -33,4 +38,22 @@ func (p *Parser) parseDropStatement() *ast.DropStatement {
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseDropTableList() []ast.Expression {
+	defer untrace(trace("parseDropTableList"))
+
+	list := []ast.Expression{}
+
+	list = append(list, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseExpression(LOWEST))
+	}
+
+	p.nextToken()
+
+	return list
 }
