@@ -147,6 +147,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
+	p.registerPrefix(token.NULL, p.parseNull)
 
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
@@ -374,6 +375,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseDropStatement()
 	case token.CREATE:
 		return p.parseCreateStatement()
+	case token.ANALYZE:
+		return p.parseAnalyzeStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -621,6 +624,10 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 func (p *Parser) parseBoolean() ast.Expression {
 	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
+}
+
+func (p *Parser) parseNull() ast.Expression {
+	return &ast.Null{Token: p.curToken}
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {

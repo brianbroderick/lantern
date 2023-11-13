@@ -9,7 +9,7 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
-// Currently we're only handling CREATE TABLE AS, but we'll need to handle CREATE TABLE, CREATE INDEX, etc.
+// Currently we're only handling CREATE TABLE AS & CREATE INDEX, but we'll need to handle CREATE TABLE, CREATE TRIGGER, etc.
 
 type CreateStatement struct {
 	Token        token.Token `json:"token,omitempty"`        // the token.CREATE token

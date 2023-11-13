@@ -116,6 +116,18 @@ func (b *Boolean) SetCast(cast string) {
 	b.Cast = cast
 }
 
+type Null struct {
+	Token token.Token
+	Cast  string
+}
+
+func (x *Null) expressionNode()               {}
+func (x *Null) TokenLiteral() string          { return x.Token.Lit }
+func (x *Null) String(maskParams bool) string { return x.Token.Lit }
+func (x *Null) SetCast(cast string) {
+	x.Cast = cast
+}
+
 type IntegerLiteral struct {
 	Token       token.Token `json:"token,omitempty"`
 	Value       int64       `json:"value,omitempty"`
