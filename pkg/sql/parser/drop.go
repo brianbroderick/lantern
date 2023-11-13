@@ -7,12 +7,14 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
+// This currently handles DROP TABLE, but does not handle DROP DATABASE, DROP INDEX, etc. yet.
+
 func (p *Parser) parseDropStatement() *ast.DropStatement {
 	defer untrace(trace("parseDropStatement " + p.curToken.Lit))
 
 	stmt := &ast.DropStatement{Token: p.curToken}
 	p.nextToken()
-	stmt.Object = p.curToken.Lit
+	stmt.Object = p.curToken
 
 	p.nextToken()
 

@@ -91,7 +91,9 @@ const (
 	BREADTH
 	BY
 	CASE
+	CONCURRENTLY
 	CONFLICT
+	CREATE
 	CROSS
 	CUBE
 	CURRENT
@@ -177,6 +179,7 @@ const (
 	TRUE
 	UNBOUNDED
 	UNION
+	UNIQUE
 	UPDATE
 	USING
 	VALUES
@@ -253,7 +256,9 @@ var Tokens = [...]string{
 	BREADTH:        "BREADTH",
 	BY:             "BY",
 	CASE:           "CASE",
+	CONCURRENTLY:   "CONCURRENTLY",
 	CONFLICT:       "CONFLICT",
+	CREATE:         "CREATE",
 	CROSS:          "CROSS",
 	CUBE:           "CUBE",
 	CURRENT:        "CURRENT",
@@ -339,6 +344,7 @@ var Tokens = [...]string{
 	TRUE:        "TRUE",
 	UNBOUNDED:   "UNBOUNDED",
 	UNION:       "UNION",
+	UNIQUE:      "UNIQUE",
 	UPDATE:      "UPDATE",
 	USING:       "USING",
 	VALUES:      "VALUES",

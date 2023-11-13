@@ -11,7 +11,7 @@ import (
 
 type DropStatement struct {
 	Token   token.Token  `json:"token,omitempty"` // the token.DROP token
-	Object  string       `json:"object,omitempty"`
+	Object  token.Token  `json:"object,omitempty"`
 	Exists  bool         `json:"exists,omitempty"`
 	Tables  []Expression `json:"expression,omitempty"`
 	Options string       `json:"options,omitempty"`
@@ -22,7 +22,7 @@ func (x *DropStatement) TokenLiteral() string { return x.Token.Lit }
 func (x *DropStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(fmt.Sprintf("(DROP %s ", strings.ToUpper(x.Object)))
+	out.WriteString(fmt.Sprintf("(DROP %s ", x.Object.Type.String()))
 	if x.Exists {
 		out.WriteString("IF EXISTS ")
 	}

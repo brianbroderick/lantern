@@ -251,16 +251,16 @@ func (p *Parser) curTokenIsOne(tokens []token.TokenType) bool {
 	return found
 }
 
-// This is essentially !curTokenIsOne, but it can't match any token in the list
-func (p *Parser) curTokenIsNot(tokens []token.TokenType) bool {
-	for _, t := range tokens {
-		if p.curTokenIs(t) { // The token matches one of the tokens in the list
-			return false
-		}
-	}
+// // This is essentially !curTokenIsOne, but it can't match any token in the list
+// func (p *Parser) curTokenIsNot(tokens []token.TokenType) bool {
+// 	for _, t := range tokens {
+// 		if p.curTokenIs(t) { // The token matches one of the tokens in the list
+// 			return false
+// 		}
+// 	}
 
-	return true
-}
+// 	return true
+// }
 
 func (p *Parser) peekTokenIsOne(tokens []token.TokenType) bool {
 	found := false
@@ -372,6 +372,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseSetStatement()
 	case token.DROP:
 		return p.parseDropStatement()
+	case token.CREATE:
+		return p.parseCreateStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
