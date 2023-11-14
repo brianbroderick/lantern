@@ -18,6 +18,16 @@ func TestAnalyzeStatements(t *testing.T) {
 	}{
 		// Select: simple
 		{"analyze temp_my_table;", "(ANALYZE temp_my_table);"},
+		{"analyze verbose temp_my_table;", "(ANALYZE (VERBOSE) temp_my_table);"},
+		{"analyze (verbose) temp_my_table;", "(ANALYZE (VERBOSE) temp_my_table);"},
+		{"analyze (verbose, skip_locked) temp_my_table;", "(ANALYZE (VERBOSE, SKIP_LOCKED) temp_my_table);"},
+		{"analyze (skip_locked) temp_my_table;", "(ANALYZE (SKIP_LOCKED) temp_my_table);"},
+		{"analyze (verbose, skip_locked) temp_my_table;", "(ANALYZE (VERBOSE, SKIP_LOCKED) temp_my_table);"},
+		{"analyze (verbose, skip_locked, buffer_usage_limit 10) temp_my_table;", "(ANALYZE (VERBOSE, SKIP_LOCKED, BUFFER_USAGE_LIMIT 10) temp_my_table);"},
+		{"analyze (verbose, skip_locked, buffer_usage_limit 10 kb) temp_my_table;", "(ANALYZE (VERBOSE, SKIP_LOCKED, BUFFER_USAGE_LIMIT 10KB) temp_my_table);"},
+		{"analyze (verbose on, skip_locked true) temp_my_table;", "(ANALYZE (VERBOSE, SKIP_LOCKED) temp_my_table);"},
+		{"analyze (verbose off, skip_locked false) temp_my_table;", "(ANALYZE temp_my_table);"},
+		{"analyze (buffer_usage_limit 20 mb) temp_my_table;", "(ANALYZE (BUFFER_USAGE_LIMIT 20MB) temp_my_table);"},
 	}
 
 	for _, tt := range tests {
