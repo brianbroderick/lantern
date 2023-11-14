@@ -35,11 +35,11 @@ func New(input string) *Lexer {
 func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 	l.skipWhitespace()
 	l.read()
+	pos = l.pos
 
 	switch l.ch {
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
-	// TODO: Support comments --
 	case '-':
 		if l.peek() == '>' {
 			l.read()
@@ -49,6 +49,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 			} else {
 				tok = token.Token{Type: token.JSONGETBYKEY, Lit: "->"}
 			}
+			// Comments out the rest of the line by using --
 		} else if l.peek() == '-' {
 			for {
 				l.read()
@@ -174,11 +175,9 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 			tok = newToken(token.SLASH, l.ch)
 		}
 	case '\'':
-		pos = l.pos
 		tok = l.scanString()
 		return tok, pos
 	case '"': // double quotes are allowed to surround identities
-		pos = l.pos
 		tok = l.scanIdent()
 		return tok, pos
 	case '#': // JSON operators

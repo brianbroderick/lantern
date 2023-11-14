@@ -44,6 +44,7 @@ func TestSingleSelectStatements(t *testing.T) {
 	}{
 
 		// Select: simple
+		{"select id from users where any(type_ids) = 10;", 1, "(SELECT id FROM users WHERE ANY(type_ids) = 10);"},
 		{"select id from users;", 1, "(SELECT id FROM users);"},                                                                                                             // super basic select
 		{"select u.* from users u;", 1, "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
 		{"select 2*3 from users;", 1, "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard

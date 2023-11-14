@@ -231,6 +231,7 @@ func (p *Parser) nextToken() {
 	}
 	p.peekToken = newToken // TODO: surface the position
 	p.pos = pos
+	fmt.Println("nextToken: ", p.curToken, p.peekToken, p.pos)
 }
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {
