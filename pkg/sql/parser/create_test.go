@@ -19,6 +19,7 @@ func TestCreateStatements(t *testing.T) {
 		// Select: simple
 		{"create temp table temp_my_table as (select id from my_table);", "(CREATE TEMP TABLE temp_my_table AS (SELECT id FROM my_table));"},
 		{"create index idx_person_id ON temp_my_table( person_id );", "(CREATE INDEX idx_person_id ON temp_my_table(person_id));"},
+		{"create INDEX idx_person_id ON temp_my_table( person_id );", "(CREATE INDEX idx_person_id ON temp_my_table(person_id));"},
 	}
 
 	for _, tt := range tests {

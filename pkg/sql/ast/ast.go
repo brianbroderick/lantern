@@ -121,9 +121,15 @@ type Null struct {
 	Cast  string
 }
 
-func (x *Null) expressionNode()               {}
-func (x *Null) TokenLiteral() string          { return x.Token.Lit }
-func (x *Null) String(maskParams bool) string { return x.Token.Lit }
+func (x *Null) expressionNode()      {}
+func (x *Null) TokenLiteral() string { return x.Token.Lit }
+func (x *Null) String(maskParams bool) string {
+	literal := strings.ToUpper(x.Token.Lit)
+	if x.Cast != "" {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast))
+	}
+	return literal
+}
 func (x *Null) SetCast(cast string) {
 	x.Cast = cast
 }

@@ -35,7 +35,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	stmt := &ast.SelectExpression{Token: p.curToken}
 
 	// COLUMNS
-	if !p.expectPeekIsOne([]token.TokenType{token.LPAREN, token.IDENT, token.INT, token.STRING, token.ASTERISK, token.ALL, token.DISTINCT, token.CASE}) {
+	if !p.expectPeekIsOne([]token.TokenType{token.CAST, token.NULL, token.LPAREN, token.IDENT, token.INT, token.STRING, token.ASTERISK, token.ALL, token.DISTINCT, token.CASE}) {
 		return nil
 	}
 
@@ -102,22 +102,27 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		stmt.OrderBy = p.parseSortList(defaultListSeparators)
 	}
 
-	// LIMIT CLAUSE
-	if p.peekTokenIs(token.LIMIT) {
-		p.nextToken()
-		p.nextToken()
-		stmt.Limit = p.parseExpression(LOWEST)
-	}
+	// LIMIT and OFFSET CLAUSES can be in any order, but only one of each
+	if p.peekTokenIsOne([]token.TokenType{token.LIMIT, token.OFFSET}) {
+		for p.peekTokenIsOne([]token.TokenType{token.LIMIT, token.OFFSET}) {
+			// LIMIT CLAUSE
+			if p.peekTokenIs(token.LIMIT) {
+				p.nextToken()
+				p.nextToken()
+				stmt.Limit = p.parseExpression(LOWEST)
+			}
 
-	// OFFSET CLAUSE
-	if p.peekTokenIs(token.OFFSET) {
-		p.nextToken()
-		p.nextToken()
-		stmt.Offset = p.parseExpression(LOWEST)
+			// OFFSET CLAUSE
+			if p.peekTokenIs(token.OFFSET) {
+				p.nextToken()
+				p.nextToken()
+				stmt.Offset = p.parseExpression(LOWEST)
 
-		if p.peekTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
-			p.nextToken()
-			p.nextToken()
+				if p.peekTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
+					p.nextToken()
+					p.nextToken()
+				}
+			}
 		}
 	}
 
@@ -673,4 +678,26 @@ func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
 	}
 
 	return exp
+}
+
+func (p *Parser) parseCastExpression() ast.Expression {
+	expression := &ast.CastExpression{Token: p.curToken}
+
+	if p.peekTokenIs(token.LPAREN) {
+		p.nextToken()
+		p.nextToken()
+		expression.Left = p.parseExpression(LOWEST)
+
+		if p.peekTokenIs(token.AS) {
+			p.nextToken()
+			p.nextToken()
+			expression.Cast = p.curToken.Lit
+		}
+
+		if p.peekTokenIs(token.RPAREN) {
+			p.nextToken()
+		}
+	}
+
+	return expression
 }

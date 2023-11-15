@@ -162,11 +162,15 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.DISTINCT, p.parseDistinct)
 	p.registerPrefix(token.ALL, p.parseDistinct)
 	p.registerPrefix(token.CASE, p.parseCaseExpression)
+	p.registerPrefix(token.CAST, p.parseCastExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
 	p.registerPrefix(token.LOCAL, p.parseIdentifier)
 	p.registerPrefix(token.DEFAULT, p.parseIdentifier)
+	p.registerPrefix(token.ANY, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_DATE, p.parseIdentifier)
+	p.registerPrefix(token.USER, p.parseIdentifier)
 
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
@@ -231,7 +235,6 @@ func (p *Parser) nextToken() {
 	}
 	p.peekToken = newToken // TODO: surface the position
 	p.pos = pos
-	fmt.Println("nextToken: ", p.curToken, p.peekToken, p.pos)
 }
 
 func (p *Parser) curTokenIs(t token.TokenType) bool {
@@ -628,7 +631,15 @@ func (p *Parser) parseBoolean() ast.Expression {
 }
 
 func (p *Parser) parseNull() ast.Expression {
-	return &ast.Null{Token: p.curToken}
+	null := &ast.Null{Token: p.curToken}
+
+	// This is why all expressions must have a SetCast method
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		null.SetCast(p.curToken.Lit)
+	}
+	return null
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {

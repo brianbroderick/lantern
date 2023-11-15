@@ -246,27 +246,27 @@ type ColumnExpression struct {
 	// Columns []*Identifier `json:"columns,omitempty"` // the columns that make up the expression for ease of reporting
 }
 
-func (c *ColumnExpression) expressionNode()      {}
-func (c *ColumnExpression) TokenLiteral() string { return c.Token.Lit }
-func (c *ColumnExpression) String(maskParams bool) string {
+func (x *ColumnExpression) expressionNode()      {}
+func (x *ColumnExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *ColumnExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	val := c.Value.String(maskParams)
+	val := x.Value.String(maskParams)
 	out.WriteString(val)
-	if c.Name != nil && c.Name.String(maskParams) != val && c.Name.String(maskParams) != "" {
+	if x.Name != nil && x.Name.String(maskParams) != val && x.Name.String(maskParams) != "" {
 		out.WriteString(" AS ")
-		out.WriteString(c.Name.String(maskParams))
+		out.WriteString(x.Name.String(maskParams))
 	}
 
-	if c.Cast != "" {
+	if x.Cast != "" {
 		out.WriteString("::")
-		out.WriteString(c.Cast)
+		out.WriteString(x.Cast)
 	}
 
 	return out.String()
 }
-func (c *ColumnExpression) SetCast(cast string) {
-	c.Cast = cast
+func (x *ColumnExpression) SetCast(cast string) {
+	x.Cast = cast
 }
 
 type SortExpression struct {
@@ -568,4 +568,27 @@ func (ie *InExpression) String(maskParams bool) string {
 }
 func (ie *InExpression) SetCast(cast string) {
 	ie.Cast = cast
+}
+
+type CastExpression struct {
+	Token token.Token `json:"token,omitempty"` // the token.CAST token
+	Left  Expression  `json:"value,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
+}
+
+func (x *CastExpression) expressionNode()      {}
+func (x *CastExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *CastExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString("CAST(")
+	out.WriteString(x.Left.String(maskParams))
+	out.WriteString(" AS ")
+	out.WriteString(x.Cast)
+	out.WriteString(")")
+
+	return out.String()
+}
+func (x *CastExpression) SetCast(cast string) {
+	x.Cast = cast
 }

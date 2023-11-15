@@ -42,9 +42,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		tableCount int
 		output     string
 	}{
+		{"select now()::timestamp from users;", 1, "(SELECT now()::timestamp FROM users);"},
 
 		// Select: simple
-		{"select id from users where any(type_ids) = 10;", 1, "(SELECT id FROM users WHERE ANY(type_ids) = 10);"},
 		{"select id from users;", 1, "(SELECT id FROM users);"},                                                                                                             // super basic select
 		{"select u.* from users u;", 1, "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
 		{"select 2*3 from users;", 1, "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard
@@ -97,8 +97,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users where id = 42 and customer_id > 74;", 1, "(SELECT id FROM users WHERE ((id = 42) AND (customer_id > 74)));"},
 		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
 		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
-		{"select id from users where name is null", 1, "(SELECT id FROM users WHERE (name IS null));"},
-		{"select id from users where name is not null", 1, "(SELECT id FROM users WHERE (name IS (NOT null)));"},
+		{"select id from users where name is null", 1, "(SELECT id FROM users WHERE (name IS NULL));"},
+		{"select id from users where name is not null", 1, "(SELECT id FROM users WHERE (name IS (NOT NULL)));"},
 
 		// Select: group by
 		{"select id from users group by id", 1, "(SELECT id FROM users GROUP BY id);"},
@@ -121,6 +121,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users limit 10;", 1, "(SELECT id FROM users LIMIT 10);"},
 		{"select id from users limit ALL;", 1, "(SELECT id FROM users LIMIT ALL);"},
 		{"select id from users limit ALL", 1, "(SELECT id FROM users LIMIT ALL);"},
+		{"select id from users order by id limit 34", 1, "(SELECT id FROM users ORDER BY id LIMIT 34);"},
+		{"select * from users order by id offset 0 limit 34", 1, "(SELECT * FROM users ORDER BY id LIMIT 34 OFFSET 0);"},
+		{"select * from users order by id limit 34 offset 0 ", 1, "(SELECT * FROM users ORDER BY id LIMIT 34 OFFSET 0);"},
 
 		// Select: offset
 		{"select id from users limit ALL offset 10;", 1, "(SELECT id FROM users LIMIT ALL OFFSET 10);"},
@@ -207,6 +210,12 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) ;", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]));"},
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality;", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY);"},
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality as t(key, index);", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY t(key, index));"},
+
+		// Select: with reserved words
+		{"select id from users where any(type_ids) = 10;", 1, "(SELECT id FROM users WHERE (any(type_ids) = 10));"},               // any
+		{"select null::integer AS id from users;", 1, "(SELECT NULL::INTEGER AS id FROM users);"},                                 // null
+		{"select id from users where login_date < current_date;", 1, "(SELECT id FROM users WHERE (login_date < current_date));"}, // CURRENT_DATE
+		{"select cast('100' as integer) from users", 1, "(SELECT CAST('100' AS integer) FROM users);"},                            // cast
 	}
 
 	for _, tt := range tests {

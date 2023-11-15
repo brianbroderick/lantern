@@ -31,7 +31,8 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 	}
 
 	// Create Object
-	if p.curTokenIs(token.TABLE) || p.curToken.Lit == "index" {
+	lit = strings.ToLower(p.curToken.Lit)
+	if p.curTokenIs(token.TABLE) || lit == "index" {
 		stmt.Object = p.curToken
 		p.nextToken()
 	}

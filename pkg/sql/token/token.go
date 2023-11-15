@@ -187,7 +187,7 @@ const (
 	PLACING
 	PRECEDING
 	PRIMARY
-	RANGE
+	// RANGE // Not a reserverd word in PG
 	RECURSIVE
 	REFERENCES
 	REPEATABLE
@@ -394,20 +394,20 @@ var Tokens = [...]string{
 	PLACING:           "PLACING",
 	PRIMARY:           "PRIMARY",
 	PRECEDING:         "PRECEDING",
-	RANGE:             "RANGE",
-	RECURSIVE:         "RECURSIVE",
-	REFERENCES:        "REFERENCES",
-	REPEATABLE:        "REPEATABLE",
-	RETURNING:         "RETURNING",
-	RIGHT:             "RIGHT",
-	ROLLUP:            "ROLLUP",
-	ROW:               "ROW",
-	ROWS:              "ROWS",
-	SEARCH:            "SEARCH",
-	SELECT:            "SELECT",
-	SESSION:           "SESSION",
-	SESSION_USER:      "SESSION_USER",
-	SET:               "SET",
+	// RANGE:             "RANGE", // Not a reserverd word in PG
+	RECURSIVE:    "RECURSIVE",
+	REFERENCES:   "REFERENCES",
+	REPEATABLE:   "REPEATABLE",
+	RETURNING:    "RETURNING",
+	RIGHT:        "RIGHT",
+	ROLLUP:       "ROLLUP",
+	ROW:          "ROW",
+	ROWS:         "ROWS",
+	SEARCH:       "SEARCH",
+	SELECT:       "SELECT",
+	SESSION:      "SESSION",
+	SESSION_USER: "SESSION_USER",
+	SET:          "SET",
 	// SETS:           "SETS", // Not a reserverd word in PG
 	SHARE:       "SHARE",
 	SIMILAR:     "SIMILAR",
