@@ -690,7 +690,6 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 
 	exp := &ast.CallExpression{Token: p.curToken, Function: function}
 
-	// fmt.Printf("parseCallExpression: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 	p.nextToken()
 
 	// DISTINCT CLAUSE
@@ -699,6 +698,13 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	}
 
 	exp.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
+
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		exp.Cast = p.curToken.Lit
+	}
+
 	return exp
 }
 

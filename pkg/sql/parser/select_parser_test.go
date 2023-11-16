@@ -42,7 +42,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		tableCount int
 		output     string
 	}{
-		{"select now()::timestamp from users;", 1, "(SELECT now()::timestamp FROM users);"},
+		// {"select now()::timestamp from users;", 1, "(SELECT now()::timestamp FROM users);"},
 
 		// Select: simple
 		{"select id from users;", 1, "(SELECT id FROM users);"},                                                                                                             // super basic select
@@ -174,6 +174,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select array[2]::integer from a", 1, "(SELECT array[2]::INTEGER FROM a);"},
 		{"select load( array[ 1 ]::integer[], array[ 2]::integer[] ) from a", 1, "(SELECT load(array[1]::INTEGER[], array[2]::INTEGER[]) FROM a);"},
 		{"select jsonb_array_length ( ( options ->> 'country_codes' ) :: jsonb ) from modules", 1, "(SELECT jsonb_array_length((options ->> 'country_codes')::JSONB) FROM modules);"},
+		{"select now()::timestamp from users;", 1, "(SELECT now()::TIMESTAMP FROM users);"},
 
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> 'name') = 'brian'));"},
