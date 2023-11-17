@@ -592,3 +592,33 @@ func (x *CastExpression) String(maskParams bool) string {
 func (x *CastExpression) SetCast(cast string) {
 	x.Cast = cast
 }
+
+type WhereExpression struct {
+	Token token.Token `json:"token,omitempty"` // The keyword token, e.g. WHERE
+	Right Expression  `json:"right,omitempty"`
+	Cast  string      `json:"cast,omitempty"` // probably not needed, but used for the interface
+}
+
+func (x *WhereExpression) expressionNode()      {}
+func (x *WhereExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *WhereExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString(strings.ToUpper(x.Token.Lit))
+
+	if x.Right != nil {
+		out.WriteString("(")
+		out.WriteString(x.Right.String(maskParams))
+		out.WriteString(")")
+	}
+
+	if x.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(x.Cast)
+	}
+
+	return out.String()
+}
+func (x *WhereExpression) SetCast(cast string) {
+	x.Cast = cast
+}

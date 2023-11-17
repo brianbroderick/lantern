@@ -13,16 +13,16 @@ import (
 const (
 	_ int = iota
 	LOWEST
-	UNION       // UNION
-	AGGREGATE   // ORDER BY in a function call
-	OR          // OR
-	AND         // AND
-	NOT         // NOT
-	IS          // IS, ISNULL, NOTNULL
-	EQUALS      // ==
-	LESSGREATER // > or <
-	FILTER      // BETWEEN, IN, LIKE, ILIKE, SIMILAR
-	// ORDINALITY     // WITH ORDINALITY
+	UNION          // UNION
+	FILTER         // FILTER i.e. COUNT(*) FILTER (WHERE i < 5)
+	AGGREGATE      // ORDER BY in a function call
+	OR             // OR
+	AND            // AND
+	NOT            // NOT
+	IS             // IS, ISNULL, NOTNULL
+	EQUALS         // ==
+	LESSGREATER    // > or <
+	COMPARE        // BETWEEN, IN, LIKE, ILIKE, SIMILAR
 	WINDOW         // OVER
 	SUM            // +
 	PRODUCT        // *
@@ -58,11 +58,12 @@ var precedences = map[token.TokenType]int{
 	token.ISNULL:            IS,
 	token.NOTNULL:           IS,
 	token.OVER:              WINDOW,
-	token.BETWEEN:           FILTER,
-	token.IN:                FILTER,
-	token.LIKE:              FILTER,
-	token.ILIKE:             FILTER,
-	token.SIMILAR:           FILTER,
+	token.BETWEEN:           COMPARE,
+	token.IN:                COMPARE,
+	token.LIKE:              COMPARE,
+	token.ILIKE:             COMPARE,
+	token.SIMILAR:           COMPARE,
+	token.OVERLAP:           COMPARE,
 	token.EXPONENTIATION:    EXPONENTIATION,
 	token.JSONGETBYKEY:      JSON,
 	token.JSONGETBYTEXT:     JSON,
@@ -75,9 +76,8 @@ var precedences = map[token.TokenType]int{
 	token.JSONHASANYKEYS:    JSON,
 	token.JSONDELETE:        JSON,
 	token.JSONCONCAT:        JSON,
-	token.OVERLAP:           FILTER,
 	token.ORDER:             AGGREGATE,
-	// token.WITH:              ORDINALITY,
+	token.FILTER:            FILTER,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -163,6 +163,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.ALL, p.parseDistinct)
 	p.registerPrefix(token.CASE, p.parseCaseExpression)
 	p.registerPrefix(token.CAST, p.parseCastExpression)
+	p.registerPrefix(token.INTERVAL, p.parseIntervalExpression)
+	p.registerPrefix(token.WHERE, p.parseWhereExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -211,6 +213,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.JSONCONCAT, p.parseInfixExpression)
 	p.registerInfix(token.OVERLAP, p.parseInfixExpression)
 	p.registerInfix(token.TO, p.parseInfixExpression)
+	p.registerInfix(token.FILTER, p.parseInfixExpression)
 
 	p.registerInfix(token.NOT, p.parseNotExpression)
 
@@ -758,6 +761,14 @@ func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 	}
 
 	return array
+}
+
+func (p *Parser) parseIntervalExpression() ast.Expression {
+	interval := &ast.IntervalExpression{Token: p.curToken}
+	p.nextToken()
+	interval.Value = p.parseExpression(LOWEST)
+
+	return interval
 }
 
 // This would parse an index lookup such as array[0], but PG uses this form to define an array

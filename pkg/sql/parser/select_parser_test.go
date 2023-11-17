@@ -217,6 +217,11 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select null::integer AS id from users;", 1, "(SELECT NULL::INTEGER AS id FROM users);"},                                 // null
 		{"select id from users where login_date < current_date;", 1, "(SELECT id FROM users WHERE (login_date < current_date));"}, // CURRENT_DATE
 		{"select cast('100' as integer) from users", 1, "(SELECT CAST('100' AS integer) FROM users);"},                            // cast
+
+		// Less common expressions
+		{"select current_date - INTERVAL '7 DAY' from users;", 1, "(SELECT (current_date - INTERVAL '7 DAY') FROM users);"},
+		{"select count(*) as unfiltered from generate_series(1,10) as s(i)", 1, "(SELECT count(*) AS unfiltered FROM generate_series(1, 10) s(i));"},
+		{"select COUNT(*) FILTER (WHERE i < 5) AS filtered from generate_series(1,10) s(i)", 1, "(SELECT (COUNT(*) FILTER WHERE((i < 5))) AS filtered FROM generate_series(1, 10) s(i));"},
 	}
 
 	for _, tt := range tests {

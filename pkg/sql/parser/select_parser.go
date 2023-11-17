@@ -33,11 +33,12 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	defer untrace(trace("parseSelectExpression " + p.curToken.Lit))
 
 	stmt := &ast.SelectExpression{Token: p.curToken}
+	p.nextToken()
 
 	// COLUMNS
-	if !p.expectPeekIsOne([]token.TokenType{token.CAST, token.NULL, token.LPAREN, token.IDENT, token.INT, token.STRING, token.ASTERISK, token.ALL, token.DISTINCT, token.CASE}) {
-		return nil
-	}
+	// if !p.expectPeekIsOne([]token.TokenType{token.CAST, token.NULL, token.LPAREN, token.IDENT, token.INT, token.STRING, token.ASTERISK, token.ALL, token.DISTINCT, token.CASE}) {
+	// 	return nil
+	// }
 
 	// DISTINCT CLAUSE
 	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
@@ -700,4 +701,12 @@ func (p *Parser) parseCastExpression() ast.Expression {
 	}
 
 	return expression
+}
+
+func (p *Parser) parseWhereExpression() ast.Expression {
+	x := &ast.WhereExpression{Token: p.curToken}
+	p.nextToken()
+	x.Right = p.parseExpression(LOWEST)
+
+	return x
 }

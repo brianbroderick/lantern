@@ -433,6 +433,31 @@ func (x *IndexExpression) SetCast(cast string) {
 	x.Cast = cast
 }
 
+type IntervalExpression struct {
+	Token token.Token `json:"token,omitempty"` // The interval token
+	Value Expression  `json:"value,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
+}
+
+func (x *IntervalExpression) expressionNode()      {}
+func (x *IntervalExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *IntervalExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString("INTERVAL ")
+	out.WriteString(x.Value.String(maskParams))
+
+	if x.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(x.Cast))
+	}
+
+	return out.String()
+}
+func (x *IntervalExpression) SetCast(cast string) {
+	x.Cast = cast
+}
+
 // type HashLiteral struct {
 // 	Token token.Token // the '{' token
 // 	Pairs map[Expression]Expression

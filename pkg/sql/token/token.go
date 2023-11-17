@@ -131,6 +131,7 @@ const (
 	EXPONENTIATION
 	FALSE
 	FETCH
+	FILTER
 	FIRST
 	FOLLOWING
 	FOR
@@ -149,6 +150,7 @@ const (
 	INNER
 	INSERT
 	INTERSECT
+	INTERVAL
 	INTO
 	IS
 	ISNULL
@@ -338,6 +340,7 @@ var Tokens = [...]string{
 	EXPONENTIATION:    "EXPONENTIATION",
 	FALSE:             "FALSE",
 	FETCH:             "FETCH",
+	FILTER:            "FILTER",
 	FIRST:             "FIRST",
 	FOLLOWING:         "FOLLOWING",
 	FOR:               "FOR",
@@ -356,6 +359,7 @@ var Tokens = [...]string{
 	INNER:             "INNER",
 	INSERT:            "INSERT",
 	INTERSECT:         "INTERSECT",
+	INTERVAL:          "INTERVAL",
 	INTO:              "INTO",
 	IS:                "IS",
 	ISNULL:            "ISNULL",
