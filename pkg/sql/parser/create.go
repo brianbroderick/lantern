@@ -44,7 +44,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 
 	if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "if" {
 		p.nextToken()
-		if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "not" {
+		if p.curTokenIs(token.NOT) {
 			p.nextToken()
 			if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "exists" {
 				stmt.Exists = true
@@ -52,6 +52,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 			}
 		}
 	}
+
 	stmt.Name = p.parseExpression(LOWEST)
 	p.nextToken()
 

@@ -17,6 +17,7 @@ func TestCreateStatements(t *testing.T) {
 		output string
 	}{
 		// Select: simple
+		{"create temp table if not exists temp_my_table as ( select id from my_table );", "(CREATE TEMP TABLE IF NOT EXISTS temp_my_table AS (SELECT id FROM my_table));"},
 		{"create temp table temp_my_table as (select id from my_table);", "(CREATE TEMP TABLE temp_my_table AS (SELECT id FROM my_table));"},
 		{"create index idx_person_id ON temp_my_table( person_id );", "(CREATE INDEX idx_person_id ON temp_my_table(person_id));"},
 		{"create INDEX idx_person_id ON temp_my_table( person_id );", "(CREATE INDEX idx_person_id ON temp_my_table(person_id));"},
