@@ -9,19 +9,41 @@ import (
 )
 
 type CTEStatement struct {
-	Token       token.Token  `json:"token,omitempty"`
-	Recursive   bool         `json:"recursive,omitempty"`
-	Expressions []Expression `json:"expressions,omitempty"`
+	Token      token.Token `json:"token,omitempty"`
+	Expression Expression  `json:"expression,omitempty"`
 }
 
 func (s *CTEStatement) statementNode()       {}
 func (s *CTEStatement) TokenLiteral() string { return s.Token.Lit }
 func (s *CTEStatement) String(maskParams bool) string {
 	var out bytes.Buffer
+	out.WriteString(s.Expression.String(maskParams))
+	out.WriteString(";")
+	return out.String()
+}
+func (s *CTEStatement) Inspect(maskParams bool) string {
+	j, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		fmt.Printf("Error loading data: %#v\n\n", err)
+	}
+	return string(j)
+}
+
+type CTEExpression struct {
+	Token       token.Token  `json:"token,omitempty"`
+	Recursive   bool         `json:"recursive,omitempty"`
+	Expressions []Expression `json:"expressions,omitempty"`
+	Cast        string       `json:"cast,omitempty"`
+}
+
+func (x *CTEExpression) expressionNode()      {}
+func (x *CTEExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *CTEExpression) String(maskParams bool) string {
+	var out bytes.Buffer
 
 	out.WriteString("(WITH ")
 
-	if s.Recursive {
+	if x.Recursive {
 		out.WriteString("RECURSIVE ")
 	}
 
@@ -34,7 +56,7 @@ func (s *CTEStatement) String(maskParams bool) string {
 
 	inCTE := true
 
-	for _, e := range s.Expressions {
+	for _, e := range x.Expressions {
 		if e != nil {
 			if stmt, ok := e.(*SelectExpression); ok {
 				if stmt.TempTable == nil {
@@ -63,14 +85,10 @@ func (s *CTEStatement) String(maskParams bool) string {
 		out.WriteString(e.String(maskParams))
 	}
 
-	out.WriteString(");")
+	out.WriteString(")")
 
 	return out.String()
 }
-func (s *CTEStatement) Inspect(maskParams bool) string {
-	j, err := json.MarshalIndent(s, "", "  ")
-	if err != nil {
-		fmt.Printf("Error loading data: %#v\n\n", err)
-	}
-	return string(j)
+func (x *CTEExpression) SetCast(cast string) {
+	x.Cast = cast
 }

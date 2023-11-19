@@ -165,6 +165,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.CAST, p.parseCastExpression)
 	p.registerPrefix(token.INTERVAL, p.parseIntervalExpression)
 	p.registerPrefix(token.WHERE, p.parseWhereExpression)
+	p.registerPrefix(token.WITH, p.parseCTEExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
