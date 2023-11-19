@@ -175,6 +175,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select load( array[ 1 ]::integer[], array[ 2]::integer[] ) from a", 1, "(SELECT load(array[1]::INTEGER[], array[2]::INTEGER[]) FROM a);"},
 		{"select jsonb_array_length ( ( options ->> 'country_codes' ) :: jsonb ) from modules", 1, "(SELECT jsonb_array_length((options ->> 'country_codes')::JSONB) FROM modules);"},
 		{"select now()::timestamp from users;", 1, "(SELECT now()::TIMESTAMP FROM users);"},
+		{"select ( junk_drawer->>'ids' )::INT[] from dashboards", 1, "(SELECT (junk_drawer ->> 'ids')::INT[] FROM dashboards);"},
 
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> 'name') = 'brian'));"},

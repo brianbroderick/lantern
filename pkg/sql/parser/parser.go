@@ -284,16 +284,16 @@ func (p *Parser) peekTokenIsOne(tokens []token.TokenType) bool {
 	return found
 }
 
-// This is essentially !curTokenIsOne, but it can't match any token in the list
-func (p *Parser) peekTokenIsNot(tokens []token.TokenType) bool {
-	for _, t := range tokens {
-		if p.peekTokenIs(t) { // The token matches one of the tokens in the list
-			return false
-		}
-	}
+// // This is essentially !curTokenIsOne, but it can't match any token in the list
+// func (p *Parser) peekTokenIsNot(tokens []token.TokenType) bool {
+// 	for _, t := range tokens {
+// 		if p.peekTokenIs(t) { // The token matches one of the tokens in the list
+// 			return false
+// 		}
+// 	}
 
-	return true
-}
+// 	return true
+// }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
@@ -638,31 +638,31 @@ func (p *Parser) parseBoolean() ast.Expression {
 }
 
 func (p *Parser) parseNull() ast.Expression {
-	null := &ast.Null{Token: p.curToken}
+	x := &ast.Null{Token: p.curToken}
 
 	// This is why all expressions must have a SetCast method
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		null.SetCast(p.curToken.Lit)
+		x.SetCast(p.curToken.Lit)
 	}
-	return null
+	return x
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
 	p.setContext(XGROUPED) // sets the context for the parseExpressionListItem function
 	p.nextToken()
 
-	expression := &ast.GroupedExpression{Token: p.curToken}
-	expression.Elements = p.parseExpressionList([]token.TokenType{token.RPAREN})
+	x := &ast.GroupedExpression{Token: p.curToken}
+	x.Elements = p.parseExpressionList([]token.TokenType{token.RPAREN})
 
-	// exp := p.parseExpression(LOWEST)
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		x.SetCast(p.curToken.Lit)
+	}
 
-	// if p.peekTokenIs(token.RPAREN) {
-	// 	p.nextToken()
-	// }
-
-	return expression
+	return x
 }
 
 // func (p *Parser) parseFunctionParameters() []*ast.Identifier {
@@ -695,24 +695,24 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	p.setContext(XCALL) // sets the context for the parseExpressionListItem function
 
-	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+	x := &ast.CallExpression{Token: p.curToken, Function: function}
 
 	p.nextToken()
 
 	// DISTINCT CLAUSE
 	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
-		exp.Distinct = p.parseDistinct()
+		x.Distinct = p.parseDistinct()
 	}
 
-	exp.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
+	x.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
 
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		exp.Cast = p.curToken.Lit
+		x.Cast = p.curToken.Lit
 	}
 
-	return exp
+	return x
 }
 
 func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
