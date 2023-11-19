@@ -56,6 +56,29 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 	stmt.Name = p.parseExpression(LOWEST)
 	p.nextToken()
 
+	if p.curTokenIs(token.ON) {
+		if p.peekTokenIs(token.COMMIT) {
+			p.nextToken()
+			p.nextToken()
+			if p.curTokenIs(token.DELETE) {
+				if p.peekTokenIs(token.ROWS) {
+					p.nextToken()
+					p.nextToken()
+					stmt.OnCommit = "DELETE ROWS"
+				}
+			} else if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "preserve" {
+				if p.peekTokenIs(token.ROWS) {
+					p.nextToken()
+					p.nextToken()
+					stmt.OnCommit = "PRESERVE ROWS"
+				}
+			} else if p.curTokenIs(token.DROP) {
+				p.nextToken()
+				stmt.OnCommit = "DROP"
+			}
+		}
+	}
+
 	if p.curTokenIsOne([]token.TokenType{token.AS, token.ON}) {
 		stmt.Operator = strings.ToUpper(p.curToken.Lit)
 		p.nextToken()

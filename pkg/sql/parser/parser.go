@@ -14,6 +14,7 @@ const (
 	_ int = iota
 	LOWEST
 	UNION          // UNION
+	USING          // USING in a JOIN or an index
 	FILTER         // FILTER i.e. COUNT(*) FILTER (WHERE i < 5)
 	AGGREGATE      // ORDER BY in a function call
 	OR             // OR
@@ -37,6 +38,7 @@ var precedences = map[token.TokenType]int{
 	token.UNION:             UNION,
 	token.INTERSECT:         UNION,
 	token.EXCEPT:            UNION,
+	token.USING:             USING,
 	token.EQ:                EQUALS,
 	token.NOT_EQ:            EQUALS,
 	token.ASSIGN:            EQUALS,
@@ -215,6 +217,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.OVERLAP, p.parseInfixExpression)
 	p.registerInfix(token.TO, p.parseInfixExpression)
 	p.registerInfix(token.FILTER, p.parseInfixExpression)
+	p.registerInfix(token.USING, p.parseInfixExpression)
 
 	p.registerInfix(token.NOT, p.parseNotExpression)
 

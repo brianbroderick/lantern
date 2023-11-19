@@ -21,6 +21,7 @@ type CreateStatement struct {
 	Object       token.Token `json:"object,omitempty"`       // TABLE, INDEX, VIEW, etc.
 	Exists       bool        `json:"exists,omitempty"`       // IF NOT EXISTS
 	Name         Expression  `json:"name,omitempty"`         // the name of the object
+	OnCommit     string      `json:"on_commit,omitempty"`    // PRESERVE ROWS, DELETE ROWS, DROP
 	Operator     string      `json:"operator,omitempty"`     // AS (for CREATE TABLE AS), ON for CREATE INDEX ON, etc.
 	Expression   Expression  `json:"expression,omitempty"`   // the expression to create the object
 }
@@ -53,6 +54,9 @@ func (x *CreateStatement) String(maskParams bool) string {
 	}
 	if x.Name != nil {
 		out.WriteString(x.Name.String(maskParams) + " ")
+	}
+	if x.OnCommit != "" {
+		out.WriteString("ON COMMIT " + strings.ToUpper(x.OnCommit) + " ")
 	}
 	if x.Operator != "" {
 		out.WriteString(strings.ToUpper(x.Operator) + " ")

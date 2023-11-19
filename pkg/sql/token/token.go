@@ -102,6 +102,7 @@ const (
 	COLLATE
 	COLLATION
 	COLUMN
+	COMMIT
 	CONCURRENTLY
 	CONFLICT
 	CONSTRAINT
@@ -195,6 +196,7 @@ const (
 	REPEATABLE
 	RETURNING
 	RIGHT
+	ROLLBACK
 	ROLLUP
 	ROW
 	ROWS
@@ -311,6 +313,7 @@ var Tokens = [...]string{
 	COLLATE:           "COLLATE",
 	COLLATION:         "COLLATION",
 	COLUMN:            "COLUMN",
+	COMMIT:            "COMMIT",
 	CONCURRENTLY:      "CONCURRENTLY",
 	CONFLICT:          "CONFLICT",
 	CONSTRAINT:        "CONSTRAINT",
@@ -404,6 +407,7 @@ var Tokens = [...]string{
 	REPEATABLE:   "REPEATABLE",
 	RETURNING:    "RETURNING",
 	RIGHT:        "RIGHT",
+	ROLLBACK:     "ROLLBACK",
 	ROLLUP:       "ROLLUP",
 	ROW:          "ROW",
 	ROWS:         "ROWS",
