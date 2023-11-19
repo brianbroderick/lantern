@@ -98,7 +98,20 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
 		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = 'brian'));"},
 		{"select id from users where name is null", 1, "(SELECT id FROM users WHERE (name IS NULL));"},
-		{"select id from users where name is not null", 1, "(SELECT id FROM users WHERE (name IS (NOT NULL)));"},
+		{"select id from users where name is not null", 1, "(SELECT id FROM users WHERE (name IS NOT NULL));"},
+
+		// Select: IS comparisons
+		{"select category from users where category is null", 1, "(SELECT category FROM users WHERE (category IS NULL));"},
+		{"select category from users where category is not null", 1, "(SELECT category FROM users WHERE (category IS NOT NULL));"},
+		{"select category from users where category is null and type = 1", 1, "(SELECT category FROM users WHERE ((category IS NULL) AND (type = 1)));"},
+		{"select category from users where category is true", 1, "(SELECT category FROM users WHERE (category IS TRUE));"},
+		{"select category from users where category is not true", 1, "(SELECT category FROM users WHERE (category IS NOT TRUE));"},
+		{"select category from users where category is false", 1, "(SELECT category FROM users WHERE (category IS FALSE));"},
+		{"select category from users where category is not false", 1, "(SELECT category FROM users WHERE (category IS NOT FALSE));"},
+		{"select category from users where category is unknown", 1, "(SELECT category FROM users WHERE (category IS UNKNOWN));"},
+		{"select category from users where category is not unknown", 1, "(SELECT category FROM users WHERE (category IS NOT UNKNOWN));"},
+		{"select foo,bar from my_table where foo is distinct from bar;", 1, "(SELECT foo, bar FROM my_table WHERE (foo IS DISTINCT FROM bar));"},
+		{"select foo,bar from my_table where foo is not distinct from bar;", 1, "(SELECT foo, bar FROM my_table WHERE (foo IS NOT DISTINCT FROM bar));"},
 
 		// Select: group by
 		{"select id from users group by id", 1, "(SELECT id FROM users GROUP BY id);"},

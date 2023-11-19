@@ -20,7 +20,7 @@ const (
 	OR             // OR
 	AND            // AND
 	NOT            // NOT
-	IS             // IS, ISNULL, NOTNULL
+	IS             // IS, IS NULL, IS NOT NULL, IS DISTINCT FROM, IS NOT DISTINCT FROM
 	EQUALS         // ==
 	LESSGREATER    // > or <
 	COMPARE        // BETWEEN, IN, LIKE, ILIKE, SIMILAR
@@ -150,6 +150,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.NULL, p.parseNull)
+	p.registerPrefix(token.UNKNOWN, p.parseUnknown)
 
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
@@ -195,7 +196,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LTE, p.parseInfixExpression)
 	p.registerInfix(token.AND, p.parseInfixExpression)
 	p.registerInfix(token.OR, p.parseInfixExpression)
-	p.registerInfix(token.IS, p.parseInfixExpression)
 	p.registerInfix(token.ISNULL, p.parseInfixExpression)  // this might actually be a postfix operator
 	p.registerInfix(token.NOTNULL, p.parseInfixExpression) // this might actually be a postfix operator
 	p.registerInfix(token.LIKE, p.parseInfixExpression)
@@ -220,6 +220,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.USING, p.parseInfixExpression)
 
 	p.registerInfix(token.NOT, p.parseNotExpression)
+	p.registerInfix(token.IS, p.parseIsExpression)
 
 	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
@@ -639,6 +640,18 @@ func (p *Parser) parseBoolean() ast.Expression {
 
 func (p *Parser) parseNull() ast.Expression {
 	x := &ast.Null{Token: p.curToken}
+
+	// This is why all expressions must have a SetCast method
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		x.SetCast(p.curToken.Lit)
+	}
+	return x
+}
+
+func (p *Parser) parseUnknown() ast.Expression {
+	x := &ast.Unknown{Token: p.curToken}
 
 	// This is why all expressions must have a SetCast method
 	if p.peekTokenIs(token.DOUBLECOLON) {

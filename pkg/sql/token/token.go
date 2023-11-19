@@ -223,6 +223,7 @@ const (
 	UNBOUNDED
 	UNION
 	UNIQUE
+	UNKNOWN
 	UPDATE
 	USER
 	USING
@@ -434,6 +435,7 @@ var Tokens = [...]string{
 	UNBOUNDED:   "UNBOUNDED",
 	UNION:       "UNION",
 	UNIQUE:      "UNIQUE",
+	UNKNOWN:     "UNKNOWN",
 	UPDATE:      "UPDATE",
 	USER:        "USER",
 	USING:       "USING",

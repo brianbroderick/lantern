@@ -111,7 +111,7 @@ type Boolean struct {
 
 func (x *Boolean) expressionNode()               {}
 func (x *Boolean) TokenLiteral() string          { return x.Token.Lit }
-func (x *Boolean) String(maskParams bool) string { return x.Token.Lit }
+func (x *Boolean) String(maskParams bool) string { return strings.ToUpper(x.Token.Lit) }
 func (x *Boolean) SetCast(cast string) {
 	x.Cast = cast
 }
@@ -131,6 +131,24 @@ func (x *Null) String(maskParams bool) string {
 	return literal
 }
 func (x *Null) SetCast(cast string) {
+	x.Cast = cast
+}
+
+type Unknown struct {
+	Token token.Token
+	Cast  string
+}
+
+func (x *Unknown) expressionNode()      {}
+func (x *Unknown) TokenLiteral() string { return x.Token.Lit }
+func (x *Unknown) String(maskParams bool) string {
+	literal := strings.ToUpper(x.Token.Lit)
+	if x.Cast != "" {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast))
+	}
+	return literal
+}
+func (x *Unknown) SetCast(cast string) {
 	x.Cast = cast
 }
 

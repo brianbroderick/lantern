@@ -222,19 +222,19 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"true",
-			"true",
+			"TRUE",
 		},
 		{
 			"false",
-			"false",
+			"FALSE",
 		},
 		{
 			"3 > 5 == false",
-			"((3 > 5) == false)",
+			"((3 > 5) == FALSE)",
 		},
 		{
 			"3 < 5 == true",
-			"((3 < 5) == true)",
+			"((3 < 5) == TRUE)",
 		},
 		{
 			"1 + (2 + 3) + 4",
@@ -258,7 +258,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		},
 		{
 			"!(true == true)",
-			"(!(true == true))",
+			"(!(TRUE == TRUE))",
 		},
 		{
 			"a + add(b * c) + d",

@@ -622,3 +622,43 @@ func (x *WhereExpression) String(maskParams bool) string {
 func (x *WhereExpression) SetCast(cast string) {
 	x.Cast = cast
 }
+
+type IsExpression struct {
+	Token    token.Token `json:"token,omitempty"` // the token.CAST token
+	Left     Expression  `json:"left,omitempty"`
+	Not      bool        `json:"not,omitempty"`
+	Distinct bool        `json:"distinct,omitempty"`
+	Right    Expression  `json:"right,omitempty"`
+	Cast     string      `json:"cast,omitempty"`
+}
+
+func (x *IsExpression) expressionNode()      {}
+func (x *IsExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *IsExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+	out.WriteString("(")
+	out.WriteString(x.Left.String(maskParams))
+
+	out.WriteString(" IS ")
+
+	if x.Not {
+		out.WriteString("NOT ")
+	}
+	if x.Distinct {
+		out.WriteString("DISTINCT FROM ")
+	}
+	if x.Right != nil {
+		out.WriteString(x.Right.String(maskParams))
+	}
+	out.WriteString(")")
+
+	if x.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(x.Cast)
+	}
+
+	return out.String()
+}
+func (x *IsExpression) SetCast(cast string) {
+	x.Cast = cast
+}

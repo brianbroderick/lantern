@@ -710,3 +710,24 @@ func (p *Parser) parseWhereExpression() ast.Expression {
 
 	return x
 }
+
+func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
+	x := &ast.IsExpression{Token: p.curToken, Left: left}
+	precedence := p.curPrecedence()
+	p.nextToken()
+
+	if p.curTokenIs(token.NOT) {
+		p.nextToken()
+		x.Not = true
+	}
+	if p.curTokenIs(token.DISTINCT) {
+		p.nextToken()
+		if p.curTokenIs(token.FROM) {
+			p.nextToken()
+			x.Distinct = true
+		}
+	}
+
+	x.Right = p.parseExpression(precedence)
+	return x
+}
