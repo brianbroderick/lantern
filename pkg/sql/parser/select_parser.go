@@ -776,11 +776,31 @@ func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseTimeZoneExpression(left ast.Expression) ast.Expression {
-	x := &ast.TimeZoneExpression{Token: p.curToken, Left: left}
-	precedence := p.curPrecedence()
-	p.nextToken()
+	if p.peekTokenIs(token.TIME) {
+		x := &ast.TimeZoneExpression{Token: p.curToken, Left: left}
+		precedence := p.curPrecedence()
 
-	x.TimeZone = p.parseExpression(precedence)
+		p.nextToken()
 
-	return x
+		if p.peekTokenIs(token.ZONE) {
+			p.nextToken()
+			p.nextToken()
+		}
+		x.TimeZone = p.parseExpression(precedence)
+		return x
+	} else {
+		return left
+	}
 }
+
+// First attempt at AT TIME ZONE
+// if p.peekTokenIs(token.IDENT) && strings.ToUpper(p.peekToken.Lit) == "AT" {
+// 	p.nextToken()
+// 	if p.peekTokenIs(token.TIME) {
+// 		p.nextToken()
+// 		if p.peekTokenIs(token.ZONE) {
+// 			p.nextToken()
+// 			colExp.Value = p.parseTimeZoneExpression(leftExp)
+// 		}
+// 	}
+// }

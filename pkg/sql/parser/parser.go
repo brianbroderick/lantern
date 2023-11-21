@@ -22,7 +22,7 @@ const (
 	NOT            // NOT
 	IS             // IS, IS NULL, IS NOT NULL, IS DISTINCT FROM, IS NOT DISTINCT FROM
 	FROM           // FROM i.e. substring('foobar' from 1 for 3)
-	ZONE           // TIME ZONE. Needs to be higher than FROM so the parser doesn't get confused by FROM table_name clauses
+	AT_TIME_ZONE   // AT TIME ZONE. Needs to be higher than FROM so the parser doesn't get confused by FROM table_name clauses
 	EQUALS         // ==
 	LESSGREATER    // > or <
 	COMPARE        // BETWEEN, IN, LIKE, ILIKE, SIMILAR
@@ -83,7 +83,7 @@ var precedences = map[token.TokenType]int{
 	token.JSONCONCAT:        JSON,
 	token.ORDER:             AGGREGATE,
 	token.FILTER:            FILTER,
-	token.ZONE:              ZONE,
+	token.AT:                AT_TIME_ZONE,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
