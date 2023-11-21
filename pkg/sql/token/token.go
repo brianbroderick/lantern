@@ -87,6 +87,7 @@ const (
 	ANALYZE
 	AND
 	ANY
+	AT // not resevered in PG, but is in ANSI. We use AT all the time as table aliases
 	AS
 	ASC
 	ASYMMETRIC
@@ -143,7 +144,6 @@ const (
 	GRANT
 	GROUP
 	GROUPING
-	GROUPS
 	HAVING
 	ILIKE
 	IN
@@ -302,6 +302,7 @@ var Tokens = [...]string{
 	AS:                "AS",
 	ASC:               "ASC",
 	ASYMMETRIC:        "ASYMMETRIC",
+	AT:                "AT",
 	AUTHORIZATION:     "AUTHORIZATION",
 	BETWEEN:           "BETWEEN",
 	BINARY:            "BINARY",
@@ -355,7 +356,6 @@ var Tokens = [...]string{
 	GRANT:             "GRANT",
 	GROUP:             "GROUP",
 	GROUPING:          "GROUPING",
-	GROUPS:            "GROUPS",
 	HAVING:            "HAVING",
 	ILIKE:             "ILIKE",
 	IN:                "IN",

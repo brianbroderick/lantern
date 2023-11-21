@@ -662,3 +662,90 @@ func (x *IsExpression) String(maskParams bool) string {
 func (x *IsExpression) SetCast(cast string) {
 	x.Cast = cast
 }
+
+// trim(both 'x' from 'xTomxx') -> Tom
+type TrimExpression struct {
+	Token      token.Token `json:"token,omitempty"` // the token.BOTH, token.LEADING, or token.TRAILING token
+	Expression Expression  `json:"expression,omitempty"`
+	Cast       string      `json:"cast,omitempty"`
+}
+
+func (x *TrimExpression) expressionNode()      {}
+func (x *TrimExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *TrimExpression) SetCast(cast string) {
+	x.Cast = cast
+}
+func (x *TrimExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+	out.WriteString(strings.ToUpper(x.Token.Lit) + " ")
+	if x.Expression != nil {
+		out.WriteString(x.Expression.String(maskParams))
+	}
+	return out.String()
+}
+
+// substring('Thomas' from '...$')
+// substring('Thomas' from 2 for 3))
+type StringFunctionExpression struct {
+	Token token.Token `json:"token,omitempty"` // the token.STRING
+	Left  Expression  `json:"left,omitempty"`
+	From  Expression  `json:"from,omitempty"`
+	For   Expression  `json:"for,omitempty"`
+	Cast  string      `json:"cast,omitempty"`
+}
+
+func (x *StringFunctionExpression) expressionNode()      {}
+func (x *StringFunctionExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *StringFunctionExpression) SetCast(cast string) {
+	x.Cast = cast
+}
+func (x *StringFunctionExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	if x.Left != nil {
+		out.WriteString(x.Left.String(maskParams))
+		if x.From != nil {
+			out.WriteString(" FROM ")
+			out.WriteString(x.From.String(maskParams))
+		}
+		if x.For != nil {
+			out.WriteString(" FOR ")
+			out.WriteString(x.For.String(maskParams))
+		}
+	}
+
+	return out.String()
+}
+
+type TimeZoneExpression struct {
+	Token    token.Token `json:"token,omitempty"` // the token.STRING
+	Left     Expression  `json:"left,omitempty"`
+	TimeZone Expression  `json:"time_zone,omitempty"`
+	Cast     string      `json:"cast,omitempty"`
+}
+
+func (x *TimeZoneExpression) expressionNode()      {}
+func (x *TimeZoneExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *TimeZoneExpression) SetCast(cast string) {
+	x.Cast = cast
+}
+func (x *TimeZoneExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	if x.Left != nil {
+		out.WriteString(x.Left.String(maskParams))
+		if x.TimeZone != nil {
+			out.WriteString(" AT TIME ZONE ")
+			out.WriteString(x.TimeZone.String(maskParams))
+		}
+	}
+	out.WriteString(")")
+
+	if x.Cast != "" {
+		out.WriteString("::")
+		out.WriteString(x.Cast)
+	}
+
+	return out.String()
+}

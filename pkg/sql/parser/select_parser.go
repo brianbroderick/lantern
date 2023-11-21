@@ -231,7 +231,7 @@ func (p *Parser) parseFirstTable() ast.Expression {
 	}
 
 	// Do we have an alias
-	if p.peekTokenIs(token.IDENT) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
 		p.nextToken()
 		table.Alias = p.parseExpression(LOWEST)
 	}
@@ -315,7 +315,7 @@ func (p *Parser) parseTable() ast.Expression {
 	}
 
 	// Do we have an alias?
-	if p.peekTokenIs(token.IDENT) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
 		p.nextToken()
 		table.Alias = p.parseExpression(LOWEST)
 	}
@@ -536,13 +536,28 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 
 	colExp := &ast.ColumnExpression{Token: p.curToken, Value: leftExp}
 
-	// AS is optional
+	// First attempt at AT TIME ZONE
+	// if p.peekTokenIs(token.IDENT) && strings.ToUpper(p.peekToken.Lit) == "AT" {
+	// 	p.nextToken()
+	// 	if p.peekTokenIs(token.TIME) {
+	// 		p.nextToken()
+	// 		if p.peekTokenIs(token.ZONE) {
+	// 			p.nextToken()
+	// 			colExp.Value = p.parseTimeZoneExpression(leftExp)
+	// 		}
+	// 	}
+	// }
+
+	// AS is optional, but opens up additional keywords that can be used as an alias.
+	// isAlias := false
 	if p.peekTokenIs(token.AS) {
+		// isAlias = true
 		p.nextToken()
 	}
 
 	if p.peekTokenIs(token.IDENT) {
 		p.nextToken()
+
 		alias := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 		colExp = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
 	}
@@ -681,6 +696,23 @@ func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
 	return exp
 }
 
+// select substring('Hello World!' from 2 for 4) from users;
+func (p *Parser) parseStringFunctionExpression(left ast.Expression) ast.Expression {
+	x := &ast.StringFunctionExpression{Token: p.curToken, Left: left}
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+	x.From = p.parseExpression(precedence)
+
+	if p.peekTokenIs(token.FOR) {
+		p.nextToken()
+		p.nextToken()
+		x.For = p.parseExpression(LOWEST)
+	}
+
+	return x
+}
+
 func (p *Parser) parseCastExpression() ast.Expression {
 	expression := &ast.CastExpression{Token: p.curToken}
 
@@ -711,6 +743,17 @@ func (p *Parser) parseWhereExpression() ast.Expression {
 	return x
 }
 
+// trim(both 'x' from 'xTomxx') -> Tom
+// starts at both, leading, or trailing token
+func (p *Parser) parseTrimExpression() ast.Expression {
+	x := &ast.TrimExpression{Token: p.curToken}
+	p.nextToken()
+
+	x.Expression = p.parseExpression(LOWEST)
+
+	return x
+}
+
 func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
 	x := &ast.IsExpression{Token: p.curToken, Left: left}
 	precedence := p.curPrecedence()
@@ -729,5 +772,15 @@ func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
 	}
 
 	x.Right = p.parseExpression(precedence)
+	return x
+}
+
+func (p *Parser) parseTimeZoneExpression(left ast.Expression) ast.Expression {
+	x := &ast.TimeZoneExpression{Token: p.curToken, Left: left}
+	precedence := p.curPrecedence()
+	p.nextToken()
+
+	x.TimeZone = p.parseExpression(precedence)
+
 	return x
 }

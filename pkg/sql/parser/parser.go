@@ -21,6 +21,8 @@ const (
 	AND            // AND
 	NOT            // NOT
 	IS             // IS, IS NULL, IS NOT NULL, IS DISTINCT FROM, IS NOT DISTINCT FROM
+	FROM           // FROM i.e. substring('foobar' from 1 for 3)
+	ZONE           // TIME ZONE. Needs to be higher than FROM so the parser doesn't get confused by FROM table_name clauses
 	EQUALS         // ==
 	LESSGREATER    // > or <
 	COMPARE        // BETWEEN, IN, LIKE, ILIKE, SIMILAR
@@ -59,6 +61,7 @@ var precedences = map[token.TokenType]int{
 	token.IS:                IS,
 	token.ISNULL:            IS,
 	token.NOTNULL:           IS,
+	token.FROM:              FROM,
 	token.OVER:              WINDOW,
 	token.BETWEEN:           COMPARE,
 	token.IN:                COMPARE,
@@ -80,6 +83,7 @@ var precedences = map[token.TokenType]int{
 	token.JSONCONCAT:        JSON,
 	token.ORDER:             AGGREGATE,
 	token.FILTER:            FILTER,
+	token.ZONE:              ZONE,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -169,6 +173,9 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.INTERVAL, p.parseIntervalExpression)
 	p.registerPrefix(token.WHERE, p.parseWhereExpression)
 	p.registerPrefix(token.WITH, p.parseCTEExpression)
+	p.registerPrefix(token.BOTH, p.parseTrimExpression)
+	p.registerPrefix(token.LEADING, p.parseTrimExpression)
+	p.registerPrefix(token.TRAILING, p.parseTrimExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -177,6 +184,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.ANY, p.parseIdentifier)
 	p.registerPrefix(token.CURRENT_DATE, p.parseIdentifier)
 	p.registerPrefix(token.USER, p.parseIdentifier)
+	p.registerPrefix(token.AT, p.parseIdentifier)
 
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
@@ -226,6 +234,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseArrayExpression)
 	p.registerInfix(token.ORDER, p.parseAggregateExpression)
+	p.registerInfix(token.FROM, p.parseStringFunctionExpression)
 
 	// Read two tokens, so curToken and peekToken are both set
 	p.nextToken()
@@ -783,7 +792,7 @@ func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseIntervalExpression() ast.Expression {
 	interval := &ast.IntervalExpression{Token: p.curToken}
 	p.nextToken()
-	interval.Value = p.parseExpression(LOWEST)
+	interval.Value = &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}
 
 	return interval
 }

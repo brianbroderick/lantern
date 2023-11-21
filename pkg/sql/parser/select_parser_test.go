@@ -18,6 +18,8 @@ func TestMultipleStatements(t *testing.T) {
 		output         string
 	}{
 		// Multiple Statements
+		// {"select '2020-01-01' at time zone 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
+		// {"select id from my_table where my_date at time zone my_zone > '2001-01-01';", 1, "(SELECT (my_date AT TIME ZONE my_zone) FROM my_table);"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
@@ -231,11 +233,20 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select null::integer AS id from users;", 1, "(SELECT NULL::INTEGER AS id FROM users);"},                                 // null
 		{"select id from users where login_date < current_date;", 1, "(SELECT id FROM users WHERE (login_date < current_date));"}, // CURRENT_DATE
 		{"select cast('100' as integer) from users", 1, "(SELECT CAST('100' AS integer) FROM users);"},                            // cast
+		{"select id from account_triggers at", 1, "(SELECT id FROM account_triggers at);"},
+		{"select u.id from users u join account_triggers at on at.user_id = u.id;", 2, "(SELECT u.id FROM users u INNER JOIN account_triggers at ON (at.user_id = u.id));"},
 
 		// Less common expressions
 		{"select current_date - INTERVAL '7 DAY' from users;", 1, "(SELECT (current_date - INTERVAL '7 DAY') FROM users);"},
 		{"select count(*) as unfiltered from generate_series(1,10) as s(i)", 1, "(SELECT count(*) AS unfiltered FROM generate_series(1, 10) s(i));"},
 		{"select COUNT(*) FILTER (WHERE i < 5) AS filtered from generate_series(1,10) s(i)", 1, "(SELECT (COUNT(*) FILTER WHERE((i < 5))) AS filtered FROM generate_series(1, 10) s(i));"},
+		{"select trim(both 'x' from 'xTomxx') from users;", 1, "(SELECT trim(BOTH 'x' FROM 'xTomxx') FROM users);"},
+		{"select trim(leading 'x' from 'xTomxx') from users;", 1, "(SELECT trim(LEADING 'x' FROM 'xTomxx') FROM users);"},
+		{"select trim(trailing 'x' from 'xTomxx') from users;", 1, "(SELECT trim(TRAILING 'x' FROM 'xTomxx') FROM users);"},
+		{"select substring('or' from 'Hello World!') from users;", 1, "(SELECT substring('or' FROM 'Hello World!') FROM users);"},
+		{"select substring('Hello World!' from 2 for 4) from users;", 1, "(SELECT substring('Hello World!' FROM 2 FOR 4) FROM users);"},
+		// {"select '2020-01-01' at time zone 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
+		// {"select my_date at time zone my_zone from my_table;", 1, "(SELECT (my_date AT TIME ZONE my_zone) FROM my_table);"},
 
 		// // Select with a CTE expression
 		{"select count(1) from (with my_list as (select i from generate_series(1,10) s(i)) select i from my_list where i > 5) as t;", 1,
