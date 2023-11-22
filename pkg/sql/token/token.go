@@ -87,7 +87,7 @@ const (
 	ANALYZE
 	AND
 	ANY
-	AT // not resevered in PG, but is in ANSI. We use AT all the time as table aliases
+	AT_TIME_ZONE // AT is not resevered in PG, but is in ANSI. We use AT all the time as table aliases, so we need to combine the phrase in the parser
 	AS
 	ASC
 	ASYMMETRIC
@@ -216,7 +216,6 @@ const (
 	TABLESAMPLE
 	THEN
 	TIES
-	TIME
 	TO
 	TRAILING
 	TRUE
@@ -234,7 +233,6 @@ const (
 	WHERE
 	WINDOW
 	WITH
-	ZONE
 	keywordEnd
 )
 
@@ -302,7 +300,7 @@ var Tokens = [...]string{
 	AS:                "AS",
 	ASC:               "ASC",
 	ASYMMETRIC:        "ASYMMETRIC",
-	AT:                "AT",
+	AT_TIME_ZONE:      "AT_TIME_ZONE",
 	AUTHORIZATION:     "AUTHORIZATION",
 	BETWEEN:           "BETWEEN",
 	BINARY:            "BINARY",
@@ -428,7 +426,6 @@ var Tokens = [...]string{
 	TABLESAMPLE: "TABLESAMPLE",
 	THEN:        "THEN",
 	TIES:        "TIES",
-	TIME:        "TIME",
 	TO:          "TO",
 	TRAILING:    "TRAILING",
 	TRUE:        "TRUE",
@@ -446,7 +443,6 @@ var Tokens = [...]string{
 	WHERE:       "WHERE",
 	WINDOW:      "WINDOW",
 	WITH:        "WITH",
-	ZONE:        "ZONE",
 }
 
 var keywords map[string]TokenType

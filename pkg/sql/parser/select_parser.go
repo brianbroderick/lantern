@@ -231,7 +231,8 @@ func (p *Parser) parseFirstTable() ast.Expression {
 	}
 
 	// Do we have an alias
-	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
+	// if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT}) {
 		p.nextToken()
 		table.Alias = p.parseExpression(LOWEST)
 	}
@@ -315,7 +316,8 @@ func (p *Parser) parseTable() ast.Expression {
 	}
 
 	// Do we have an alias?
-	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
+	// if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT}) {
 		p.nextToken()
 		table.Alias = p.parseExpression(LOWEST)
 	}
@@ -522,9 +524,13 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 		return nil
 	}
 	leftExp := prefix()
+	// fmt.Printf("parseColumn1: %s :: %s\n", p.curToken.Type, p.peekToken.Type)
 
 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.FROM, token.AS, token.IDENT}) && precedence < p.peekPrecedence() {
+		// fmt.Printf("parseColumn2: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+
 		infix := p.infixParseFns[p.peekToken.Type]
+
 		if infix == nil {
 			return leftExp
 		}
@@ -773,24 +779,6 @@ func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
 
 	x.Right = p.parseExpression(precedence)
 	return x
-}
-
-func (p *Parser) parseTimeZoneExpression(left ast.Expression) ast.Expression {
-	if p.peekTokenIs(token.TIME) {
-		x := &ast.TimeZoneExpression{Token: p.curToken, Left: left}
-		precedence := p.curPrecedence()
-
-		p.nextToken()
-
-		if p.peekTokenIs(token.ZONE) {
-			p.nextToken()
-			p.nextToken()
-		}
-		x.TimeZone = p.parseExpression(precedence)
-		return x
-	} else {
-		return left
-	}
 }
 
 // First attempt at AT TIME ZONE

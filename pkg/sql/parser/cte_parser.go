@@ -77,6 +77,7 @@ func (p *Parser) parseCTESubExpression() ast.Expression {
 	p.nextToken()
 
 	exp := p.parseExpression(LOWEST)
+
 	exp.(*ast.SelectExpression).TempTable = tempTable
 	exp.(*ast.SelectExpression).WithMaterialized = materialized
 

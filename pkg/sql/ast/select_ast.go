@@ -716,36 +716,3 @@ func (x *StringFunctionExpression) String(maskParams bool) string {
 
 	return out.String()
 }
-
-type TimeZoneExpression struct {
-	Token    token.Token `json:"token,omitempty"` // the token.STRING
-	Left     Expression  `json:"left,omitempty"`
-	TimeZone Expression  `json:"time_zone,omitempty"`
-	Cast     string      `json:"cast,omitempty"`
-}
-
-func (x *TimeZoneExpression) expressionNode()      {}
-func (x *TimeZoneExpression) TokenLiteral() string { return x.Token.Lit }
-func (x *TimeZoneExpression) SetCast(cast string) {
-	x.Cast = cast
-}
-func (x *TimeZoneExpression) String(maskParams bool) string {
-	var out bytes.Buffer
-
-	out.WriteString("(")
-	if x.Left != nil {
-		out.WriteString(x.Left.String(maskParams))
-		if x.TimeZone != nil {
-			out.WriteString(" AT TIME ZONE ")
-			out.WriteString(x.TimeZone.String(maskParams))
-		}
-	}
-	out.WriteString(")")
-
-	if x.Cast != "" {
-		out.WriteString("::")
-		out.WriteString(x.Cast)
-	}
-
-	return out.String()
-}

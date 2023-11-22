@@ -18,8 +18,12 @@ func TestMultipleStatements(t *testing.T) {
 		output         string
 	}{
 		// Multiple Statements
-		// {"select '2020-01-01' at time zone 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
-		// {"select id from my_table where my_date at time zone my_zone > '2001-01-01';", 1, "(SELECT (my_date AT TIME ZONE my_zone) FROM my_table);"},
+		{"select id from my_table where '2020-01-01' at time zone 'MDT' = '2023-01-01';", 1, "(SELECT id FROM my_table WHERE (('2020-01-01' AT TIME ZONE 'MDT') = '2023-01-01'));"},
+		{"select * from tasks where date_trunc('day', created_at) = date_trunc('day', now()::timestamp with time zone at time zone 'America/Denver') LIMIT 1;", 1, "(SELECT * FROM tasks WHERE (date_trunc('day', created_at) = date_trunc('day', (now()::TIMESTAMP WITH TIME ZONE AT TIME ZONE 'America/Denver'))) LIMIT 1);"},
+		{"select now()::timestamp with time zone from users;", 1, "(SELECT now()::TIMESTAMP WITH TIME ZONE FROM users);"},
+		{"select '2020-01-01' at time zone 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
+		{"select '2020-01-01' + 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' + 'MDT') FROM my_table);"},
+		{"select id from my_table where my_date at time zone my_zone > '2001-01-01';", 1, "(SELECT id FROM my_table WHERE ((my_date AT TIME ZONE my_zone) > '2001-01-01'));"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
@@ -228,7 +232,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality;", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY);"},
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality as t(key, index);", 1, "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY t(key, index));"},
 
-		// Select: with reserved words
+		// Select: reserved words
 		{"select id from users where any(type_ids) = 10;", 1, "(SELECT id FROM users WHERE (any(type_ids) = 10));"},               // any
 		{"select null::integer AS id from users;", 1, "(SELECT NULL::INTEGER AS id FROM users);"},                                 // null
 		{"select id from users where login_date < current_date;", 1, "(SELECT id FROM users WHERE (login_date < current_date));"}, // CURRENT_DATE

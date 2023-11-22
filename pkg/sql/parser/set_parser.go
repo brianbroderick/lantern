@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"strings"
+
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
@@ -20,10 +22,10 @@ func (p *Parser) parseSetStatement() *ast.SetStatement {
 		stmt.Local = true
 		p.nextToken()
 	}
-	if p.curTokenIs(token.TIME) {
+	if p.curTokenIs(token.IDENT) && strings.ToUpper(p.curToken.Lit) == "TIME" {
 		stmt.TimeZone = true
 		p.nextToken()
-		if p.curTokenIs(token.ZONE) {
+		if p.curTokenIs(token.IDENT) && strings.ToUpper(p.curToken.Lit) == "ZONE" {
 			p.nextToken()
 		}
 	}
