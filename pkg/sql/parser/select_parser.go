@@ -162,13 +162,13 @@ func (p *Parser) parseDistinct() ast.Expression {
 	p.context = XDISTINCT
 
 	if p.curTokenIs(token.ALL) {
-		all := &ast.DistinctExpression{Token: p.curToken}
+		x := &ast.DistinctExpression{Token: p.curToken}
 		p.nextToken()
-		return all // &ast.DistinctExpression{Token: p.curToken, On: token.Token{Type: token.NIL, Lit: ""}}
+		return x // &ast.DistinctExpression{Token: p.curToken, On: token.Token{Type: token.NIL, Lit: ""}}
 	}
 
 	if p.curTokenIs(token.DISTINCT) {
-		distinct := &ast.DistinctExpression{Token: p.curToken}
+		x := &ast.DistinctExpression{Token: p.curToken}
 		p.nextToken()
 
 		if p.curTokenIs(token.ON) {
@@ -176,14 +176,14 @@ func (p *Parser) parseDistinct() ast.Expression {
 
 			if p.curTokenIs(token.LPAREN) {
 				p.nextToken()
-				distinct.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+				x.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 				if p.curTokenIs(token.RPAREN) {
 					p.nextToken()
 				}
 			}
 		}
 
-		return distinct
+		return x
 	}
 
 	return nil
@@ -192,37 +192,29 @@ func (p *Parser) parseDistinct() ast.Expression {
 func (p *Parser) parseTables() []ast.Expression {
 	defer untrace(trace("parseTables"))
 
-	tables := []ast.Expression{}
-
-	// if p.peekTokenIsOne([]token.TokenType{token.EOF, token.SEMICOLON}) {
-	// 	return tables
-	// }
-
-	tables = append(tables, p.parseFirstTable())
+	x := []ast.Expression{}
+	x = append(x, p.parseFirstTable())
 
 	for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL, token.COMMA}) {
-		tables = append(tables, p.parseTable())
+		x = append(x, p.parseTable())
 	}
 
-	return tables
+	return x
 }
 
 // parseFirstTable will leave curToken on the last token of the table (name or alias)
 func (p *Parser) parseFirstTable() ast.Expression {
 	defer untrace(trace("parseFirstTable"))
 
-	table := ast.TableExpression{Token: token.Token{Type: token.FROM}}
-
-	// fmt.Printf("parseFirstTable1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
-
-	table.Table = p.parseExpression(LOWEST)
+	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
+	x.Table = p.parseExpression(LOWEST)
 
 	if p.peekTokenIs(token.WITH) {
 		p.nextToken()
 		if p.peekTokenIs(token.ORDINALITY) {
 			p.nextToken()
 			p.nextToken()
-			table.Ordinality = true
+			x.Ordinality = true
 		}
 	}
 
@@ -234,29 +226,29 @@ func (p *Parser) parseFirstTable() ast.Expression {
 	// if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
 	if p.peekTokenIsOne([]token.TokenType{token.IDENT}) {
 		p.nextToken()
-		table.Alias = p.parseExpression(LOWEST)
+		x.Alias = p.parseExpression(LOWEST)
 	}
 
 	// fmt.Printf("parseFirstTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
-	return &table
+	return &x
 }
 
 func (p *Parser) parseTable() ast.Expression {
 	defer untrace(trace("parseTable"))
 
-	table := ast.TableExpression{Token: token.Token{Type: token.FROM}}
+	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 
 	// fmt.Printf("parseTable1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	// Get the join type
 	if p.peekTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
 		p.nextToken()
-		table.JoinType = strings.ToUpper(p.curToken.Lit)
+		x.JoinType = strings.ToUpper(p.curToken.Lit)
 
 		if p.peekTokenIs(token.JOIN) {
 			p.nextToken()
-			table.JoinType = table.JoinType + " JOIN"
+			x.JoinType = x.JoinType + " JOIN"
 		}
 		// Skip the OUTER keyword
 		if p.peekTokenIs(token.OUTER) {
@@ -269,23 +261,23 @@ func (p *Parser) parseTable() ast.Expression {
 	// If just using JOIN, assume INNER
 	if p.peekTokenIs(token.JOIN) {
 		p.nextToken()
-		if table.JoinType == "" {
-			table.JoinType = "INNER JOIN"
+		if x.JoinType == "" {
+			x.JoinType = "INNER JOIN"
 		} else {
-			table.JoinType = table.JoinType + " JOIN"
+			x.JoinType = x.JoinType + " JOIN"
 		}
 		// fmt.Printf("parseTable simple join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 	}
 
 	if p.peekTokenIs(token.LATERAL) {
 		p.nextToken()
-		table.JoinType = table.JoinType + " LATERAL"
+		x.JoinType = x.JoinType + " LATERAL"
 	}
 
 	if p.peekTokenIs(token.COMMA) {
 		p.nextToken()
-		if table.JoinType == "" {
-			table.JoinType = ","
+		if x.JoinType == "" {
+			x.JoinType = ","
 		}
 	}
 
@@ -294,7 +286,7 @@ func (p *Parser) parseTable() ast.Expression {
 	// fmt.Printf("parseTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	// Get the table name
-	table.Table = p.parseExpression(LOWEST)
+	x.Table = p.parseExpression(LOWEST)
 
 	// if p.curTokenIs(token.IDENT) {
 	// 	table.Table = &ast.Identifier{Token: token.Token{Type: token.IDENT, Lit: p.curToken.Lit}, Value: p.curToken.Lit}
@@ -307,7 +299,7 @@ func (p *Parser) parseTable() ast.Expression {
 		if p.peekTokenIs(token.ORDINALITY) {
 			p.nextToken()
 			p.nextToken()
-			table.Ordinality = true
+			x.Ordinality = true
 		}
 	}
 
@@ -319,7 +311,7 @@ func (p *Parser) parseTable() ast.Expression {
 	// if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
 	if p.peekTokenIsOne([]token.TokenType{token.IDENT}) {
 		p.nextToken()
-		table.Alias = p.parseExpression(LOWEST)
+		x.Alias = p.parseExpression(LOWEST)
 	}
 
 	// fmt.Printf("parseTable4: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
@@ -328,10 +320,10 @@ func (p *Parser) parseTable() ast.Expression {
 	if p.peekTokenIs(token.ON) {
 		p.nextToken()
 		p.nextToken()
-		table.JoinCondition = p.parseExpression(LOWEST)
+		x.JoinCondition = p.parseExpression(LOWEST)
 	}
 
-	return &table
+	return &x
 }
 
 func (p *Parser) parseFetch() ast.Expression {
@@ -341,7 +333,7 @@ func (p *Parser) parseFetch() ast.Expression {
 		p.nextToken()
 	}
 
-	fetch := &ast.FetchExpression{Token: p.curToken,
+	x := &ast.FetchExpression{Token: p.curToken,
 		Value:  &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset},
 		Option: token.Token{Type: token.NIL, Lit: ""}}
 
@@ -350,12 +342,12 @@ func (p *Parser) parseFetch() ast.Expression {
 	}
 
 	if p.curTokenIs(token.INT) {
-		fetch.Value = p.parseExpression(LOWEST)
+		x.Value = p.parseExpression(LOWEST)
 		p.nextToken()
 	} else {
 		// Integer is suppressed, so we need to increment the param offset manually instead of in the IntegerLiteral
 		p.paramOffset++
-		fetch.Value = &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset}
+		x.Value = &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset}
 	}
 
 	if p.curTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
@@ -363,41 +355,40 @@ func (p *Parser) parseFetch() ast.Expression {
 	}
 
 	if p.curTokenIs(token.ONLY) {
-		fetch.Option = p.curToken
+		x.Option = p.curToken
 		p.nextToken()
 	} else if p.curTokenIs(token.WITH) {
 		if p.peekTokenIs(token.TIES) {
 			p.nextToken()
-			fetch.Option = p.curToken
+			x.Option = p.curToken
 			p.nextToken()
 		}
 	}
-	return fetch
+	return x
 }
 
 func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
 	defer untrace(trace("parseSortList"))
 
-	list := []ast.Expression{}
+	x := []ast.Expression{}
 
 	if p.curTokenIsOne(end) {
-		return list
+		return x
 	}
 
-	list = append(list, p.parseSort(LOWEST, end))
+	x = append(x, p.parseSort(LOWEST, end))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		list = append(list, p.parseSort(LOWEST, end))
+		x = append(x, p.parseSort(LOWEST, end))
 	}
 
-	return list
+	return x
 }
 
 func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression {
 	defer untrace(trace("parseSort"))
-	// fmt.Printf("parseSort1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -405,8 +396,6 @@ func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression
 		return nil
 	}
 	leftExp := prefix()
-
-	// fmt.Printf("parseSort2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, leftExp)
 
 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA}) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
@@ -418,23 +407,22 @@ func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression
 		leftExp = infix(leftExp)
 	}
 
-	sortExp := &ast.SortExpression{Token: p.curToken, Value: leftExp, Direction: token.Token{Type: token.ASC, Lit: "ASC"}, Nulls: token.Token{Type: token.NIL, Lit: ""}}
+	x := &ast.SortExpression{Token: p.curToken, Value: leftExp, Direction: token.Token{Type: token.ASC, Lit: "ASC"}, Nulls: token.Token{Type: token.NIL, Lit: ""}}
 
 	if p.peekTokenIsOne([]token.TokenType{token.ASC, token.DESC}) {
 		p.nextToken()
-		sortExp.Direction = p.curToken
+		x.Direction = p.curToken
 	}
 
 	if p.peekTokenIs(token.NULLS) {
 		p.nextToken()
 		if p.peekTokenIsOne([]token.TokenType{token.FIRST, token.LAST}) {
 			p.nextToken()
-			sortExp.Nulls = p.curToken
+			x.Nulls = p.curToken
 		}
 	}
 
-	// fmt.Printf("parseSort3: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-	return sortExp
+	return x
 }
 
 func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
@@ -461,14 +449,12 @@ func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
 func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
 	defer untrace(trace("parseWindow"))
 
-	expression := &ast.WindowExpression{
+	x := &ast.WindowExpression{
 		Token: p.curToken,
 	}
 
-	// fmt.Printf("parseWindow1: '%s' :: '%s' == %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
-
 	if p.curTokenIs(token.IDENT) {
-		expression.Alias = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+		x.Alias = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 		p.nextToken()
 
 		if p.curTokenIs(token.AS) {
@@ -480,39 +466,35 @@ func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
 		}
 	}
 
-	// fmt.Printf("parseWindow2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
-
 	window := p.parseWindowExpression()
-	expression.PartitionBy = window.(*ast.WindowExpression).PartitionBy
-	expression.OrderBy = window.(*ast.WindowExpression).OrderBy
-
-	// fmt.Printf("parseWindow3: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
+	x.PartitionBy = window.(*ast.WindowExpression).PartitionBy
+	x.OrderBy = window.(*ast.WindowExpression).OrderBy
 
 	if p.peekTokenIs(token.RPAREN) {
 		p.nextToken()
 	}
 
-	return expression
+	return x
 }
 
 func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 	defer untrace(trace("parseColumnList"))
 
-	list := []ast.Expression{}
+	x := []ast.Expression{}
 
 	if p.curTokenIsOne(end) {
-		return list
+		return x
 	}
 
-	list = append(list, p.parseColumn(LOWEST, end))
+	x = append(x, p.parseColumn(LOWEST, end))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		list = append(list, p.parseColumn(LOWEST, end))
+		x = append(x, p.parseColumn(LOWEST, end))
 	}
 
-	return list
+	return x
 }
 
 func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expression {
@@ -524,11 +506,8 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 		return nil
 	}
 	leftExp := prefix()
-	// fmt.Printf("parseColumn1: %s :: %s\n", p.curToken.Type, p.peekToken.Type)
 
 	for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.FROM, token.AS, token.IDENT}) && precedence < p.peekPrecedence() {
-		// fmt.Printf("parseColumn2: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-
 		infix := p.infixParseFns[p.peekToken.Type]
 
 		if infix == nil {
@@ -540,24 +519,10 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 		leftExp = infix(leftExp)
 	}
 
-	colExp := &ast.ColumnExpression{Token: p.curToken, Value: leftExp}
-
-	// First attempt at AT TIME ZONE
-	// if p.peekTokenIs(token.IDENT) && strings.ToUpper(p.peekToken.Lit) == "AT" {
-	// 	p.nextToken()
-	// 	if p.peekTokenIs(token.TIME) {
-	// 		p.nextToken()
-	// 		if p.peekTokenIs(token.ZONE) {
-	// 			p.nextToken()
-	// 			colExp.Value = p.parseTimeZoneExpression(leftExp)
-	// 		}
-	// 	}
-	// }
+	x := &ast.ColumnExpression{Token: p.curToken, Value: leftExp}
 
 	// AS is optional, but opens up additional keywords that can be used as an alias.
-	// isAlias := false
 	if p.peekTokenIs(token.AS) {
-		// isAlias = true
 		p.nextToken()
 	}
 
@@ -565,61 +530,56 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 		p.nextToken()
 
 		alias := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
-		colExp = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
+		x = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
 	}
 
-	// fmt.Printf("parseColumn3: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-	return colExp
+	return x
 }
 
 func (p *Parser) parseWindowExpression() ast.Expression {
-	expression := &ast.WindowExpression{
+	x := &ast.WindowExpression{
 		Token: p.curToken,
 	}
 
-	// fmt.Printf("parseWindowExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 	if p.curTokenIs(token.PARTITION) {
 		if p.expectPeek(token.BY) {
 			p.nextToken()
-			expression.PartitionBy = p.parseColumnList([]token.TokenType{token.COMMA, token.ORDER, token.AS, token.RPAREN})
+			x.PartitionBy = p.parseColumnList([]token.TokenType{token.COMMA, token.ORDER, token.AS, token.RPAREN})
 		}
 	}
 	if p.peekTokenIs(token.ORDER) {
 		p.nextToken()
 	}
 
-	// fmt.Printf("parseWindowExpression2: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
-
 	if p.curTokenIs(token.ORDER) {
 		if p.expectPeek(token.BY) {
 			p.nextToken()
-			expression.OrderBy = p.parseSortList([]token.TokenType{token.COMMA, token.AS, token.RPAREN})
+			x.OrderBy = p.parseSortList([]token.TokenType{token.COMMA, token.AS, token.RPAREN})
 		}
 	}
-	// fmt.Printf("parseWindowExpression3: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 
-	return expression
+	return x
 }
 
 func (p *Parser) parseLock() ast.Expression {
 	p.context = XLOCK // sets the context for the parseExpressionListItem function
-	expression := &ast.LockExpression{
+	x := &ast.LockExpression{
 		Token: p.curToken,
 	}
 
 	switch p.curToken.Type {
 	case token.UPDATE:
-		expression.Lock = "UPDATE"
+		x.Lock = "UPDATE"
 		p.nextToken()
 	case token.SHARE:
-		expression.Lock = "SHARE"
+		x.Lock = "SHARE"
 		p.nextToken()
 	}
 
 	if p.curTokenIs(token.IDENT) && strings.ToUpper(p.curToken.Lit) == "KEY" {
 		p.nextToken()
 		if p.curTokenIs(token.SHARE) {
-			expression.Lock = "KEY SHARE"
+			x.Lock = "KEY SHARE"
 		}
 	}
 
@@ -629,61 +589,59 @@ func (p *Parser) parseLock() ast.Expression {
 			p.nextToken()
 			if p.curTokenIs(token.UPDATE) {
 				p.nextToken()
-				expression.Lock = "NO KEY UPDATE"
+				x.Lock = "NO KEY UPDATE"
 			}
 		}
 	}
 
 	if p.curTokenIs(token.OF) {
 		p.nextToken()
-		expression.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF})
+		x.Tables = p.parseExpressionList([]token.TokenType{token.NOWAIT, token.SKIP, token.SEMICOLON, token.EOF})
 	}
 
 	if p.curTokenIs(token.NOWAIT) {
-		expression.Options = "NOWAIT"
+		x.Options = "NOWAIT"
 	} else if p.curTokenIs(token.SKIP) {
 		p.nextToken()
 		if p.curTokenIs(token.LOCKED) {
-			expression.Options = "SKIP LOCKED"
+			x.Options = "SKIP LOCKED"
 		}
 	}
 
 	p.nextToken()
 
-	return expression
+	return x
 }
 
 func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
 	p.context = XNOT // sets the context for the parseExpressionListItem function
-	exp := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
 	p.nextToken()
 
 	// If we're missing another NOT expression, add it here.
 	if p.curTokenIsOne([]token.TokenType{token.IN, token.LIKE, token.ILIKE, token.BETWEEN}) {
-		exp.Operator = "NOT " + p.curToken.Lit
+		x.Operator = "NOT " + p.curToken.Lit
 		p.nextToken()
 	}
 
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()
-		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+		x.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
-	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
-	return exp
+	return x
 }
 
 func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 	p.context = XIN // sets the context for the parseExpressionListItem function
-	exp := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
 	p.nextToken()
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()
-		exp.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+		x.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
-	// fmt.Printf("parseInExpression1: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
-	return exp
+	return x
 }
 
 func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
@@ -720,17 +678,17 @@ func (p *Parser) parseStringFunctionExpression(left ast.Expression) ast.Expressi
 }
 
 func (p *Parser) parseCastExpression() ast.Expression {
-	expression := &ast.CastExpression{Token: p.curToken}
+	x := &ast.CastExpression{Token: p.curToken}
 
 	if p.peekTokenIs(token.LPAREN) {
 		p.nextToken()
 		p.nextToken()
-		expression.Left = p.parseExpression(LOWEST)
+		x.Left = p.parseExpression(LOWEST)
 
 		if p.peekTokenIs(token.AS) {
 			p.nextToken()
 			p.nextToken()
-			expression.Cast = p.curToken.Lit
+			x.SetCast(p.parseExpression(CAST))
 		}
 
 		if p.peekTokenIs(token.RPAREN) {
@@ -738,7 +696,7 @@ func (p *Parser) parseCastExpression() ast.Expression {
 		}
 	}
 
-	return expression
+	return x
 }
 
 func (p *Parser) parseWhereExpression() ast.Expression {
@@ -780,15 +738,3 @@ func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
 	x.Right = p.parseExpression(precedence)
 	return x
 }
-
-// First attempt at AT TIME ZONE
-// if p.peekTokenIs(token.IDENT) && strings.ToUpper(p.peekToken.Lit) == "AT" {
-// 	p.nextToken()
-// 	if p.peekTokenIs(token.TIME) {
-// 		p.nextToken()
-// 		if p.peekTokenIs(token.ZONE) {
-// 			p.nextToken()
-// 			colExp.Value = p.parseTimeZoneExpression(leftExp)
-// 		}
-// 	}
-// }

@@ -27,7 +27,7 @@ type Statement interface {
 type Expression interface {
 	Node
 	expressionNode()
-	SetCast(cast string)
+	SetCast(cast Expression)
 }
 
 type Program struct {
@@ -87,75 +87,75 @@ func (x *ExpressionStatement) Inspect(maskParams bool) string {
 type Identifier struct {
 	Token token.Token `json:"token,omitempty"` // the token.IDENT token
 	Value string      `json:"value,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
 func (x *Identifier) expressionNode()      {}
 func (x *Identifier) TokenLiteral() string { return x.Token.Lit }
 func (x *Identifier) String(maskParams bool) string {
-	if x.Cast != "" {
-		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast))
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return x.Value
 }
-func (x *Identifier) SetCast(cast string) {
+func (x *Identifier) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type Boolean struct {
 	Token token.Token
 	Value bool
-	Cast  string
+	Cast  Expression
 }
 
 func (x *Boolean) expressionNode()               {}
 func (x *Boolean) TokenLiteral() string          { return x.Token.Lit }
 func (x *Boolean) String(maskParams bool) string { return strings.ToUpper(x.Token.Lit) }
-func (x *Boolean) SetCast(cast string) {
+func (x *Boolean) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type Null struct {
 	Token token.Token
-	Cast  string
+	Cast  Expression
 }
 
 func (x *Null) expressionNode()      {}
 func (x *Null) TokenLiteral() string { return x.Token.Lit }
 func (x *Null) String(maskParams bool) string {
 	literal := strings.ToUpper(x.Token.Lit)
-	if x.Cast != "" {
-		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast))
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}
 	return literal
 }
-func (x *Null) SetCast(cast string) {
+func (x *Null) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type Unknown struct {
 	Token token.Token
-	Cast  string
+	Cast  Expression
 }
 
 func (x *Unknown) expressionNode()      {}
 func (x *Unknown) TokenLiteral() string { return x.Token.Lit }
 func (x *Unknown) String(maskParams bool) string {
 	literal := strings.ToUpper(x.Token.Lit)
-	if x.Cast != "" {
-		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast))
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}
 	return literal
 }
-func (x *Unknown) SetCast(cast string) {
+func (x *Unknown) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type IntegerLiteral struct {
 	Token       token.Token `json:"token,omitempty"`
 	Value       int64       `json:"value,omitempty"`
-	Cast        string      `json:"cast,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
 	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
@@ -166,18 +166,18 @@ func (x *IntegerLiteral) String(maskParams bool) string {
 	if maskParams {
 		literal = fmt.Sprintf("$%d", x.ParamOffset)
 	}
-	if x.Cast != "" {
-		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast))
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}
 	return literal
 }
-func (x *IntegerLiteral) SetCast(cast string) {
+func (x *IntegerLiteral) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type KeywordExpression struct {
 	Token token.Token `json:"token,omitempty"` // The keyword token, e.g. ALL
-	Cast  string      `json:"cast,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
 func (x *KeywordExpression) expressionNode()      {}
@@ -185,13 +185,13 @@ func (x *KeywordExpression) TokenLiteral() string { return x.Token.Lit }
 func (x *KeywordExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(strings.ToUpper(x.Token.Lit))
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 	return out.String()
 }
-func (x *KeywordExpression) SetCast(cast string) {
+func (x *KeywordExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -200,7 +200,7 @@ type PrefixExpression struct {
 	Token    token.Token `json:"token,omitempty"` // The prefix token, e.g. !
 	Operator string      `json:"operator,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
-	Cast     string      `json:"cast,omitempty"`
+	Cast     Expression  `json:"cast,omitempty"`
 }
 
 func (x *PrefixExpression) expressionNode()      {}
@@ -212,14 +212,14 @@ func (x *PrefixExpression) String(maskParams bool) string {
 	out.WriteString(x.Operator)
 	out.WriteString(x.Right.String(maskParams))
 	out.WriteString(")")
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *PrefixExpression) SetCast(cast string) {
+func (x *PrefixExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -230,7 +230,7 @@ type PrefixKeywordExpression struct {
 	Token    token.Token `json:"token,omitempty"` // The prefix token, e.g. !
 	Operator string      `json:"operator,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
-	Cast     string      `json:"cast,omitempty"`
+	Cast     Expression  `json:"cast,omitempty"`
 }
 
 func (x *PrefixKeywordExpression) expressionNode()      {}
@@ -244,14 +244,14 @@ func (x *PrefixKeywordExpression) String(maskParams bool) string {
 	out.WriteString(x.Right.String(maskParams))
 	out.WriteString(")")
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *PrefixKeywordExpression) SetCast(cast string) {
+func (x *PrefixKeywordExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -260,7 +260,7 @@ type InfixExpression struct {
 	Left     Expression  `json:"left,omitempty"`
 	Operator string      `json:"operator,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
-	Cast     string      `json:"cast,omitempty"`
+	Cast     Expression  `json:"cast,omitempty"`
 }
 
 func (x *InfixExpression) expressionNode()      {}
@@ -276,21 +276,21 @@ func (x *InfixExpression) String(maskParams bool) string {
 	}
 	out.WriteString(")")
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *InfixExpression) SetCast(cast string) {
+func (x *InfixExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type GroupedExpression struct {
 	Token    token.Token  `json:"token,omitempty"` // The '(' token
 	Elements []Expression `json:"elements,omitempty"`
-	Cast     string       `json:"cast,omitempty"`
+	Cast     Expression   `json:"cast,omitempty"`
 }
 
 func (x *GroupedExpression) expressionNode()      {}
@@ -312,14 +312,14 @@ func (x *GroupedExpression) String(maskParams bool) string {
 		out.WriteString(")")
 	}
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *GroupedExpression) SetCast(cast string) {
+func (x *GroupedExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -328,7 +328,7 @@ type CallExpression struct {
 	Distinct  Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
 	Function  Expression   `json:"function,omitempty"` // Identifier or FunctionLiteral
 	Arguments []Expression `json:"arguments,omitempty"`
-	Cast      string       `json:"cast,omitempty"`
+	Cast      Expression   `json:"cast,omitempty"`
 }
 
 func (x *CallExpression) expressionNode()      {}
@@ -352,21 +352,21 @@ func (x *CallExpression) String(maskParams bool) string {
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *CallExpression) SetCast(cast string) {
+func (x *CallExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type StringLiteral struct {
 	Token       token.Token `json:"token,omitempty"`
 	Value       string      `json:"value,omitempty"`
-	Cast        string      `json:"cast,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
 	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
@@ -377,12 +377,12 @@ func (x *StringLiteral) String(maskParams bool) string {
 	if maskParams {
 		literal = fmt.Sprintf("$%d", x.ParamOffset)
 	}
-	if x.Cast != "" {
-		return fmt.Sprintf("'%s'::%s", literal, strings.ToUpper(x.Cast))
+	if x.Cast != nil {
+		return fmt.Sprintf("'%s'::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}
 	return fmt.Sprintf("'%s'", literal)
 }
-func (x *StringLiteral) SetCast(cast string) {
+func (x *StringLiteral) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -390,7 +390,7 @@ type ArrayLiteral struct {
 	Token    token.Token  `json:"token,omitempty"` // the '[' token
 	Left     Expression   `json:"left,omitempty"`
 	Elements []Expression `json:"elements,omitempty"`
-	Cast     string       `json:"cast,omitempty"`
+	Cast     Expression   `json:"cast,omitempty"`
 }
 
 func (x *ArrayLiteral) expressionNode()      {}
@@ -411,14 +411,14 @@ func (x *ArrayLiteral) String(maskParams bool) string {
 	out.WriteString(strings.Join(elements, ", "))
 	out.WriteString("]")
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *ArrayLiteral) SetCast(cast string) {
+func (x *ArrayLiteral) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -426,7 +426,7 @@ type IndexExpression struct {
 	Token token.Token `json:"token,omitempty"` // The [ token
 	Left  Expression  `json:"left,omitempty"`
 	Index Expression  `json:"index,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
 func (x *IndexExpression) expressionNode()      {}
@@ -440,21 +440,21 @@ func (x *IndexExpression) String(maskParams bool) string {
 	out.WriteString(x.Index.String(maskParams))
 	out.WriteString("])")
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *IndexExpression) SetCast(cast string) {
+func (x *IndexExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type IntervalExpression struct {
 	Token token.Token `json:"token,omitempty"` // The interval token
 	Value Expression  `json:"value,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
 func (x *IntervalExpression) expressionNode()      {}
@@ -465,14 +465,14 @@ func (x *IntervalExpression) String(maskParams bool) string {
 	out.WriteString("INTERVAL ")
 	out.WriteString(x.Value.String(maskParams))
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *IntervalExpression) SetCast(cast string) {
+func (x *IntervalExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 

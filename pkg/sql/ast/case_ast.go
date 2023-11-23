@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
@@ -10,7 +11,7 @@ type CaseExpression struct {
 	Token       token.Token            `json:"token,omitempty"` // the token.CASE token
 	Conditions  []*ConditionExpression `json:"conditions,omitempty"`
 	Alternative Expression             `json:"alternative,omitempty"`
-	Cast        string                 `json:"cast,omitempty"`
+	Cast        Expression             `json:"cast,omitempty"`
 }
 
 func (ce *CaseExpression) expressionNode()      {}
@@ -32,7 +33,7 @@ func (ce *CaseExpression) String(maskParams bool) string {
 
 	return out.String()
 }
-func (ce *CaseExpression) SetCast(cast string) {
+func (ce *CaseExpression) SetCast(cast Expression) {
 	ce.Cast = cast
 }
 
@@ -40,31 +41,31 @@ type ConditionExpression struct {
 	Token       token.Token `json:"token,omitempty"`
 	Condition   Expression  `json:"condition,omitempty"`
 	Consequence Expression  `json:"consequence,omitempty"`
-	Cast        string      `json:"cast,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
 }
 
-func (ce *ConditionExpression) expressionNode()      {}
-func (ce *ConditionExpression) TokenLiteral() string { return ce.Token.Lit }
-func (ce *ConditionExpression) String(maskParams bool) string {
+func (x *ConditionExpression) expressionNode()      {}
+func (x *ConditionExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *ConditionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	if ce.Condition != nil {
+	if x.Condition != nil {
 		out.WriteString(" WHEN ")
-		out.WriteString(ce.Condition.String(maskParams))
+		out.WriteString(x.Condition.String(maskParams))
 	}
 
-	if ce.Consequence != nil {
+	if x.Consequence != nil {
 		out.WriteString(" THEN ")
-		out.WriteString(ce.Consequence.String(maskParams))
+		out.WriteString(x.Consequence.String(maskParams))
 	}
 
-	if ce.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(ce.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (ce *ConditionExpression) SetCast(cast string) {
-	ce.Cast = cast
+func (x *ConditionExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }

@@ -14,12 +14,12 @@ type SelectStatement struct {
 	Expressions []Expression `json:"expressions,omitempty"` // a select statement may consist of multiple expressions such as the with clause in a CTE along with the primary select expression
 }
 
-func (ss *SelectStatement) statementNode()       {}
-func (ss *SelectStatement) TokenLiteral() string { return ss.Token.Lit }
-func (ss *SelectStatement) String(maskParams bool) string {
+func (s *SelectStatement) statementNode()       {}
+func (s *SelectStatement) TokenLiteral() string { return s.Token.Lit }
+func (s *SelectStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	for _, e := range ss.Expressions {
+	for _, e := range s.Expressions {
 		out.WriteString(e.String(maskParams))
 	}
 
@@ -27,8 +27,8 @@ func (ss *SelectStatement) String(maskParams bool) string {
 
 	return out.String()
 }
-func (ss *SelectStatement) Inspect(maskParams bool) string {
-	j, err := json.MarshalIndent(ss, "", "  ")
+func (s *SelectStatement) Inspect(maskParams bool) string {
+	j, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)
 	}
@@ -56,37 +56,37 @@ type SelectExpression struct {
 	CompoundToken         token.Token  `json:"compound_token,omitempty"`          // the token.UNION, token.INTERSECT, or token.EXCEPT token
 	CompoundTokenModifier token.Token  `json:"compound_token_modifier,omitempty"` // the token.ALL
 	CompoundExpression    Expression   `json:"union,omitempty"`                   // the select expression to union with
-	Cast                  string       `json:"cast,omitempty"`                    // probably not needed, but used for the interface
+	Cast                  Expression   `json:"cast,omitempty"`                    // probably not needed, but used for the interface
 }
 
-func (se *SelectExpression) expressionNode()      {}
-func (se *SelectExpression) TokenLiteral() string { return se.Token.Lit }
+func (x *SelectExpression) expressionNode()      {}
+func (x *SelectExpression) TokenLiteral() string { return x.Token.Lit }
 
 // String() is incomplete and only returns the most basic of select statements
-func (se *SelectExpression) String(maskParams bool) string {
+func (x *SelectExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	if se.TempTable != nil {
-		out.WriteString(se.TempTable.String(maskParams) + " AS ")
+	if x.TempTable != nil {
+		out.WriteString(x.TempTable.String(maskParams) + " AS ")
 	}
 
-	if se.WithMaterialized != "" {
-		out.WriteString(strings.ToUpper(se.WithMaterialized) + " ")
+	if x.WithMaterialized != "" {
+		out.WriteString(strings.ToUpper(x.WithMaterialized) + " ")
 	}
 
 	// Subqueries need to be surrounded by parentheses. A primary query may also have parentheses, so we'll add them here to be consistent.
 	out.WriteString("(")
 
-	out.WriteString(strings.ToUpper(se.TokenLiteral()) + " ")
+	out.WriteString(strings.ToUpper(x.TokenLiteral()) + " ")
 
 	// Distinct
-	if se.Distinct != nil {
-		out.WriteString(se.Distinct.String(maskParams) + " ")
+	if x.Distinct != nil {
+		out.WriteString(x.Distinct.String(maskParams) + " ")
 	}
 
 	// Columns
 	columns := []string{}
-	for _, c := range se.Columns {
+	for _, c := range x.Columns {
 		columns = append(columns, c.String(maskParams))
 	}
 	out.WriteString(strings.Join(columns, ", "))
@@ -94,156 +94,140 @@ func (se *SelectExpression) String(maskParams bool) string {
 	// Tables
 	out.WriteString(" FROM ")
 	tables := []string{}
-	for _, t := range se.Tables {
+	for _, t := range x.Tables {
 		tables = append(tables, t.String(maskParams))
 	}
 	out.WriteString(strings.Join(tables, " "))
 
 	// Window
-	if len(se.Window) > 0 {
+	if len(x.Window) > 0 {
 		out.WriteString(" WINDOW ")
 		windows := []string{}
-		for _, w := range se.Window {
+		for _, w := range x.Window {
 			windows = append(windows, w.String(maskParams))
 		}
 		out.WriteString(strings.Join(windows, ", "))
 	}
 
 	// Where
-	if se.Where != nil {
+	if x.Where != nil {
 		out.WriteString(" WHERE ")
-		out.WriteString(se.Where.String(maskParams))
+		out.WriteString(x.Where.String(maskParams))
 	}
 
 	// Group By
-	if len(se.GroupBy) > 0 {
+	if len(x.GroupBy) > 0 {
 		out.WriteString(" GROUP BY ")
 		groupBy := []string{}
-		for _, g := range se.GroupBy {
+		for _, g := range x.GroupBy {
 			groupBy = append(groupBy, g.String(maskParams))
 		}
 		out.WriteString(strings.Join(groupBy, ", "))
 	}
 
 	// Having
-	if se.Having != nil {
+	if x.Having != nil {
 		out.WriteString(" HAVING ")
-		out.WriteString(se.Having.String(maskParams))
+		out.WriteString(x.Having.String(maskParams))
 	}
 
 	// Order By
-	if len(se.OrderBy) > 0 {
+	if len(x.OrderBy) > 0 {
 		out.WriteString(" ORDER BY ")
 		orderBy := []string{}
-		for _, g := range se.OrderBy {
+		for _, g := range x.OrderBy {
 			orderBy = append(orderBy, g.String(maskParams))
 		}
 		out.WriteString(strings.Join(orderBy, ", "))
 	}
 
 	// Limit
-	if se.Limit != nil {
+	if x.Limit != nil {
 		out.WriteString(" LIMIT ")
-		out.WriteString(se.Limit.String(maskParams))
+		out.WriteString(x.Limit.String(maskParams))
 	}
 
 	// Offset
-	if se.Offset != nil {
+	if x.Offset != nil {
 		out.WriteString(" OFFSET ")
-		out.WriteString(se.Offset.String(maskParams))
+		out.WriteString(x.Offset.String(maskParams))
 	}
 
 	// Fetch
-	if se.Fetch != nil {
+	if x.Fetch != nil {
 		out.WriteString(" FETCH NEXT ")
-		out.WriteString(se.Fetch.String(maskParams))
+		out.WriteString(x.Fetch.String(maskParams))
 	}
 
 	// Lock
-	if se.Lock != nil {
+	if x.Lock != nil {
 		out.WriteString(" FOR ")
-		out.WriteString(se.Lock.String(maskParams))
+		out.WriteString(x.Lock.String(maskParams))
 	}
 
 	// Compound
-	if se.CompoundExpression != nil {
-		out.WriteString(" " + strings.ToUpper(se.CompoundToken.Lit) + " ")
-		if se.CompoundTokenModifier.Type == token.ALL {
-			out.WriteString(strings.ToUpper(se.CompoundTokenModifier.Lit) + " ")
+	if x.CompoundExpression != nil {
+		out.WriteString(" " + strings.ToUpper(x.CompoundToken.Lit) + " ")
+		if x.CompoundTokenModifier.Type == token.ALL {
+			out.WriteString(strings.ToUpper(x.CompoundTokenModifier.Lit) + " ")
 		}
-		out.WriteString(se.CompoundExpression.String(maskParams))
+		out.WriteString(x.CompoundExpression.String(maskParams))
 	}
 
 	out.WriteString(")")
 
-	if se.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(se.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (se *SelectExpression) SetCast(cast string) {
-	se.Cast = cast
+func (x *SelectExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
-
-// func (se *SelectExpression) Inspect() string {
-// 	columns := []string{}
-// 	for _, c := range se.Columns {
-// 		columns = append(columns, c.String(maskParams))
-// 	}
-// 	strColumns := strings.Join(columns, "\n\t\t")
-// 	strTables := []string{}
-// 	for _, t := range se.Tables {
-// 		strTables = append(strTables, t.String(maskParams))
-// 	}
-
-// 	ins := fmt.Sprintf("\tColumns: \n\t\t%s\n\n\tTable: \n\t\t%s\n", strColumns, strTables)
-// 	return ins
-// }
 
 type DistinctExpression struct {
 	Token token.Token  `json:"token,omitempty"` // The keyword token, e.g. DISTINCT
 	Right []Expression `json:"right,omitempty"` // The columns to be distinct
-	Cast  string       `json:"cast,omitempty"`  // probably not needed, but used for the interface
+	Cast  Expression   `json:"cast,omitempty"`  // probably not needed, but used for the interface
 }
 
-func (de *DistinctExpression) expressionNode()      {}
-func (de *DistinctExpression) TokenLiteral() string { return de.Token.Lit }
-func (de *DistinctExpression) String(maskParams bool) string {
+func (x *DistinctExpression) expressionNode()      {}
+func (x *DistinctExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *DistinctExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(strings.ToUpper(de.Token.Lit))
-	if len(de.Right) > 0 {
+	out.WriteString(strings.ToUpper(x.Token.Lit))
+	if len(x.Right) > 0 {
 		out.WriteString(" ON ")
 	}
-	if de.Right != nil {
+	if x.Right != nil {
 		out.WriteString("(")
 		right := []string{}
-		for _, r := range de.Right {
+		for _, r := range x.Right {
 			right = append(right, r.String(maskParams))
 		}
 		out.WriteString(strings.Join(right, ", "))
 		out.WriteString(")")
 	}
 
-	if de.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(de.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (de *DistinctExpression) SetCast(cast string) {
-	de.Cast = cast
+func (x *DistinctExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type ColumnExpression struct {
 	Token token.Token `json:"token,omitempty"` // the token.AS token
-	Name  *Identifier `json:"name,omitempty"`  // the name of the column or alias
+	Name  Expression  `json:"name,omitempty"`  // the name of the column or alias
 	Value Expression  `json:"value,omitempty"` // the complete expression including all of the columns
-	Cast  string      `json:"cast,omitempty"`
-	// Columns []*Identifier `json:"columns,omitempty"` // the columns that make up the expression for ease of reporting
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
 func (x *ColumnExpression) expressionNode()      {}
@@ -253,19 +237,22 @@ func (x *ColumnExpression) String(maskParams bool) string {
 
 	val := x.Value.String(maskParams)
 	out.WriteString(val)
-	if x.Name != nil && x.Name.String(maskParams) != val && x.Name.String(maskParams) != "" {
-		out.WriteString(" AS ")
-		out.WriteString(x.Name.String(maskParams))
+	if x.Name != nil {
+		name := x.Name.String(maskParams)
+		if name != val && name != "" {
+			out.WriteString(" AS ")
+			out.WriteString(x.Name.String(maskParams))
+		}
 	}
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(x.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *ColumnExpression) SetCast(cast string) {
+func (x *ColumnExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -274,33 +261,33 @@ type SortExpression struct {
 	Value     Expression  `json:"value,omitempty"`     // the column to sort on
 	Direction token.Token `json:"direction,omitempty"` // the direction to sort
 	Nulls     token.Token `json:"nulls,omitempty"`     // first or last
-	Cast      string      `json:"cast,omitempty"`
+	Cast      Expression  `json:"cast,omitempty"`
 }
 
-func (s *SortExpression) expressionNode()      {}
-func (s *SortExpression) TokenLiteral() string { return s.Token.Lit }
-func (s *SortExpression) String(maskParams bool) string {
+func (x *SortExpression) expressionNode()      {}
+func (x *SortExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *SortExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(s.Value.String(maskParams))
-	if s.Direction.Type == token.DESC {
+	out.WriteString(x.Value.String(maskParams))
+	if x.Direction.Type == token.DESC {
 		out.WriteString(" DESC")
 	}
-	if s.Nulls.Type == token.FIRST {
+	if x.Nulls.Type == token.FIRST {
 		out.WriteString(" NULLS FIRST")
-	} else if s.Nulls.Type == token.LAST {
+	} else if x.Nulls.Type == token.LAST {
 		out.WriteString(" NULLS LAST")
 	}
 
-	if s.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(s.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (s *SortExpression) SetCast(cast string) {
-	s.Cast = cast
+func (x *SortExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type FetchExpression struct {
@@ -309,31 +296,31 @@ type FetchExpression struct {
 	Value Expression `json:"value,omitempty"` // the number of rows to fetch
 	// We also don't need to store "row" or "rows" since these are synonyms. We'll convert everything to "rows" when printing in .String()
 	Option token.Token `json:"option,omitempty"` // the token.ONLY or token.TIES token (don't need to store "with ties", just "ties" will do)
-	Cast   string      `json:"cast,omitempty"`
+	Cast   Expression  `json:"cast,omitempty"`
 }
 
-func (f *FetchExpression) expressionNode()      {}
-func (f *FetchExpression) TokenLiteral() string { return f.Token.Lit }
-func (f *FetchExpression) String(maskParams bool) string {
+func (x *FetchExpression) expressionNode()      {}
+func (x *FetchExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *FetchExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(f.Value.String(maskParams))
+	out.WriteString(x.Value.String(maskParams))
 	out.WriteString(" ROWS")
-	if f.Option.Type == token.TIES {
+	if x.Option.Type == token.TIES {
 		out.WriteString(" WITH TIES")
 	} else {
 		out.WriteString(" ONLY")
 	}
 
-	if f.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(f.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (f *FetchExpression) SetCast(cast string) {
-	f.Cast = cast
+func (x *FetchExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type AggregateExpression struct {
@@ -341,7 +328,7 @@ type AggregateExpression struct {
 	Left     Expression   `json:"expression,omitempty"`
 	Operator string       `json:"operator,omitempty"`
 	Right    []Expression `json:"order_by,omitempty"` // the columns to order by
-	Cast     string       `json:"cast,omitempty"`
+	Cast     Expression   `json:"cast,omitempty"`
 }
 
 func (x *AggregateExpression) expressionNode()      {}
@@ -371,7 +358,7 @@ func (x *AggregateExpression) String(maskParams bool) string {
 
 	return out.String()
 }
-func (x *AggregateExpression) SetCast(cast string) {
+func (x *AggregateExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -380,34 +367,34 @@ type WindowExpression struct {
 	Alias       *Identifier  `json:"alias,omitempty"`        // the alias of the window
 	PartitionBy []Expression `json:"partition_by,omitempty"` // the columns to partition by
 	OrderBy     []Expression `json:"order_by,omitempty"`     // the columns to order by
-	Cast        string       `json:"cast,omitempty"`
+	Cast        Expression   `json:"cast,omitempty"`
 }
 
-func (w *WindowExpression) expressionNode()      {}
-func (w *WindowExpression) TokenLiteral() string { return w.Token.Lit }
-func (w *WindowExpression) String(maskParams bool) string {
+func (x *WindowExpression) expressionNode()      {}
+func (x *WindowExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *WindowExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	if w.Alias != nil {
-		out.WriteString(w.Alias.String(maskParams) + " AS ")
+	if x.Alias != nil {
+		out.WriteString(x.Alias.String(maskParams) + " AS ")
 	}
 
 	out.WriteString("(")
-	if len(w.PartitionBy) > 0 {
+	if len(x.PartitionBy) > 0 {
 		out.WriteString("PARTITION BY ")
 		partitionBy := []string{}
-		for _, p := range w.PartitionBy {
+		for _, p := range x.PartitionBy {
 			partitionBy = append(partitionBy, p.String(maskParams))
 		}
 		out.WriteString(strings.Join(partitionBy, ", "))
 	}
-	if len(w.PartitionBy) > 0 && len(w.OrderBy) > 0 {
+	if len(x.PartitionBy) > 0 && len(x.OrderBy) > 0 {
 		out.WriteString(" ")
 	}
-	if len(w.OrderBy) > 0 {
+	if len(x.OrderBy) > 0 {
 		out.WriteString("ORDER BY ")
 		orderBy := []string{}
-		for _, o := range w.OrderBy {
+		for _, o := range x.OrderBy {
 			orderBy = append(orderBy, o.String(maskParams))
 		}
 		out.WriteString(strings.Join(orderBy, ", "))
@@ -415,38 +402,64 @@ func (w *WindowExpression) String(maskParams bool) string {
 
 	out.WriteString(")")
 
-	if w.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(w.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (w *WindowExpression) SetCast(cast string) {
-	w.Cast = cast
+func (x *WindowExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type WildcardLiteral struct {
 	Token token.Token `json:"token,omitempty"` // the token.ASTERISK token
 	Value string      `json:"value,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
-func (w *WildcardLiteral) expressionNode()      {}
-func (w *WildcardLiteral) TokenLiteral() string { return w.Token.Lit }
-func (w *WildcardLiteral) String(maskParams bool) string {
+func (x *WildcardLiteral) expressionNode()      {}
+func (x *WildcardLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *WildcardLiteral) String(maskParams bool) string {
 	var out bytes.Buffer
-	out.WriteString(w.Value)
+	out.WriteString(x.Value)
 
-	if w.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(w.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (w *WildcardLiteral) SetCast(cast string) {
-	w.Cast = cast
+func (x *WildcardLiteral) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
+type TimestampExpression struct {
+	Token        token.Token `json:"token,omitempty"` // the token.TIMESTAMP token
+	WithTimeZone bool        `json:"with_time_zone,omitempty"`
+	Cast         Expression  `json:"cast,omitempty"`
+}
+
+func (x *TimestampExpression) expressionNode()      {}
+func (x *TimestampExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *TimestampExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+	out.WriteString(strings.ToUpper(x.Token.Lit))
+	if x.WithTimeZone {
+		out.WriteString(" WITH TIME ZONE")
+	}
+
+	if x.Cast != nil {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
+	}
+
+	return out.String()
+}
+func (x *TimestampExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 // JoinType  Table     Alias JoinCondition
@@ -460,41 +473,41 @@ type TableExpression struct {
 	Table         Expression  `json:"table,omitempty"`          // the name of the table
 	Alias         Expression  `json:"alias,omitempty"`          // the alias of the table
 	JoinCondition Expression  `json:"join_condition,omitempty"` // the ON clause
-	Cast          string      `json:"cast,omitempty"`           // :: to cast the table
+	Cast          Expression  `json:"cast,omitempty"`           // :: to cast the table
 	Ordinality    bool        `json:"ordinality,omitempty"`     // the WITH ORDINALITY clause
 }
 
-func (t *TableExpression) expressionNode()      {}
-func (t *TableExpression) TokenLiteral() string { return t.Token.Lit }
-func (t *TableExpression) String(maskParams bool) string {
+func (x *TableExpression) expressionNode()      {}
+func (x *TableExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *TableExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	if t.JoinType != "" {
-		out.WriteString(t.JoinType + " ")
+	if x.JoinType != "" {
+		out.WriteString(x.JoinType + " ")
 	}
 
-	out.WriteString(t.Table.String(maskParams))
-	if t.Ordinality {
+	out.WriteString(x.Table.String(maskParams))
+	if x.Ordinality {
 		out.WriteString(" WITH ORDINALITY")
 	}
 
-	if t.Alias != nil && t.Alias.String(maskParams) != "" {
-		out.WriteString(" " + t.Alias.String(maskParams))
+	if x.Alias != nil && x.Alias.String(maskParams) != "" {
+		out.WriteString(" " + x.Alias.String(maskParams))
 	}
 
-	if t.JoinCondition != nil {
-		out.WriteString(" ON " + t.JoinCondition.String(maskParams))
+	if x.JoinCondition != nil {
+		out.WriteString(" ON " + x.JoinCondition.String(maskParams))
 	}
 
-	if t.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(t.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (t *TableExpression) SetCast(cast string) {
-	t.Cast = cast
+func (x *TableExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type LockExpression struct {
@@ -502,35 +515,35 @@ type LockExpression struct {
 	Lock    string       `json:"lock,omitempty"`    // the type of lock: update, share, key share, no key update
 	Tables  []Expression `json:"tables,omitempty"`  // the tables to lock
 	Options string       `json:"options,omitempty"` // the options: NOWAIT, SKIP LOCKED
-	Cast    string       `json:"cast,omitempty"`
+	Cast    Expression   `json:"cast,omitempty"`
 }
 
-func (l *LockExpression) expressionNode()      {}
-func (l *LockExpression) TokenLiteral() string { return l.Token.Lit }
-func (l *LockExpression) String(maskParams bool) string {
+func (x *LockExpression) expressionNode()      {}
+func (x *LockExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *LockExpression) String(maskParams bool) string {
 	var out bytes.Buffer
-	out.WriteString(l.Lock)
-	if len(l.Tables) > 0 {
+	out.WriteString(x.Lock)
+	if len(x.Tables) > 0 {
 		tables := []string{}
 		out.WriteString(" OF ")
-		for _, t := range l.Tables {
+		for _, t := range x.Tables {
 			tables = append(tables, t.String(maskParams))
 		}
 		out.WriteString(strings.Join(tables, ", "))
 	}
-	if l.Options != "" {
-		out.WriteString(" " + l.Options)
+	if x.Options != "" {
+		out.WriteString(" " + x.Options)
 	}
 
-	if l.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(l.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (l *LockExpression) SetCast(cast string) {
-	l.Cast = cast
+func (x *LockExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type InExpression struct {
@@ -538,20 +551,20 @@ type InExpression struct {
 	Left     Expression   `json:"left,omitempty"`
 	Operator string       `json:"operator,omitempty"`
 	Right    []Expression `json:"right,omitempty"`
-	Cast     string       `json:"cast,omitempty"`
+	Cast     Expression   `json:"cast,omitempty"`
 }
 
-func (ie *InExpression) expressionNode()      {}
-func (ie *InExpression) TokenLiteral() string { return ie.Token.Lit }
-func (ie *InExpression) String(maskParams bool) string {
+func (x *InExpression) expressionNode()      {}
+func (x *InExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *InExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(ie.Left.String(maskParams))
-	out.WriteString(" " + strings.ToUpper(ie.Operator) + " ")
+	out.WriteString(x.Left.String(maskParams))
+	out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
 
 	out.WriteString("(")
-	oneLess := len(ie.Right) - 1
-	for i, e := range ie.Right {
+	oneLess := len(x.Right) - 1
+	for i, e := range x.Right {
 		out.WriteString(e.String(maskParams))
 		if i < oneLess {
 			out.WriteString(", ")
@@ -559,21 +572,21 @@ func (ie *InExpression) String(maskParams bool) string {
 	}
 	out.WriteString(")")
 
-	if ie.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(ie.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (ie *InExpression) SetCast(cast string) {
-	ie.Cast = cast
+func (x *InExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type CastExpression struct {
 	Token token.Token `json:"token,omitempty"` // the token.CAST token
 	Left  Expression  `json:"value,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
 func (x *CastExpression) expressionNode()      {}
@@ -584,19 +597,19 @@ func (x *CastExpression) String(maskParams bool) string {
 	out.WriteString("CAST(")
 	out.WriteString(x.Left.String(maskParams))
 	out.WriteString(" AS ")
-	out.WriteString(x.Cast)
+	out.WriteString(x.Cast.String(maskParams))
 	out.WriteString(")")
 
 	return out.String()
 }
-func (x *CastExpression) SetCast(cast string) {
+func (x *CastExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type WhereExpression struct {
 	Token token.Token `json:"token,omitempty"` // The keyword token, e.g. WHERE
 	Right Expression  `json:"right,omitempty"`
-	Cast  string      `json:"cast,omitempty"` // probably not needed, but used for the interface
+	Cast  Expression  `json:"cast,omitempty"` // probably not needed, but used for the interface
 }
 
 func (x *WhereExpression) expressionNode()      {}
@@ -612,14 +625,14 @@ func (x *WhereExpression) String(maskParams bool) string {
 		out.WriteString(")")
 	}
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(x.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *WhereExpression) SetCast(cast string) {
+func (x *WhereExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -629,7 +642,7 @@ type IsExpression struct {
 	Not      bool        `json:"not,omitempty"`
 	Distinct bool        `json:"distinct,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
-	Cast     string      `json:"cast,omitempty"`
+	Cast     Expression  `json:"cast,omitempty"`
 }
 
 func (x *IsExpression) expressionNode()      {}
@@ -652,14 +665,14 @@ func (x *IsExpression) String(maskParams bool) string {
 	}
 	out.WriteString(")")
 
-	if x.Cast != "" {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(x.Cast)
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (x *IsExpression) SetCast(cast string) {
+func (x *IsExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
@@ -667,12 +680,12 @@ func (x *IsExpression) SetCast(cast string) {
 type TrimExpression struct {
 	Token      token.Token `json:"token,omitempty"` // the token.BOTH, token.LEADING, or token.TRAILING token
 	Expression Expression  `json:"expression,omitempty"`
-	Cast       string      `json:"cast,omitempty"`
+	Cast       Expression  `json:"cast,omitempty"`
 }
 
 func (x *TrimExpression) expressionNode()      {}
 func (x *TrimExpression) TokenLiteral() string { return x.Token.Lit }
-func (x *TrimExpression) SetCast(cast string) {
+func (x *TrimExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 func (x *TrimExpression) String(maskParams bool) string {
@@ -691,12 +704,12 @@ type StringFunctionExpression struct {
 	Left  Expression  `json:"left,omitempty"`
 	From  Expression  `json:"from,omitempty"`
 	For   Expression  `json:"for,omitempty"`
-	Cast  string      `json:"cast,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
 }
 
 func (x *StringFunctionExpression) expressionNode()      {}
 func (x *StringFunctionExpression) TokenLiteral() string { return x.Token.Lit }
-func (x *StringFunctionExpression) SetCast(cast string) {
+func (x *StringFunctionExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 func (x *StringFunctionExpression) String(maskParams bool) string {

@@ -18,12 +18,6 @@ func TestMultipleStatements(t *testing.T) {
 		output         string
 	}{
 		// Multiple Statements
-		{"select id from my_table where '2020-01-01' at time zone 'MDT' = '2023-01-01';", 1, "(SELECT id FROM my_table WHERE (('2020-01-01' AT TIME ZONE 'MDT') = '2023-01-01'));"},
-		{"select * from tasks where date_trunc('day', created_at) = date_trunc('day', now()::timestamp with time zone at time zone 'America/Denver') LIMIT 1;", 1, "(SELECT * FROM tasks WHERE (date_trunc('day', created_at) = date_trunc('day', (now()::TIMESTAMP WITH TIME ZONE AT TIME ZONE 'America/Denver'))) LIMIT 1);"},
-		{"select now()::timestamp with time zone from users;", 1, "(SELECT now()::TIMESTAMP WITH TIME ZONE FROM users);"},
-		{"select '2020-01-01' at time zone 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
-		{"select '2020-01-01' + 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' + 'MDT') FROM my_table);"},
-		{"select id from my_table where my_date at time zone my_zone > '2001-01-01';", 1, "(SELECT id FROM my_table WHERE ((my_date AT TIME ZONE my_zone) > '2001-01-01'));"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
@@ -249,8 +243,14 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select trim(trailing 'x' from 'xTomxx') from users;", 1, "(SELECT trim(TRAILING 'x' FROM 'xTomxx') FROM users);"},
 		{"select substring('or' from 'Hello World!') from users;", 1, "(SELECT substring('or' FROM 'Hello World!') FROM users);"},
 		{"select substring('Hello World!' from 2 for 4) from users;", 1, "(SELECT substring('Hello World!' FROM 2 FOR 4) FROM users);"},
-		// {"select '2020-01-01' at time zone 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
-		// {"select my_date at time zone my_zone from my_table;", 1, "(SELECT (my_date AT TIME ZONE my_zone) FROM my_table);"},
+
+		// Multi word keywords: AT TIME ZONE, and TIMESTAMP WITH TIME ZONE
+		{"select id from my_table where '2020-01-01' at time zone 'MDT' = '2023-01-01';", 1, "(SELECT id FROM my_table WHERE (('2020-01-01' AT TIME ZONE 'MDT') = '2023-01-01'));"},
+		{"select * from tasks where date_trunc('day', created_at) = date_trunc('day', now()::timestamp with time zone at time zone 'America/Denver') LIMIT 1;", 1, "(SELECT * FROM tasks WHERE (date_trunc('day', created_at) = date_trunc('day', (now()::TIMESTAMP WITH TIME ZONE AT TIME ZONE 'America/Denver'))) LIMIT 1);"},
+		{"select now()::timestamp with time zone from users;", 1, "(SELECT now()::TIMESTAMP WITH TIME ZONE FROM users);"},
+		{"select '2020-01-01' at time zone 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
+		{"select '2020-01-01' + 'MDT' from my_table;", 1, "(SELECT ('2020-01-01' + 'MDT') FROM my_table);"},
+		{"select id from my_table where my_date at time zone my_zone > '2001-01-01';", 1, "(SELECT id FROM my_table WHERE ((my_date AT TIME ZONE my_zone) > '2001-01-01'));"},
 
 		// // Select with a CTE expression
 		{"select count(1) from (with my_list as (select i from generate_series(1,10) s(i)) select i from my_list where i > 5) as t;", 1,

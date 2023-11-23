@@ -34,6 +34,7 @@ const (
 	JSON           // ->, ->>, #>, #>>, @>, <@, ?, ?&, ?|
 	CALL           // myFunction(X)
 	INDEX          // array[index]
+	CAST
 )
 
 var precedences = map[token.TokenType]int{
@@ -158,6 +159,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.NULL, p.parseNull)
 	p.registerPrefix(token.UNKNOWN, p.parseUnknown)
+	// p.registerPrefix(token.TIMESTAMP, p.parseTimestampExpression)
 
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
@@ -187,6 +189,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.ANY, p.parseIdentifier)
 	p.registerPrefix(token.CURRENT_DATE, p.parseIdentifier)
 	p.registerPrefix(token.USER, p.parseIdentifier)
+	// p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
 	// p.registerPrefix(token.AT, p.parseIdentifier)
 
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
@@ -527,57 +530,11 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		leftExp.SetCast(p.curToken.Lit)
+		leftExp.SetCast(p.parseExpression(CAST))
 	}
 
 	return leftExp
 }
-
-// func (p *Parser) parseExpressionListItem(precedence int) ast.Expression {
-// 	defer untrace(trace("parseExpression"))
-// 	defer p.setContext(XLISTITEM)
-
-// 	prefix := p.prefixParseFns[p.curToken.Type]
-// 	if prefix == nil {
-// 		p.noPrefixParseFnError(p.curToken.Type)
-// 		return nil
-// 	}
-// 	leftExp := prefix()
-
-// 	if p.context == XCALL { // Allow order by to denote an aggregate function
-// 		for !p.peekTokenIsOne([]token.TokenType{token.COMMA}) && precedence < p.peekPrecedence() {
-// 			infix := p.infixParseFns[p.peekToken.Type]
-// 			if infix == nil {
-// 				return leftExp
-// 			}
-
-// 			p.nextToken()
-
-// 			leftExp = infix(leftExp)
-// 		}
-// 	} else {
-
-// 		for !p.peekTokenIsOne([]token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}) && precedence < p.peekPrecedence() {
-// 			infix := p.infixParseFns[p.peekToken.Type]
-// 			if infix == nil {
-// 				return leftExp
-// 			}
-
-// 			p.nextToken()
-
-// 			leftExp = infix(leftExp)
-// 		}
-// 	}
-
-// 	// This is why all expressions must have a SetCast method
-// 	if p.peekTokenIs(token.DOUBLECOLON) {
-// 		p.nextToken()
-// 		p.nextToken()
-// 		leftExp.SetCast(p.curToken.Lit)
-// 	}
-
-// 	return leftExp
-// }
 
 func (p *Parser) peekPrecedence() int {
 	if p, ok := precedences[p.peekToken.Type]; ok {
@@ -598,12 +555,10 @@ func (p *Parser) curPrecedence() int {
 func (p *Parser) parseIdentifier() ast.Expression {
 	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
 
-	// fmt.Printf("parseIdentifier: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		ident.Cast = p.curToken.Lit
+		ident.SetCast(p.parseExpression(CAST))
 	}
 	return ident
 }
@@ -633,7 +588,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		lit.Cast = p.curToken.Lit
+		lit.SetCast(p.parseExpression(CAST))
 	}
 
 	return lit
@@ -645,7 +600,7 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		str.Cast = p.curToken.Lit
+		str.SetCast(p.parseExpression(CAST))
 	}
 	return str
 }
@@ -750,7 +705,7 @@ func (p *Parser) parseNull() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.curToken.Lit)
+		x.SetCast(p.parseExpression(CAST))
 	}
 	return x
 }
@@ -762,7 +717,7 @@ func (p *Parser) parseUnknown() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.curToken.Lit)
+		x.SetCast(p.parseExpression(CAST))
 	}
 	return x
 }
@@ -777,7 +732,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.curToken.Lit)
+		x.SetCast(p.parseExpression(CAST))
 	}
 
 	return x
@@ -827,7 +782,7 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.Cast = p.curToken.Lit
+		x.SetCast(p.parseExpression(CAST))
 	}
 
 	return x
@@ -879,7 +834,7 @@ func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		array.Cast = p.curToken.Lit
+		array.SetCast(p.parseExpression(CAST))
 	}
 
 	return array

@@ -33,7 +33,7 @@ type CTEExpression struct {
 	Token       token.Token  `json:"token,omitempty"`
 	Recursive   bool         `json:"recursive,omitempty"`
 	Expressions []Expression `json:"expressions,omitempty"`
-	Cast        string       `json:"cast,omitempty"`
+	Cast        Expression   `json:"cast,omitempty"`
 }
 
 func (x *CTEExpression) expressionNode()      {}
@@ -89,6 +89,6 @@ func (x *CTEExpression) String(maskParams bool) string {
 
 	return out.String()
 }
-func (x *CTEExpression) SetCast(cast string) {
+func (x *CTEExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
