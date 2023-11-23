@@ -351,17 +351,21 @@ func (l *Lexer) scanString() token.Token {
 }
 
 func (l *Lexer) scanNumber() token.Token {
+	numType := token.INT // default to INT
 	var buf bytes.Buffer
 	for {
 		l.read()
-		if !isDigit(l.ch) {
+		if !isDigit(l.ch) && l.ch != '.' {
 			l.unread()
 			break
+		} else if l.ch == '.' { // Found a dot, so this is a FLOAT
+			numType = token.FLOAT
+			_, _ = buf.WriteRune(l.ch)
 		} else {
 			_, _ = buf.WriteRune(l.ch)
 		}
 	}
-	return token.Token{Type: token.INT, Lit: buf.String()}
+	return token.Token{Type: numType, Lit: buf.String()}
 }
 
 // isWhitespace returns true if the rune is a space, tab, or newline.

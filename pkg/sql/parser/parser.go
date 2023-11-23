@@ -155,6 +155,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.IDENT, p.parseIdentifier)
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
+	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
@@ -571,6 +572,29 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	value, err := strconv.ParseInt(p.curToken.Lit, 0, 64)
 	if err != nil {
 		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Lit)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+
+	lit.Value = value
+
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		lit.SetCast(p.parseExpression(CAST))
+	}
+
+	return lit
+}
+
+func (p *Parser) parseFloatLiteral() ast.Expression {
+	// Incrementing the offset is to help when masking parameters in the AST
+	p.paramOffset++
+	lit := &ast.FloatLiteral{Token: p.curToken, ParamOffset: p.paramOffset}
+
+	value, err := strconv.ParseFloat(p.curToken.Lit, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as float", p.curToken.Lit)
 		p.errors = append(p.errors, msg)
 		return nil
 	}

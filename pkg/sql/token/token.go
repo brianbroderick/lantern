@@ -33,7 +33,7 @@ const (
 	literalBeg // Literals
 	IDENT      // identity: add, foobar, x, y, my_var, ...
 	INT        // 12345
-	NUMBER     // 0.12345
+	FLOAT      // 0.12345
 	STRING     // "foobar"
 	literalEnd
 
@@ -247,7 +247,7 @@ var Tokens = [...]string{
 
 	IDENT:  "IDENT",
 	INT:    "INTEGER",
-	NUMBER: "NUMBER",
+	FLOAT:  "FLOAT", // 0.12345 or 12345.12345
 	STRING: "STRING",
 
 	ASSIGN:   "ASSIGN",   // =
