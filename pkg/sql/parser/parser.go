@@ -85,6 +85,7 @@ var precedences = map[token.TokenType]int{
 	token.ORDER:             AGGREGATE,
 	token.FILTER:            FILTER,
 	token.AT_TIME_ZONE:      AT_TIME_ZONE,
+	token.TIMESTAMP:         AT_TIME_ZONE,
 }
 
 // https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-PRECEDENCE
@@ -159,7 +160,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.NULL, p.parseNull)
 	p.registerPrefix(token.UNKNOWN, p.parseUnknown)
-	// p.registerPrefix(token.TIMESTAMP, p.parseTimestampExpression)
+	p.registerPrefix(token.TIMESTAMP, p.parseTimestampExpression)
 
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
@@ -265,22 +266,22 @@ func (p *Parser) nextToken() {
 	newToken, pos := p.advanceToken()
 	p.peekFourToken = newToken
 
-	// timestamp with time zone
-	if p.peekToken.Type == token.IDENT && strings.ToUpper(p.peekToken.Lit) == "TIMESTAMP" {
-		if p.peekTwoToken.Type == token.WITH {
-			if p.peekThreeToken.Type == token.IDENT && strings.ToUpper(p.peekThreeToken.Lit) == "TIME" {
-				if p.peekFourToken.Type == token.IDENT && strings.ToUpper(p.peekFourToken.Lit) == "ZONE" {
-					p.peekToken = token.Token{Type: token.IDENT, Lit: "TIMESTAMP WITH TIME ZONE"}
-					newToken, _ = p.advanceToken()
-					p.peekTwoToken = newToken
-					newToken, _ = p.advanceToken()
-					p.peekThreeToken = newToken
-					newToken, _ = p.advanceToken()
-					p.peekFourToken = newToken
-				}
-			}
-		}
-	}
+	// // timestamp with time zone
+	// if p.peekToken.Type == token.IDENT && strings.ToUpper(p.peekToken.Lit) == "TIMESTAMP" {
+	// 	if p.peekTwoToken.Type == token.WITH {
+	// 		if p.peekThreeToken.Type == token.IDENT && strings.ToUpper(p.peekThreeToken.Lit) == "TIME" {
+	// 			if p.peekFourToken.Type == token.IDENT && strings.ToUpper(p.peekFourToken.Lit) == "ZONE" {
+	// 				p.peekToken = token.Token{Type: token.IDENT, Lit: "TIMESTAMP WITH TIME ZONE"}
+	// 				newToken, _ = p.advanceToken()
+	// 				p.peekTwoToken = newToken
+	// 				newToken, _ = p.advanceToken()
+	// 				p.peekThreeToken = newToken
+	// 				newToken, _ = p.advanceToken()
+	// 				p.peekFourToken = newToken
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	// Read into the future for AT TIME ZONE since AT isn't a reserved word (it's often used as a column or table alias)
 	if p.peekTwoToken.Type == token.IDENT && strings.ToUpper(p.peekTwoToken.Lit) == "AT" {

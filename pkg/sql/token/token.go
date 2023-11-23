@@ -216,7 +216,7 @@ const (
 	TABLESAMPLE
 	THEN
 	TIES
-	// TIMESTAMP
+	TIMESTAMP
 	TO
 	TRAILING
 	TRUE
@@ -427,24 +427,24 @@ var Tokens = [...]string{
 	TABLESAMPLE: "TABLESAMPLE",
 	THEN:        "THEN",
 	TIES:        "TIES",
-	// TIMESTAMP:   "TIMESTAMP",
-	TO:        "TO",
-	TRAILING:  "TRAILING",
-	TRUE:      "TRUE",
-	UNBOUNDED: "UNBOUNDED",
-	UNION:     "UNION",
-	UNIQUE:    "UNIQUE",
-	UNKNOWN:   "UNKNOWN",
-	UPDATE:    "UPDATE",
-	USER:      "USER",
-	USING:     "USING",
-	VALUES:    "VALUES",
-	VARIADIC:  "VARIADIC",
-	VERBOSE:   "VERBOSE",
-	WHEN:      "WHEN",
-	WHERE:     "WHERE",
-	WINDOW:    "WINDOW",
-	WITH:      "WITH",
+	TIMESTAMP:   "TIMESTAMP",
+	TO:          "TO",
+	TRAILING:    "TRAILING",
+	TRUE:        "TRUE",
+	UNBOUNDED:   "UNBOUNDED",
+	UNION:       "UNION",
+	UNIQUE:      "UNIQUE",
+	UNKNOWN:     "UNKNOWN",
+	UPDATE:      "UPDATE",
+	USER:        "USER",
+	USING:       "USING",
+	VALUES:      "VALUES",
+	VARIADIC:    "VARIADIC",
+	VERBOSE:     "VERBOSE",
+	WHEN:        "WHEN",
+	WHERE:       "WHERE",
+	WINDOW:      "WINDOW",
+	WITH:        "WITH",
 }
 
 var keywords map[string]TokenType
