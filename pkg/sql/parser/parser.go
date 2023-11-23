@@ -188,9 +188,17 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LOCAL, p.parseIdentifier)
 	p.registerPrefix(token.DEFAULT, p.parseIdentifier)
 	p.registerPrefix(token.ANY, p.parseIdentifier)
-	p.registerPrefix(token.CURRENT_DATE, p.parseIdentifier)
 	p.registerPrefix(token.USER, p.parseIdentifier)
-	// p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
+	p.registerPrefix(token.SESSION_USER, p.parseIdentifier)
+	p.registerPrefix(token.SYSTEM_USER, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_CATALOG, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_DATE, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_SCHEMA, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_ROLE, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_TIME, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_TIMESTAMP, p.parseIdentifier)
+	p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
+
 	// p.registerPrefix(token.AT, p.parseIdentifier)
 
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
@@ -265,23 +273,6 @@ func (p *Parser) nextToken() {
 	p.peekThreeToken = p.peekFourToken
 	newToken, pos := p.advanceToken()
 	p.peekFourToken = newToken
-
-	// // timestamp with time zone
-	// if p.peekToken.Type == token.IDENT && strings.ToUpper(p.peekToken.Lit) == "TIMESTAMP" {
-	// 	if p.peekTwoToken.Type == token.WITH {
-	// 		if p.peekThreeToken.Type == token.IDENT && strings.ToUpper(p.peekThreeToken.Lit) == "TIME" {
-	// 			if p.peekFourToken.Type == token.IDENT && strings.ToUpper(p.peekFourToken.Lit) == "ZONE" {
-	// 				p.peekToken = token.Token{Type: token.IDENT, Lit: "TIMESTAMP WITH TIME ZONE"}
-	// 				newToken, _ = p.advanceToken()
-	// 				p.peekTwoToken = newToken
-	// 				newToken, _ = p.advanceToken()
-	// 				p.peekThreeToken = newToken
-	// 				newToken, _ = p.advanceToken()
-	// 				p.peekFourToken = newToken
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	// Read into the future for AT TIME ZONE since AT isn't a reserved word (it's often used as a column or table alias)
 	if p.peekTwoToken.Type == token.IDENT && strings.ToUpper(p.peekTwoToken.Lit) == "AT" {
