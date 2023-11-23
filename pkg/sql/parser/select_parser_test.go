@@ -17,6 +17,9 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
+		// Parse Errors
+		// {"select u . id from users u", 2, "(SELECT u.id FROM users);"}, // "no prefix parse function for DOT found at line 0 char 25"
+
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -68,7 +71,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select all id from users", 1, "(SELECT ALL id FROM users);"},
 		{"select distinct on (location) reported_at, report from weather_reports;", 1, "(SELECT DISTINCT ON (location) reported_at, report FROM weather_reports);"},
 		{"select c.id, string_agg ( distinct c.name, ', ' ) as value FROM companies c", 1, "(SELECT c.id, string_agg(DISTINCT c.name, ', ') AS value FROM companies c);"},
-		{"select array_agg(distinct sub.id) from a", 1, "(SELECT array_agg(DISTINCT sub.id) FROM a);"},
+		{"select array_agg(distinct sub.id) from sub", 1, "(SELECT array_agg(DISTINCT sub.id) FROM sub);"},
 
 		// Select: window functions
 		{"select avg(salary) over (partition by depname) from empsalary;", 1, "(SELECT (avg(salary) OVER (PARTITION BY depname)) FROM empsalary);"},
@@ -172,6 +175,12 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select option_id, external_id from modules group by option_id, external_id having (option_id, external_id) IN ((1, 7), (2, 9))", 1, "(SELECT option_id, external_id FROM modules GROUP BY option_id, external_id HAVING (option_id, external_id) IN ((1, 7), (2, 9)));"},
 
 		// Select: UNION clause
+		//   No tables
+		{"SELECT '08/22/2023'::DATE;", 0, "(SELECT '08/22/2023'::DATE);"},
+		{"SELECT '08/22/2023'::DATE union select '08/23/2023'::DATE;", 0, "(SELECT '08/22/2023'::DATE UNION (SELECT '08/23/2023'::DATE));"},
+		{"SELECT '123' union select '456';", 0, "(SELECT '123' UNION (SELECT '456'));"},
+
+		//  Single tables
 		{"select id from users union select id from customers;", 1, "(SELECT id FROM users UNION (SELECT id FROM customers));"},
 		{"select id from users except select id from customers;", 1, "(SELECT id FROM users EXCEPT (SELECT id FROM customers));"},
 		{"select id from users intersect select id from customers;", 1, "(SELECT id FROM users INTERSECT (SELECT id FROM customers));"},
@@ -216,6 +225,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select w() from a", 1, "(SELECT w() FROM a);"},
 		{"select id from load(1,2)", 1, "(SELECT id FROM load(1, 2));"},
 		{"select json_object_agg(foo order by id) from bar", 1, "(SELECT json_object_agg(foo ORDER BY id) FROM bar);"}, // aggregate function with order by
+		{"select array_agg( distinct sub.name_first order by sub.name_first ) from customers sub", 1, "(SELECT array_agg(DISTINCT sub.name_first ORDER BY sub.name_first) FROM customers sub);"}, // aggregate with distinct
 
 		// Subqueries
 		{"select * from (select id from a) b order by id", 1, "(SELECT * FROM (SELECT id FROM a) b ORDER BY id);"},

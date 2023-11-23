@@ -129,10 +129,14 @@ const (
 // For now, we're just passing the caller as a string in certain functions
 
 type Parser struct {
-	l           *lexer.Lexer
-	errors      []string
-	paramOffset int
-	pos         lexer.Pos
+	l            *lexer.Lexer
+	errors       []string
+	paramOffset  int
+	pos          lexer.Pos
+	posPeek      lexer.Pos
+	posPeekTwo   lexer.Pos
+	posPeekThree lexer.Pos
+	posPeekFour  lexer.Pos
 
 	curToken       token.Token
 	peekToken      token.Token
@@ -269,26 +273,32 @@ func New(l *lexer.Lexer) *Parser {
 // Multi word keywords is getting annoying... we need to think of a better way to do this.
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
+	p.pos = p.posPeek
 	p.peekToken = p.peekTwoToken
+	p.pos = p.posPeekTwo
 	p.peekTwoToken = p.peekThreeToken
+	p.posPeekTwo = p.posPeekThree
 	p.peekThreeToken = p.peekFourToken
+	p.posPeekThree = p.posPeekFour
 	newToken, pos := p.advanceToken()
 	p.peekFourToken = newToken
+	p.posPeekFour = pos
 
 	// Read into the future for AT TIME ZONE since AT isn't a reserved word (it's often used as a column or table alias)
 	if p.peekTwoToken.Type == token.IDENT && strings.ToUpper(p.peekTwoToken.Lit) == "AT" {
 		if p.peekThreeToken.Type == token.IDENT && strings.ToUpper(p.peekThreeToken.Lit) == "TIME" {
 			if p.peekFourToken.Type == token.IDENT && strings.ToUpper(p.peekFourToken.Lit) == "ZONE" {
 				p.peekTwoToken = token.Token{Type: token.AT_TIME_ZONE, Lit: "AT TIME ZONE"}
-				newToken, _ = p.advanceToken()
+				newToken, pos = p.advanceToken()
+				p.posPeekThree = pos
 				p.peekThreeToken = newToken
-				newToken, _ = p.advanceToken()
+				newToken, pos = p.advanceToken()
 				p.peekFourToken = newToken
+				p.posPeekFour = pos
 			}
 		}
 	}
 
-	p.pos = pos
 }
 
 func (p *Parser) advanceToken() (newToken token.Token, pos lexer.Pos) {
@@ -782,8 +792,6 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 // }
 
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
-	p.setContext(XCALL) // sets the context for the parseExpressionListItem function
-
 	x := &ast.CallExpression{Token: p.curToken, Function: function}
 
 	p.nextToken()
@@ -793,6 +801,7 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 		x.Distinct = p.parseDistinct()
 	}
 
+	p.setContext(XCALL) // sets the context for the parseExpressionListItem function
 	x.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
 
 	if p.peekTokenIs(token.DOUBLECOLON) {
@@ -811,8 +820,6 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 		return list
 	}
 
-	// p.nextToken()
-	// fmt.Printf("parseExpressionList: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, list)
 	list = append(list, p.parseExpression(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {

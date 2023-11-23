@@ -92,12 +92,14 @@ func (x *SelectExpression) String(maskParams bool) string {
 	out.WriteString(strings.Join(columns, ", "))
 
 	// Tables
-	out.WriteString(" FROM ")
-	tables := []string{}
-	for _, t := range x.Tables {
-		tables = append(tables, t.String(maskParams))
+	if len(x.Tables) > 0 {
+		out.WriteString(" FROM ")
+		tables := []string{}
+		for _, t := range x.Tables {
+			tables = append(tables, t.String(maskParams))
+		}
+		out.WriteString(strings.Join(tables, " "))
 	}
-	out.WriteString(strings.Join(tables, " "))
 
 	// Window
 	if len(x.Window) > 0 {

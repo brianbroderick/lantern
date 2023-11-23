@@ -51,94 +51,92 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	if p.peekTokenIs(token.FROM) {
 		p.nextToken()
 		p.nextToken()
-	} else {
-		return stmt
-	}
 
-	// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
+		// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
 
-	// p.nextToken()
-	stmt.Tables = p.parseTables()
+		// p.nextToken()
+		stmt.Tables = p.parseTables()
 
-	// fmt.Printf("parseSelectExpression002: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
+		// fmt.Printf("parseSelectExpression002: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
 
-	// WINDOW CLAUSE
-	if p.peekTokenIs(token.WINDOW) {
-		p.nextToken()
-		p.nextToken()
-		stmt.Window = p.parseWindowList(defaultListSeparators)
-	}
-
-	// WHERE CLAUSE
-	if p.peekTokenIs(token.WHERE) {
-		p.nextToken()
-		p.nextToken()
-		stmt.Where = p.parseExpression(LOWEST)
-	}
-
-	// GROUP BY CLAUSE
-	if p.peekTokenIs(token.GROUP) {
-		p.nextToken()
-		if !p.expectPeek(token.BY) {
-			return nil
+		// WINDOW CLAUSE
+		if p.peekTokenIs(token.WINDOW) {
+			p.nextToken()
+			p.nextToken()
+			stmt.Window = p.parseWindowList(defaultListSeparators)
 		}
-		p.nextToken()
-		stmt.GroupBy = p.parseColumnList(defaultListSeparators)
-	}
 
-	// HAVING CLAUSE
-	if p.peekTokenIs(token.HAVING) {
-		p.nextToken()
-		p.nextToken()
-		stmt.Having = p.parseExpression(LOWEST)
-	}
-
-	// ORDER BY CLAUSE
-	if p.peekTokenIs(token.ORDER) {
-		p.nextToken()
-		if !p.expectPeek(token.BY) {
-			return nil
+		// WHERE CLAUSE
+		if p.peekTokenIs(token.WHERE) {
+			p.nextToken()
+			p.nextToken()
+			stmt.Where = p.parseExpression(LOWEST)
 		}
-		p.nextToken()
-		stmt.OrderBy = p.parseSortList(defaultListSeparators)
-	}
 
-	// LIMIT and OFFSET CLAUSES can be in any order, but only one of each
-	if p.peekTokenIsOne([]token.TokenType{token.LIMIT, token.OFFSET}) {
-		for p.peekTokenIsOne([]token.TokenType{token.LIMIT, token.OFFSET}) {
-			// LIMIT CLAUSE
-			if p.peekTokenIs(token.LIMIT) {
-				p.nextToken()
-				p.nextToken()
-				stmt.Limit = p.parseExpression(LOWEST)
+		// GROUP BY CLAUSE
+		if p.peekTokenIs(token.GROUP) {
+			p.nextToken()
+			if !p.expectPeek(token.BY) {
+				return nil
 			}
+			p.nextToken()
+			stmt.GroupBy = p.parseColumnList(defaultListSeparators)
+		}
 
-			// OFFSET CLAUSE
-			if p.peekTokenIs(token.OFFSET) {
-				p.nextToken()
-				p.nextToken()
-				stmt.Offset = p.parseExpression(LOWEST)
+		// HAVING CLAUSE
+		if p.peekTokenIs(token.HAVING) {
+			p.nextToken()
+			p.nextToken()
+			stmt.Having = p.parseExpression(LOWEST)
+		}
 
-				if p.peekTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
+		// ORDER BY CLAUSE
+		if p.peekTokenIs(token.ORDER) {
+			p.nextToken()
+			if !p.expectPeek(token.BY) {
+				return nil
+			}
+			p.nextToken()
+			stmt.OrderBy = p.parseSortList(defaultListSeparators)
+		}
+
+		// LIMIT and OFFSET CLAUSES can be in any order, but only one of each
+		if p.peekTokenIsOne([]token.TokenType{token.LIMIT, token.OFFSET}) {
+			for p.peekTokenIsOne([]token.TokenType{token.LIMIT, token.OFFSET}) {
+				// LIMIT CLAUSE
+				if p.peekTokenIs(token.LIMIT) {
 					p.nextToken()
 					p.nextToken()
+					stmt.Limit = p.parseExpression(LOWEST)
+				}
+
+				// OFFSET CLAUSE
+				if p.peekTokenIs(token.OFFSET) {
+					p.nextToken()
+					p.nextToken()
+					stmt.Offset = p.parseExpression(LOWEST)
+
+					if p.peekTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
+						p.nextToken()
+						p.nextToken()
+					}
 				}
 			}
 		}
-	}
 
-	// FETCH CLAUSE
-	if p.peekTokenIs(token.FETCH) {
-		p.nextToken()
-		p.nextToken()
-		stmt.Fetch = p.parseFetch()
-	}
+		// FETCH CLAUSE
+		if p.peekTokenIs(token.FETCH) {
+			p.nextToken()
+			p.nextToken()
+			stmt.Fetch = p.parseFetch()
+		}
 
-	// FOR UPDATE CLAUSE
-	if p.peekTokenIs(token.FOR) {
-		p.nextToken()
-		p.nextToken()
-		stmt.Lock = p.parseLock()
+		// FOR UPDATE CLAUSE
+		if p.peekTokenIs(token.FOR) {
+			p.nextToken()
+			p.nextToken()
+			stmt.Lock = p.parseLock()
+		}
 	}
 
 	if p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
