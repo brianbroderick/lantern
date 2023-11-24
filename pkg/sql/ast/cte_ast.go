@@ -8,6 +8,11 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
+// we need to specify the with clauses separate from the main query. the with tables are temporary tables with a name
+// then we don't have to eff with infix vs select expressions in the case of unions
+
+// with tmp as (select count(1) as counter from orders) select counter from tmp;
+
 type CTEStatement struct {
 	Token      token.Token `json:"token,omitempty"`
 	Expression Expression  `json:"expression,omitempty"`
@@ -30,10 +35,11 @@ func (s *CTEStatement) Inspect(maskParams bool) string {
 }
 
 type CTEExpression struct {
-	Token       token.Token  `json:"token,omitempty"`
-	Recursive   bool         `json:"recursive,omitempty"`
-	Expressions []Expression `json:"expressions,omitempty"`
-	Cast        Expression   `json:"cast,omitempty"`
+	Token     token.Token  `json:"token,omitempty"`
+	Recursive bool         `json:"recursive,omitempty"`
+	Auxiliary []Expression `json:"auxiliary,omitempty"`
+	Primary   Expression   `json:"primary,omitempty"`
+	Cast      Expression   `json:"cast,omitempty"`
 }
 
 func (x *CTEExpression) expressionNode()      {}
@@ -46,49 +52,58 @@ func (x *CTEExpression) String(maskParams bool) string {
 	if x.Recursive {
 		out.WriteString("RECURSIVE ")
 	}
-
-	// CTEs are a little different. We need to split the expressions into two groups. The first group is the CTEs consisting of temp tables
-	// and the second group is the main query. The main query is the last statement, but that can consist of multiple
-	// expressions such as SELECT. We need to split them up and put the CTEs first so that we can comma separate the query appropriately.
-
-	tmpTables := []Expression{}
-	primaryExpressions := []Expression{}
-
-	inCTE := true
-
-	for _, e := range x.Expressions {
-		if e != nil {
-			if stmt, ok := e.(*SelectExpression); ok {
-				if stmt.TempTable == nil {
-					inCTE = false
-				}
-			}
-			if inCTE {
-				tmpTables = append(tmpTables, e)
-			} else {
-				primaryExpressions = append(primaryExpressions, e)
+	if len(x.Auxiliary) > 0 {
+		for _, a := range x.Auxiliary {
+			out.WriteString(a.String(maskParams))
+			if a != x.Auxiliary[len(x.Auxiliary)-1] {
+				out.WriteString(", ")
 			}
 		}
+		out.WriteString(" ")
 	}
-
-	lenTmpTables := len(tmpTables) - 1
-	for i, e := range tmpTables {
-		out.WriteString(e.String(maskParams))
-		if i < lenTmpTables {
-			out.WriteString(", ")
-		} else if i == lenTmpTables {
-			out.WriteString(" ")
-		}
+	if x.Primary != nil {
+		out.WriteString(x.Primary.String(maskParams))
 	}
-
-	for _, e := range primaryExpressions {
-		out.WriteString(e.String(maskParams))
+	if x.Cast != nil {
+		out.WriteString("::")
+		out.WriteString(x.Cast.String(maskParams))
 	}
-
 	out.WriteString(")")
 
 	return out.String()
 }
 func (x *CTEExpression) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
+type CTEAuxiliaryExpression struct {
+	Token        token.Token `json:"token,omitempty"`
+	Name         Expression  `json:"name,omitempty"`
+	Materialized string      `json:"materialized,omitempty"`
+	Expression   Expression  `json:"expression,omitempty"`
+	Cast         Expression  `json:"cast,omitempty"`
+}
+
+func (x *CTEAuxiliaryExpression) expressionNode()      {}
+func (x *CTEAuxiliaryExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *CTEAuxiliaryExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+	out.WriteString(x.Name.String(maskParams))
+	out.WriteString(" AS ")
+	if x.Materialized != "" {
+		out.WriteString(fmt.Sprintf("%s ", x.Materialized))
+	}
+
+	if x.Expression != nil {
+		out.WriteString(x.Expression.String(maskParams))
+	}
+
+	if x.Cast != nil {
+		out.WriteString("::")
+		out.WriteString(x.Cast.String(maskParams))
+	}
+	return out.String()
+}
+func (x *CTEAuxiliaryExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }

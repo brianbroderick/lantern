@@ -12,8 +12,9 @@ import (
 
 const (
 	_ int = iota
-	LOWEST
+	STATEMENT
 	UNION          // UNION
+	LOWEST         // Most of the time, this is the lowest we go, except for when we're joining statements together such as with UNIONS
 	USING          // USING in a JOIN or an index
 	FILTER         // FILTER i.e. COUNT(*) FILTER (WHERE i < 5)
 	AGGREGATE      // ORDER BY in a function call
@@ -247,6 +248,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.FILTER, p.parseInfixExpression)
 	p.registerInfix(token.USING, p.parseInfixExpression)
 	p.registerInfix(token.AT_TIME_ZONE, p.parseInfixExpression)
+	p.registerInfix(token.UNION, p.parseInfixExpression)
 
 	p.registerInfix(token.NOT, p.parseNotExpression)
 	p.registerInfix(token.IS, p.parseIsExpression)
@@ -475,7 +477,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	defer untrace(trace("parseExpressionStatement"))
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
-	stmt.Expression = p.parseExpression(LOWEST)
+	stmt.Expression = p.parseExpression(STATEMENT)
 
 	if p.peekTokenIsOne([]token.TokenType{token.SEMICOLON}) {
 		p.nextToken()
@@ -508,7 +510,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	// fmt.Printf("parseExpression1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	for !p.peekTokenIsOne(end) && precedence < p.peekPrecedence() {
-		var infix infixParseFn
+		// var infix infixParseFn
 		// fmt.Printf("HERE: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 		// switch p.curToken.Type {
 		// case token.AT:
@@ -517,7 +519,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		// 		infix = p.parseCompoundInfixExpression
 		// 	}
 		// default:
-		infix = p.infixParseFns[p.peekToken.Type]
+		infix := p.infixParseFns[p.peekToken.Type]
 		// }
 
 		if infix == nil {

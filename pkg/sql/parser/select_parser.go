@@ -20,7 +20,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 
 	stmt := &ast.SelectStatement{Token: p.curToken}
 	stmt.Expressions = []ast.Expression{}
-	stmt.Expressions = append(stmt.Expressions, p.parseSelectExpression())
+	stmt.Expressions = append(stmt.Expressions, p.parseExpression(STATEMENT))
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
@@ -32,7 +32,8 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 func (p *Parser) parseSelectExpression() ast.Expression {
 	defer untrace(trace("parseSelectExpression " + p.curToken.Lit))
 
-	stmt := &ast.SelectExpression{Token: p.curToken}
+	x := &ast.SelectExpression{Token: p.curToken}
+	// fmt.Printf("parseSelectExpressionStart: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 	p.nextToken()
 
 	// COLUMNS
@@ -42,35 +43,35 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 
 	// DISTINCT CLAUSE
 	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
-		stmt.Distinct = p.parseDistinct()
+		x.Distinct = p.parseDistinct()
 	}
 
-	stmt.Columns = p.parseColumnList([]token.TokenType{token.COMMA, token.FROM, token.AS})
+	x.Columns = p.parseColumnList([]token.TokenType{token.COMMA, token.FROM, token.AS})
 
 	// FROM CLAUSE: if the next token is FROM, advance the token and move on. Otherwise, return the statement.
 	if p.peekTokenIs(token.FROM) {
 		p.nextToken()
 		p.nextToken()
 
-		// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
+		// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 
 		// p.nextToken()
-		stmt.Tables = p.parseTables()
+		x.Tables = p.parseTables()
 
-		// fmt.Printf("parseSelectExpression002: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
+		// fmt.Printf("parseSelectExpression002: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 
 		// WINDOW CLAUSE
 		if p.peekTokenIs(token.WINDOW) {
 			p.nextToken()
 			p.nextToken()
-			stmt.Window = p.parseWindowList(defaultListSeparators)
+			x.Window = p.parseWindowList(defaultListSeparators)
 		}
 
 		// WHERE CLAUSE
 		if p.peekTokenIs(token.WHERE) {
 			p.nextToken()
 			p.nextToken()
-			stmt.Where = p.parseExpression(LOWEST)
+			x.Where = p.parseExpression(LOWEST)
 		}
 
 		// GROUP BY CLAUSE
@@ -80,14 +81,14 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 				return nil
 			}
 			p.nextToken()
-			stmt.GroupBy = p.parseColumnList(defaultListSeparators)
+			x.GroupBy = p.parseColumnList(defaultListSeparators)
 		}
 
 		// HAVING CLAUSE
 		if p.peekTokenIs(token.HAVING) {
 			p.nextToken()
 			p.nextToken()
-			stmt.Having = p.parseExpression(LOWEST)
+			x.Having = p.parseExpression(LOWEST)
 		}
 
 		// ORDER BY CLAUSE
@@ -97,7 +98,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 				return nil
 			}
 			p.nextToken()
-			stmt.OrderBy = p.parseSortList(defaultListSeparators)
+			x.OrderBy = p.parseSortList(defaultListSeparators)
 		}
 
 		// LIMIT and OFFSET CLAUSES can be in any order, but only one of each
@@ -107,14 +108,14 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 				if p.peekTokenIs(token.LIMIT) {
 					p.nextToken()
 					p.nextToken()
-					stmt.Limit = p.parseExpression(LOWEST)
+					x.Limit = p.parseExpression(LOWEST)
 				}
 
 				// OFFSET CLAUSE
 				if p.peekTokenIs(token.OFFSET) {
 					p.nextToken()
 					p.nextToken()
-					stmt.Offset = p.parseExpression(LOWEST)
+					x.Offset = p.parseExpression(LOWEST)
 
 					if p.peekTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
 						p.nextToken()
@@ -128,31 +129,31 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		if p.peekTokenIs(token.FETCH) {
 			p.nextToken()
 			p.nextToken()
-			stmt.Fetch = p.parseFetch()
+			x.Fetch = p.parseFetch()
 		}
 
 		// FOR UPDATE CLAUSE
 		if p.peekTokenIs(token.FOR) {
 			p.nextToken()
 			p.nextToken()
-			stmt.Lock = p.parseLock()
+			x.Lock = p.parseLock()
 		}
 	}
 
-	if p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
-		p.nextToken()
-		stmt.CompoundToken = p.curToken
-		p.nextToken()
-		if p.curTokenIs(token.ALL) {
-			stmt.CompoundTokenModifier = p.curToken
-			p.nextToken()
-		}
-		stmt.CompoundExpression = p.parseExpression(LOWEST)
-	}
+	// if p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
+	// 	p.nextToken()
+	// 	x.CompoundToken = p.curToken
+	// 	p.nextToken()
+	// 	if p.curTokenIs(token.ALL) {
+	// 		x.CompoundTokenModifier = p.curToken
+	// 		p.nextToken()
+	// 	}
+	// 	x.CompoundExpression = p.parseExpression(LOWEST)
+	// }
 
-	// fmt.Printf("parseSelectExpressionEnd: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, stmt)
+	// fmt.Printf("parseSelectExpressionEnd: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 
-	return stmt
+	return x
 }
 
 func (p *Parser) parseDistinct() ast.Expression {

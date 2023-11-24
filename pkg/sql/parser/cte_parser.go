@@ -28,20 +28,20 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 		p.nextToken()
 	}
 
-	x.Expressions = []ast.Expression{}
-	x.Expressions = append(x.Expressions, p.parseCTESubExpression())
+	x.Auxiliary = []ast.Expression{}
+	x.Auxiliary = append(x.Auxiliary, p.parseCTESubExpression())
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		x.Expressions = append(x.Expressions, p.parseCTESubExpression())
+		x.Auxiliary = append(x.Auxiliary, p.parseCTESubExpression())
 	}
 
 	if p.curTokenIs(token.RPAREN) {
 		p.nextToken()
 	}
 
-	x.Expressions = append(x.Expressions, p.parseExpression(LOWEST)) // Get the main query
+	x.Primary = p.parseExpression(STATEMENT) // Get the main query
 
 	if p.peekTokenIsOne([]token.TokenType{token.SEMICOLON, token.EOF}) {
 		p.nextToken()
@@ -52,38 +52,29 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 
 func (p *Parser) parseCTESubExpression() ast.Expression {
 	defer untrace(trace("parseCTESubExpression " + p.curToken.Lit))
-
-	if !p.curTokenIs(token.IDENT) {
-		return nil
-	}
-	tempTable := p.parseExpression(LOWEST)
-
-	// fmt.Printf("parseCTESubExpression: %s %s :: %s %s\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit)
+	x := &ast.CTEAuxiliaryExpression{Token: p.curToken}
+	x.Name = p.parseExpression(LOWEST)
 
 	p.expectPeek(token.AS) // expect AS and move to next token
 
-	materialized := ""
 	if p.peekTokenIs(token.NOT) {
-		materialized = "NOT "
+		x.Materialized = "NOT "
 		p.nextToken()
 	}
 
 	if p.peekTokenIs(token.MATERIALIZED) {
-		materialized += "MATERIALIZED"
+		x.Materialized += "MATERIALIZED"
 		p.nextToken()
 	}
 
 	p.expectPeek(token.LPAREN) // expect LPAREN and move to next token
 	p.nextToken()
 
-	exp := p.parseExpression(LOWEST)
-
-	exp.(*ast.SelectExpression).TempTable = tempTable
-	exp.(*ast.SelectExpression).WithMaterialized = materialized
+	x.Expression = p.parseExpression(STATEMENT)
 
 	if p.peekTokenIs(token.RPAREN) {
 		p.nextToken()
 	}
 
-	return exp
+	return x
 }
