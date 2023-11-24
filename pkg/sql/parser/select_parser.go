@@ -452,7 +452,7 @@ func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
 	}
 
 	if p.curTokenIs(token.IDENT) {
-		x.Alias = &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+		x.Alias = &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
 		p.nextToken()
 
 		if p.curTokenIs(token.AS) {
@@ -527,7 +527,7 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 	if p.peekTokenIs(token.IDENT) {
 		p.nextToken()
 
-		alias := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+		alias := &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
 		x = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
 	}
 

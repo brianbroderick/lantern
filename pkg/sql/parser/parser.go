@@ -555,15 +555,33 @@ func (p *Parser) curPrecedence() int {
 	return LOWEST
 }
 
+func (p *Parser) parseColumnSection() ast.Expression {
+	if p.peekTokenIs(token.DOT) {
+		p.nextToken()
+		p.nextToken()
+		if p.curTokenIs(token.ASTERISK) {
+			return &ast.WildcardLiteral{Token: p.curToken, Value: p.curToken.Lit}
+		} else if p.curTokenIs(token.IDENT) {
+			return &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
+		}
+	}
+	return nil
+}
+
 func (p *Parser) parseIdentifier() ast.Expression {
-	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
+	x := &ast.Identifier{Token: p.curToken}
+	x.Value = append(x.Value, &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit})
+
+	for p.peekTokenIs(token.DOT) {
+		x.Value = append(x.Value, p.parseColumnSection())
+	}
 
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		ident.SetCast(p.parseExpression(CAST))
+		x.SetCast(p.parseExpression(CAST))
 	}
-	return ident
+	return x
 }
 
 func (p *Parser) parseWildcardLiteral() ast.Expression {

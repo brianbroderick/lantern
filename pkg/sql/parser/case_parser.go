@@ -8,7 +8,12 @@ import (
 // CASE WHEN id = 1 THEN 'one' WHEN id = 2 THEN 'two' ELSE 'other' end
 
 func (p *Parser) parseCaseExpression() ast.Expression {
-	expression := &ast.CaseExpression{Token: p.curToken}
+	x := &ast.CaseExpression{Token: p.curToken}
+
+	if !p.peekTokenIs(token.WHEN) {
+		p.nextToken()
+		x.Expression = p.parseExpression(LOWEST)
+	}
 
 	for p.peekTokenIs(token.WHEN) {
 		p.nextToken()
@@ -23,18 +28,24 @@ func (p *Parser) parseCaseExpression() ast.Expression {
 		p.nextToken()
 
 		condition.Consequence = p.parseExpression(LOWEST)
-		expression.Conditions = append(expression.Conditions, condition)
+		x.Conditions = append(x.Conditions, condition)
 	}
 
 	if p.peekTokenIs(token.ELSE) {
 		p.nextToken()
 		p.nextToken()
-		expression.Alternative = p.parseExpression(LOWEST)
+		x.Alternative = p.parseExpression(LOWEST)
 	}
 
 	if p.peekTokenIs(token.END) {
 		p.nextToken()
 	}
 
-	return expression
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		x.SetCast(p.parseExpression(CAST))
+	}
+
+	return x
 }

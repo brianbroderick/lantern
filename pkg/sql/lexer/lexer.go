@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"strings"
 
@@ -178,7 +179,8 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = l.scanString()
 		return tok, pos
 	case '"': // double quotes are allowed to surround identities
-		tok = l.scanIdent()
+		// tok = l.scanIdent()
+		tok = l.scanDoubleQuoteString()
 		return tok, pos
 	case '#': // JSON operators
 		if l.peek() == '>' {
@@ -289,23 +291,25 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) scanIdent() token.Token {
 	var buf bytes.Buffer
-	dot := false
+	// dot := false
 
 	for {
 		l.read()
 		if isIdentChar(l.ch) {
-			dot = false
+			// dot = false
 			_, _ = buf.WriteRune(l.ch)
 			continue
-		} else if l.ch == '.' {
-			dot = true
-			_, _ = buf.WriteRune(l.ch)
-			continue
-		} else if l.ch == '*' && dot {
-			dot = false
-			_, _ = buf.WriteRune(l.ch)
+			// We were allowing dots in identifiers to support schema.table.column, but we're now splitting that
+			// } else if l.ch == '.' {
+			// 	dot = true
+			// 	_, _ = buf.WriteRune(l.ch)
+			// 	continue
+			// This was for the table.* syntax, but we're now splitting that
+			// } else if l.ch == '*' && dot {
+			// 	dot = false
+			// 	_, _ = buf.WriteRune(l.ch)
 		} else if l.ch == '"' {
-			dot = false
+			// dot = false
 			// Allow double quotes in identifiers, but don't include them in the token.
 			// They can be used to escape reserved words.
 		} else {
@@ -348,6 +352,26 @@ func (l *Lexer) scanString() token.Token {
 	}
 	lit := buf.String()
 	return token.Token{Type: token.STRING, Lit: lit}
+}
+
+func (l *Lexer) scanDoubleQuoteString() token.Token {
+	var buf bytes.Buffer
+	for {
+		l.read()
+		if l.ch == '"' {
+			l.read()
+			if l.ch == '"' {
+				_, _ = buf.WriteRune(l.ch)
+			} else {
+				l.unread()
+				break
+			}
+		} else {
+			_, _ = buf.WriteRune(l.ch)
+		}
+	}
+	lit := fmt.Sprintf(`"%s"`, buf.String())
+	return token.Token{Type: token.IDENT, Lit: lit}
 }
 
 func (l *Lexer) scanNumber() token.Token {

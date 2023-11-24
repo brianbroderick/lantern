@@ -84,22 +84,86 @@ func (x *ExpressionStatement) Inspect(maskParams bool) string {
 }
 
 // Expressions
-type Identifier struct {
+type SimpleIdentifier struct {
 	Token token.Token `json:"token,omitempty"` // the token.IDENT token
 	Value string      `json:"value,omitempty"`
 	Cast  Expression  `json:"cast,omitempty"`
 }
 
-func (x *Identifier) expressionNode()      {}
-func (x *Identifier) TokenLiteral() string { return x.Token.Lit }
-func (x *Identifier) String(maskParams bool) string {
+func (x *SimpleIdentifier) expressionNode()      {}
+func (x *SimpleIdentifier) TokenLiteral() string { return x.Token.Lit }
+func (x *SimpleIdentifier) String(maskParams bool) string {
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return x.Value
 }
+func (x *SimpleIdentifier) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
+type Identifier struct {
+	Token token.Token  `json:"token,omitempty"` // the token.IDENT token
+	Value []Expression `json:"value,omitempty"` // can have multiple values, e.g. schema.table.column
+	Cast  Expression   `json:"cast,omitempty"`
+}
+
+func (x *Identifier) expressionNode()      {}
+func (x *Identifier) TokenLiteral() string { return x.Token.Lit }
+func (x *Identifier) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	if len(x.Value) > 0 {
+		val := []string{}
+		for _, r := range x.Value {
+			val = append(val, r.String(maskParams))
+		}
+		out.WriteString(strings.Join(val, "."))
+	}
+
+	if x.Cast != nil {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
+	}
+
+	return out.String()
+}
 func (x *Identifier) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
+type ColumnLiteral struct {
+	Token  token.Token `json:"token,omitempty"` // the token.IDENT token
+	Schema Expression  `json:"schema,omitempty"`
+	Table  Expression  `json:"table,omitempty"`
+	Column Expression  `json:"column,omitempty"`
+	Cast   Expression  `json:"cast,omitempty"`
+}
+
+func (x *ColumnLiteral) expressionNode()      {}
+func (x *ColumnLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *ColumnLiteral) String(maskParams bool) string {
+	var out bytes.Buffer
+	if x.Schema != nil {
+		out.WriteString(x.Schema.String(maskParams))
+		out.WriteString(".")
+	}
+	if x.Table != nil {
+		out.WriteString(x.Table.String(maskParams))
+		out.WriteString(".")
+	}
+	if x.Column != nil {
+		out.WriteString(x.Column.String(maskParams))
+	}
+	if x.Cast != nil {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
+	}
+
+	return out.String()
+}
+func (x *ColumnLiteral) SetCast(cast Expression) {
 	x.Cast = cast
 }
 

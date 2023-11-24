@@ -366,7 +366,7 @@ func (x *AggregateExpression) SetCast(cast Expression) {
 
 type WindowExpression struct {
 	Token       token.Token  `json:"token,omitempty"`        // the token.OVER token
-	Alias       *Identifier  `json:"alias,omitempty"`        // the alias of the window
+	Alias       Expression   `json:"alias,omitempty"`        // the alias of the window
 	PartitionBy []Expression `json:"partition_by,omitempty"` // the columns to partition by
 	OrderBy     []Expression `json:"order_by,omitempty"`     // the columns to order by
 	Cast        Expression   `json:"cast,omitempty"`

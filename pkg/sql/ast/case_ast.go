@@ -9,6 +9,7 @@ import (
 
 type CaseExpression struct {
 	Token       token.Token            `json:"token,omitempty"` // the token.CASE token
+	Expression  Expression             `json:"expression,omitempty"`
 	Conditions  []*ConditionExpression `json:"conditions,omitempty"`
 	Alternative Expression             `json:"alternative,omitempty"`
 	Cast        Expression             `json:"cast,omitempty"`
@@ -21,6 +22,11 @@ func (ce *CaseExpression) String(maskParams bool) string {
 
 	out.WriteString("CASE")
 
+	if ce.Expression != nil {
+		out.WriteString(" ")
+		out.WriteString(ce.Expression.String(maskParams))
+	}
+
 	for _, c := range ce.Conditions {
 		out.WriteString(c.String(maskParams))
 	}
@@ -30,6 +36,11 @@ func (ce *CaseExpression) String(maskParams bool) string {
 		out.WriteString(ce.Alternative.String(maskParams))
 	}
 	out.WriteString(" END")
+
+	if ce.Cast != nil {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(ce.Cast.String(maskParams)))
+	}
 
 	return out.String()
 }

@@ -18,9 +18,12 @@ func TestMultipleStatements(t *testing.T) {
 		output         string
 	}{
 		// Parse Errors
-		// {"select u . id from users u", 2, "(SELECT u.id FROM users);"}, // "no prefix parse function for DOT found at line 0 char 25"
+
+		{"select a::text from b;", 1, "(SELECT a::TEXT FROM b);"},
 
 		// Multiple Statements
+		// {"(select name from users limit 1) union (select name from people limit 1)", 1, ""}, // union with selects inside parens
+
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
@@ -51,7 +54,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users;", 1, "(SELECT id FROM users);"},                                                                                                             // super basic select
 		{"select u.* from users u;", 1, "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
 		{"select 2*3 from users;", 1, "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard
-		{"select \"blah\".id from users", 1, "(SELECT blah.id FROM users);"},                                                                                                // check for double quotes around the table name
+		{`select "blah".id from users`, 1, `(SELECT "blah".id FROM users);`},                                                                                                // check for double quotes around the table name
 		{"select 1 * (2 + (6 / 4)) - 9 from users;", 1, "(SELECT ((1 * (2 + (6 / 4))) - 9) FROM users);"},                                                                   // math expression
 		{"select id, name from users", 1, "(SELECT id, name FROM users);"},                                                                                                  // multiple columns
 		{"select id, first_name from users;", 1, "(SELECT id, first_name FROM users);"},                                                                                     // underscore in a column name
@@ -220,6 +223,7 @@ func TestSingleSelectStatements(t *testing.T) {
 
 		// Select: CASE
 		{"select case when id = 1 then 'one' when id = 2 then 'two' else 'other' end from users;", 1, "(SELECT CASE WHEN (id = 1) THEN 'one' WHEN (id = 2) THEN 'two' ELSE 'other' END FROM users);"},
+		{`SELECT case when (type_id = 3) then 1 else 0 end::text as is_complete FROM users`, 1, "(SELECT CASE WHEN (type_id = 3) THEN 1 ELSE 0 END::TEXT AS is_complete FROM users);"},
 
 		// Select: Functions
 		{"select w() from a", 1, "(SELECT w() FROM a);"},
@@ -265,6 +269,11 @@ func TestSingleSelectStatements(t *testing.T) {
 		// // Select with a CTE expression
 		{"select count(1) from (with my_list as (select i from generate_series(1,10) s(i)) select i from my_list where i > 5) as t;", 1,
 			"(SELECT count(1) FROM (WITH my_list AS (SELECT i FROM generate_series(1, 10) s(i)) (SELECT i FROM my_list WHERE (i > 5))) t);"},
+
+		// Dots
+		{`select id as "my.id" from users u`, 1, `(SELECT id AS "my.id" FROM users u);`},
+		{`select id as "my" from users u`, 1, `(SELECT id AS "my" FROM users u);`},
+		{"select u . id from users u", 1, "(SELECT u.id FROM users u);"}, // "no prefix parse function for DOT found at line 0 char 25"
 	}
 
 	for _, tt := range tests {
