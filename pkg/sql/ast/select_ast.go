@@ -731,3 +731,39 @@ func (x *StringFunctionExpression) String(maskParams bool) string {
 
 	return out.String()
 }
+
+type UnionExpression struct {
+	Token    token.Token `json:"token,omitempty"` // The operator token, e.g. +
+	Left     Expression  `json:"left,omitempty"`
+	Operator string      `json:"operator,omitempty"` // UNION, INTERSECT, EXCEPT
+	All      bool        `json:"all,omitempty"`
+	Right    Expression  `json:"right,omitempty"`
+	Cast     Expression  `json:"cast,omitempty"`
+}
+
+func (x *UnionExpression) expressionNode()      {}
+func (x *UnionExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *UnionExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(x.Left.String(maskParams))
+	out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
+	if x.All {
+		out.WriteString("ALL ")
+	}
+	if x.Right != nil {
+		out.WriteString(x.Right.String(maskParams))
+	}
+	out.WriteString(")")
+
+	if x.Cast != nil {
+		out.WriteString("::")
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
+	}
+
+	return out.String()
+}
+func (x *UnionExpression) SetCast(cast Expression) {
+	x.Cast = cast
+}

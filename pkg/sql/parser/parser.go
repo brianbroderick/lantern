@@ -248,7 +248,9 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.FILTER, p.parseInfixExpression)
 	p.registerInfix(token.USING, p.parseInfixExpression)
 	p.registerInfix(token.AT_TIME_ZONE, p.parseInfixExpression)
-	p.registerInfix(token.UNION, p.parseInfixExpression)
+	p.registerInfix(token.UNION, p.parseUnionExpression)
+	p.registerInfix(token.EXCEPT, p.parseUnionExpression)
+	p.registerInfix(token.INTERSECT, p.parseUnionExpression)
 
 	p.registerInfix(token.NOT, p.parseNotExpression)
 	p.registerInfix(token.IS, p.parseIsExpression)
@@ -688,6 +690,27 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	// fmt.Printf("parseInfixExpressionPrecedence: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 	precedence := p.curPrecedence()
 	p.nextToken()
+
+	expression.Right = p.parseExpression(precedence)
+
+	return expression
+}
+
+func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {
+	defer untrace(trace("parseUnionExpression"))
+	expression := &ast.UnionExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Lit,
+		Left:     left,
+	}
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+
+	if p.curTokenIs(token.ALL) {
+		expression.All = true
+		p.nextToken()
+	}
 
 	expression.Right = p.parseExpression(precedence)
 
