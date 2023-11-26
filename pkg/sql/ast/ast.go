@@ -473,6 +473,29 @@ func (x *StringLiteral) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
+type EscapeStringLiteral struct {
+	Token       token.Token `json:"token,omitempty"`
+	Value       string      `json:"value,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
+	ParamOffset int         `json:"param_offset,omitempty"`
+}
+
+func (x *EscapeStringLiteral) expressionNode()      {}
+func (x *EscapeStringLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *EscapeStringLiteral) String(maskParams bool) string {
+	literal := x.Token.Lit
+	if maskParams {
+		literal = fmt.Sprintf("$%d", x.ParamOffset)
+	}
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
+	}
+	return literal
+}
+func (x *EscapeStringLiteral) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
 type ArrayLiteral struct {
 	Token    token.Token  `json:"token,omitempty"` // the '[' token
 	Left     Expression   `json:"left,omitempty"`

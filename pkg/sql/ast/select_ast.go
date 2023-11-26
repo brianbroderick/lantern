@@ -38,25 +38,25 @@ func (s *SelectStatement) Inspect(maskParams bool) string {
 // SelectExpression is a select inside a SELECT or WITH (Common Table Expression) statement,
 // since a select statement can have multiple select expressions. i.e. WITH clause, subqueries, and the primary select expression.
 type SelectExpression struct {
-	Token                 token.Token  `json:"token,omitempty"`      // the token.SELECT token
-	TempTable             Expression   `json:"temp_table,omitempty"` // the name of the temp table named in a WITH clause (CTE)
-	WithMaterialized      string       `json:"with_materialized,omitempty"`
-	Distinct              Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
-	Columns               []Expression `json:"columns,omitempty"`
-	Tables                []Expression `json:"tables,omitempty"`
-	Where                 Expression   `json:"where,omitempty"`
-	GroupBy               []Expression `json:"group_by,omitempty"`
-	Having                Expression   `json:"having,omitempty"`
-	Window                []Expression `json:"window,omitempty"`
-	OrderBy               []Expression `json:"order_by,omitempty"`
-	Limit                 Expression   `json:"limit,omitempty"`
-	Offset                Expression   `json:"offset,omitempty"`
-	Fetch                 Expression   `json:"fetch,omitempty"`
-	Lock                  Expression   `json:"lock,omitempty"`
-	CompoundToken         token.Token  `json:"compound_token,omitempty"`          // the token.UNION, token.INTERSECT, or token.EXCEPT token
-	CompoundTokenModifier token.Token  `json:"compound_token_modifier,omitempty"` // the token.ALL
-	CompoundExpression    Expression   `json:"union,omitempty"`                   // the select expression to union with
-	Cast                  Expression   `json:"cast,omitempty"`                    // probably not needed, but used for the interface
+	Token            token.Token  `json:"token,omitempty"`      // the token.SELECT token
+	TempTable        Expression   `json:"temp_table,omitempty"` // the name of the temp table named in a WITH clause (CTE)
+	WithMaterialized string       `json:"with_materialized,omitempty"`
+	Distinct         Expression   `json:"distinct,omitempty"` // the DISTINCT or ALL token
+	Columns          []Expression `json:"columns,omitempty"`
+	Tables           []Expression `json:"tables,omitempty"`
+	Where            Expression   `json:"where,omitempty"`
+	GroupBy          []Expression `json:"group_by,omitempty"`
+	Having           Expression   `json:"having,omitempty"`
+	Window           []Expression `json:"window,omitempty"`
+	OrderBy          []Expression `json:"order_by,omitempty"`
+	Limit            Expression   `json:"limit,omitempty"`
+	Offset           Expression   `json:"offset,omitempty"`
+	Fetch            Expression   `json:"fetch,omitempty"`
+	Lock             Expression   `json:"lock,omitempty"`
+	// CompoundToken         token.Token  `json:"compound_token,omitempty"`          // the token.UNION, token.INTERSECT, or token.EXCEPT token
+	// CompoundTokenModifier token.Token  `json:"compound_token_modifier,omitempty"` // the token.ALL
+	// CompoundExpression    Expression   `json:"union,omitempty"`                   // the select expression to union with
+	Cast Expression `json:"cast,omitempty"` // probably not needed, but used for the interface
 }
 
 func (x *SelectExpression) expressionNode()      {}
@@ -167,14 +167,14 @@ func (x *SelectExpression) String(maskParams bool) string {
 		out.WriteString(x.Lock.String(maskParams))
 	}
 
-	// Compound
-	if x.CompoundExpression != nil {
-		out.WriteString(" " + strings.ToUpper(x.CompoundToken.Lit) + " ")
-		if x.CompoundTokenModifier.Type == token.ALL {
-			out.WriteString(strings.ToUpper(x.CompoundTokenModifier.Lit) + " ")
-		}
-		out.WriteString(x.CompoundExpression.String(maskParams))
-	}
+	// // Compound
+	// if x.CompoundExpression != nil {
+	// 	out.WriteString(" " + strings.ToUpper(x.CompoundToken.Lit) + " ")
+	// 	if x.CompoundTokenModifier.Type == token.ALL {
+	// 		out.WriteString(strings.ToUpper(x.CompoundTokenModifier.Lit) + " ")
+	// 	}
+	// 	out.WriteString(x.CompoundExpression.String(maskParams))
+	// }
 
 	out.WriteString(")")
 

@@ -162,6 +162,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.INT, p.parseIntegerLiteral)
 	p.registerPrefix(token.FLOAT, p.parseFloatLiteral)
 	p.registerPrefix(token.STRING, p.parseStringLiteral)
+	p.registerPrefix(token.ESCAPESTRING, p.parseEscapeStringLiteral)
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.NULL, p.parseNull)
@@ -204,6 +205,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.CURRENT_TIME, p.parseIdentifier)
 	p.registerPrefix(token.CURRENT_TIMESTAMP, p.parseIdentifier)
 	p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
+	// p.registerPrefix(token.GROUP, p.parseIdentifier) // can be used as a column alias
 
 	// p.registerPrefix(token.AT, p.parseIdentifier)
 
@@ -653,6 +655,17 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	return str
 }
 
+func (p *Parser) parseEscapeStringLiteral() ast.Expression {
+	p.paramOffset++
+	str := &ast.EscapeStringLiteral{Token: p.curToken, Value: p.curToken.Lit, ParamOffset: p.paramOffset}
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		str.SetCast(p.parseExpression(CAST))
+	}
+	return str
+}
+
 func (p *Parser) parsePrefixExpression() ast.Expression {
 	expression := &ast.PrefixExpression{
 		Token:    p.curToken,
@@ -792,6 +805,8 @@ func (p *Parser) parseUnknown() ast.Expression {
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
+	defer untrace(trace("parseGroupedExpression"))
+
 	p.setContext(XGROUPED) // sets the context for the parseExpressionListItem function
 	p.nextToken()
 
@@ -863,12 +878,12 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 		return list
 	}
 
-	list = append(list, p.parseExpression(LOWEST))
+	list = append(list, p.parseExpression(STATEMENT))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		list = append(list, p.parseExpression(LOWEST))
+		list = append(list, p.parseExpression(STATEMENT))
 	}
 
 	if !p.peekTokenIsOne(end) {

@@ -46,9 +46,9 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 			l.read()
 			if l.peek() == '>' {
 				l.read()
-				tok = token.Token{Type: token.JSONGETBYTEXT, Lit: "->>"}
+				tok = token.Token{Type: token.JSONGETBYTEXT, Lit: "->>", Upper: "->>"}
 			} else {
-				tok = token.Token{Type: token.JSONGETBYKEY, Lit: "->"}
+				tok = token.Token{Type: token.JSONGETBYKEY, Lit: "->", Upper: "->"}
 			}
 			// Comments out the rest of the line by using --
 		} else if l.peek() == '-' {
@@ -60,7 +60,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 					break
 				}
 			}
-			tok = token.Token{Type: token.COMMENT, Lit: ""}
+			tok = token.Token{Type: token.COMMENT}
 		} else {
 			tok = newToken(token.MINUS, l.ch)
 		}
@@ -70,13 +70,13 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		switch l.peek() {
 		case '=':
 			l.read()
-			tok = token.Token{Type: token.LTE, Lit: "<="}
+			tok = token.Token{Type: token.LTE, Lit: "<=", Upper: "<="}
 		case '@':
 			l.read()
-			tok = token.Token{Type: token.JSONCONTAINED, Lit: "<@"}
+			tok = token.Token{Type: token.JSONCONTAINED, Lit: "<@", Upper: "<@"}
 		case '>':
 			l.read()
-			tok = token.Token{Type: token.NOT_EQ, Lit: "<>"}
+			tok = token.Token{Type: token.NOT_EQ, Lit: "<>", Upper: "<>"}
 		default:
 			tok = newToken(token.LT, l.ch)
 		}
@@ -84,7 +84,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		switch l.peek() {
 		case '=':
 			l.read()
-			tok = token.Token{Type: token.GTE, Lit: ">="}
+			tok = token.Token{Type: token.GTE, Lit: ">=", Upper: ">="}
 		default:
 			tok = newToken(token.GT, l.ch)
 		}
@@ -92,10 +92,8 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = newToken(token.SEMICOLON, l.ch)
 	case ':':
 		if l.peek() == ':' {
-			ch := l.ch
 			l.read()
-			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.DOUBLECOLON, Lit: literal}
+			tok = token.Token{Type: token.DOUBLECOLON, Lit: "::", Upper: "::"}
 		} else {
 			tok = newToken(token.COLON, l.ch)
 		}
@@ -117,42 +115,32 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = newToken(token.DOT, l.ch)
 	case '|':
 		if l.peek() == '|' {
-			ch := l.ch
 			l.read()
-			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.JSONCONCAT, Lit: literal}
+			tok = token.Token{Type: token.JSONCONCAT, Lit: "||", Upper: "||"}
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	case '?':
 		if l.peek() == '|' {
-			ch := l.ch
 			l.read()
-			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.JSONHASANYKEYS, Lit: literal}
+			tok = token.Token{Type: token.JSONHASANYKEYS, Lit: "?|", Upper: "?|"}
 		} else if l.peek() == '&' {
-			ch := l.ch
 			l.read()
-			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.JSONHASALLKEYS, Lit: literal}
+			tok = token.Token{Type: token.JSONHASALLKEYS, Lit: "?&", Upper: "?&"}
 		} else {
 			tok = newToken(token.JSONHASKEY, l.ch)
 		}
 	case '=':
 		if l.peek() == '=' {
-			ch := l.ch
 			l.read()
-			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.EQ, Lit: literal}
+			tok = token.Token{Type: token.EQ, Lit: "==", Upper: "=="}
 		} else {
 			tok = newToken(token.ASSIGN, l.ch)
 		}
 	case '!':
 		if l.peek() == '=' {
-			ch := l.ch
 			l.read()
-			literal := string(ch) + string(l.ch)
-			tok = token.Token{Type: token.NOT_EQ, Lit: literal}
+			tok = token.Token{Type: token.NOT_EQ, Lit: "!=", Upper: "!="}
 		} else {
 			tok = newToken(token.BANG, l.ch)
 		}
@@ -171,7 +159,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 					}
 				}
 			}
-			tok = token.Token{Type: token.COMMENT, Lit: ""}
+			tok = token.Token{Type: token.COMMENT}
 		} else {
 			tok = newToken(token.SLASH, l.ch)
 		}
@@ -187,32 +175,32 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 			l.read()
 			if l.peek() == '>' {
 				l.read()
-				tok = token.Token{Type: token.JSONGETBYPATHTEXT, Lit: "#>>"}
+				tok = token.Token{Type: token.JSONGETBYPATHTEXT, Lit: "#>>", Upper: "#>>"}
 			} else {
-				tok = token.Token{Type: token.JSONGETBYPATH, Lit: "#>"}
+				tok = token.Token{Type: token.JSONGETBYPATH, Lit: "#>", Upper: "#>"}
 			}
 		} else if l.peek() == '-' {
 			l.read()
-			tok = token.Token{Type: token.JSONDELETE, Lit: "#-"}
+			tok = token.Token{Type: token.JSONDELETE, Lit: "#-", Upper: "#-"}
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	case '@': // JSON operators
 		if l.peek() == '>' {
 			l.read()
-			tok = token.Token{Type: token.JSONCONTAINS, Lit: "@>"}
+			tok = token.Token{Type: token.JSONCONTAINS, Lit: "@>", Upper: "@>"}
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	case '&': // ARRAY OPERATORS
 		if l.peek() == '&' {
 			l.read()
-			tok = token.Token{Type: token.OVERLAP, Lit: "&&"}
+			tok = token.Token{Type: token.OVERLAP, Lit: "&&", Upper: "&&"}
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
 		}
 	case 0:
-		tok = token.Token{Type: token.EOF, Lit: ""}
+		tok = token.Token{Type: token.EOF}
 	default:
 		if isLetter(l.ch) {
 			l.unread()
@@ -235,7 +223,8 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 }
 
 func newToken(tokenType token.TokenType, ch rune) token.Token {
-	return token.Token{Type: tokenType, Lit: string(ch)}
+	str := string(ch)
+	return token.Token{Type: tokenType, Lit: str, Upper: str}
 }
 
 func (l *Lexer) read() {
@@ -291,46 +280,31 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) scanIdent() token.Token {
 	var buf bytes.Buffer
-	// dot := false
 
 	for {
 		l.read()
 		if isIdentChar(l.ch) {
-			// dot = false
 			_, _ = buf.WriteRune(l.ch)
 			continue
-			// We were allowing dots in identifiers to support schema.table.column, but we're now splitting that
-			// } else if l.ch == '.' {
-			// 	dot = true
-			// 	_, _ = buf.WriteRune(l.ch)
-			// 	continue
-			// This was for the table.* syntax, but we're now splitting that
-			// } else if l.ch == '*' && dot {
-			// 	dot = false
-			// 	_, _ = buf.WriteRune(l.ch)
-		} else if l.ch == '"' {
-			// dot = false
-			// Allow double quotes in identifiers, but don't include them in the token.
-			// They can be used to escape reserved words.
+		} else if l.ch == '\'' { // This is an escape string of the form E'...'
+			if buf.Len() == 1 {
+				lit := buf.String()
+				if lit == "e" || lit == "E" {
+					str := l.scanString()
+					estr := fmt.Sprintf("E'%s'", str.Lit)
+					return token.Token{Type: token.ESCAPESTRING, Lit: estr, Upper: estr}
+				}
+			}
+			l.unread()
+			break
 		} else {
 			l.unread()
 			break
 		}
-
-		// // Allow '.' in identifiers.
-		// // Allow '*' in identifiers.
-		// if !isIdentChar(l.ch) && l.ch != '.' && l.ch != '*' {
-		// 	l.unread()
-		// 	break
-		// } else if l.ch == '"' {
-		// 	// Allow double quotes in identifiers, but don't include them in the token.
-		// 	// They can be used to escape reserved words.
-		// } else {
-		// 	_, _ = buf.WriteRune(l.ch)
-		// }
 	}
 	lit := buf.String()
-	return token.Token{Type: token.Lookup(lit), Lit: lit}
+	up := strings.ToUpper(lit)
+	return token.Token{Type: token.LookupFromUpper(up), Lit: lit, Upper: up}
 }
 
 // SQL strings are single quoted.
@@ -346,12 +320,14 @@ func (l *Lexer) scanString() token.Token {
 				l.unread()
 				break
 			}
+		} else if l.ch == 0 {
+			break
 		} else {
 			_, _ = buf.WriteRune(l.ch)
 		}
 	}
 	lit := buf.String()
-	return token.Token{Type: token.STRING, Lit: lit}
+	return token.Token{Type: token.STRING, Lit: lit} // Don't need upper for strings
 }
 
 func (l *Lexer) scanDoubleQuoteString() token.Token {
@@ -371,7 +347,7 @@ func (l *Lexer) scanDoubleQuoteString() token.Token {
 		}
 	}
 	lit := fmt.Sprintf(`"%s"`, buf.String())
-	return token.Token{Type: token.IDENT, Lit: lit}
+	return token.Token{Type: token.IDENT, Lit: lit} // Don't need upper for strings
 }
 
 func (l *Lexer) scanNumber() token.Token {
@@ -389,7 +365,7 @@ func (l *Lexer) scanNumber() token.Token {
 			_, _ = buf.WriteRune(l.ch)
 		}
 	}
-	return token.Token{Type: numType, Lit: buf.String()}
+	return token.Token{Type: numType, Lit: buf.String()} // Don't need upper for numbers
 }
 
 // isWhitespace returns true if the rune is a space, tab, or newline.
@@ -404,3 +380,6 @@ func isDigit(ch rune) bool { return (ch >= '0' && ch <= '9') }
 // isIdentChar returns true if the rune can be used in an unquoted identifier.
 // identities can be surrounded by double quotes and can contain any character.
 func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' }
+
+// isE returns true if the rune is an e or E. This could be used for E'...' escape strings.
+// func isE(ch rune) bool { return ch == 'e' || ch == 'E' }

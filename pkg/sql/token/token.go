@@ -8,8 +8,9 @@ import (
 type TokenType int
 
 type Token struct {
-	Type TokenType `json:"type,omitempty"`
-	Lit  string    `json:"literal,omitempty"`
+	Type  TokenType `json:"type,omitempty"`
+	Lit   string    `json:"literal,omitempty"`
+	Upper string    `json:"upper,omitempty"`
 }
 
 func (t *Token) MarshalJSON() ([]byte, error) {
@@ -30,11 +31,12 @@ const (
 	COMMENT
 	NIL
 
-	literalBeg // Literals
-	IDENT      // identity: add, foobar, x, y, my_var, ...
-	INT        // 12345
-	FLOAT      // 0.12345
-	STRING     // "foobar"
+	literalBeg   // Literals
+	IDENT        // identity: add, foobar, x, y, my_var, ...
+	INT          // 12345
+	FLOAT        // 0.12345
+	STRING       // "foobar"
+	ESCAPESTRING // E'foobar'
 	literalEnd
 
 	// Operators
@@ -245,10 +247,11 @@ var Tokens = [...]string{
 	COMMENT: "COMMENT",
 	NIL:     "NIL",
 
-	IDENT:  "IDENT",
-	INT:    "INTEGER",
-	FLOAT:  "FLOAT", // 0.12345 or 12345.12345
-	STRING: "STRING",
+	IDENT:        "IDENT",
+	INT:          "INTEGER",
+	FLOAT:        "FLOAT", // 0.12345 or 12345.12345
+	STRING:       "STRING",
+	ESCAPESTRING: "ESCAPESTRING", // E'foobar'
 
 	ASSIGN:   "ASSIGN",   // =
 	PLUS:     "PLUS",     // +
@@ -452,7 +455,7 @@ var keywords map[string]TokenType
 func init() {
 	keywords = make(map[string]TokenType)
 	for tok := keywordBeg + 1; tok < keywordEnd; tok++ {
-		keywords[strings.ToLower(Tokens[tok])] = tok
+		keywords[strings.ToUpper(Tokens[tok])] = tok
 	}
 }
 
@@ -466,7 +469,16 @@ func (tok TokenType) String() string {
 
 // Lookup returns the token associated with a given string.
 func Lookup(ident string) TokenType {
-	if tok, ok := keywords[strings.ToLower(ident)]; ok {
+	if tok, ok := keywords[strings.ToUpper(ident)]; ok {
+		return tok
+	}
+
+	return IDENT
+}
+
+// LookupFromUpper assumes the ident passed is already upper case and returns the token associated with a given string.
+func LookupFromUpper(ident string) TokenType {
+	if tok, ok := keywords[ident]; ok {
 		return tok
 	}
 
