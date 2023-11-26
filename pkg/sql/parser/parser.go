@@ -291,9 +291,9 @@ func (p *Parser) nextToken() {
 	p.posPeekFour = pos
 
 	// Read into the future for AT TIME ZONE since AT isn't a reserved word (it's often used as a column or table alias)
-	if p.peekTwoToken.Type == token.IDENT && strings.ToUpper(p.peekTwoToken.Lit) == "AT" {
-		if p.peekThreeToken.Type == token.IDENT && strings.ToUpper(p.peekThreeToken.Lit) == "TIME" {
-			if p.peekFourToken.Type == token.IDENT && strings.ToUpper(p.peekFourToken.Lit) == "ZONE" {
+	if p.peekTwoToken.Type == token.IDENT && p.peekTwoToken.Upper == "AT" {
+		if p.peekThreeToken.Type == token.IDENT && p.peekThreeToken.Upper == "TIME" {
+			if p.peekFourToken.Type == token.IDENT && p.peekFourToken.Upper == "ZONE" {
 				p.peekTwoToken = token.Token{Type: token.AT_TIME_ZONE, Lit: "AT TIME ZONE"}
 				newToken, pos = p.advanceToken()
 				p.posPeekThree = pos
@@ -367,17 +367,6 @@ func (p *Parser) peekTwoTokenIsOne(tokens []token.TokenType) bool {
 	}
 	return false
 }
-
-// // This is essentially !curTokenIsOne, but it can't match any token in the list
-// func (p *Parser) peekTokenIsNot(tokens []token.TokenType) bool {
-// 	for _, t := range tokens {
-// 		if p.peekTokenIs(t) { // The token matches one of the tokens in the list
-// 			return false
-// 		}
-// 	}
-
-// 	return true
-// }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
@@ -458,7 +447,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseStatement() ast.Statement {
 	defer untrace(trace("parseStatement"))
-	// fmt.Printf("parseStatement: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
+
 	switch p.curToken.Type {
 	case token.SELECT:
 		return p.parseSelectStatement()
@@ -490,11 +479,8 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
-// "select '2020-01-01' at time zone 'MDT' from my_table;"
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	defer untrace(trace("parseExpression"))
-
-	// fmt.Printf("parseExpression: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -514,17 +500,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	// fmt.Printf("parseExpression1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	for !p.peekTokenIsOne(end) && precedence < p.peekPrecedence() {
-		// var infix infixParseFn
-		// fmt.Printf("HERE: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-		// switch p.curToken.Type {
-		// case token.AT:
-		// 	// fmt.Printf("HERE2: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-		// 	if p.peekTokenIs(token.TIME) {
-		// 		infix = p.parseCompoundInfixExpression
-		// 	}
-		// default:
 		infix := p.infixParseFns[p.peekToken.Type]
-		// }
 
 		if infix == nil {
 			return leftExp
@@ -694,13 +670,13 @@ func (p *Parser) parsePrefixKeywordExpression() ast.Expression {
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	defer untrace(trace("parseInfixExpression"))
+
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Lit,
 		Left:     left,
 	}
 
-	// fmt.Printf("parseInfixExpressionPrecedence: %s :: %s :: %+v\n", p.curToken.Lit, p.peekToken.Lit, expression)
 	precedence := p.curPrecedence()
 	p.nextToken()
 
@@ -711,6 +687,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 
 func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {
 	defer untrace(trace("parseUnionExpression"))
+
 	expression := &ast.UnionExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Lit,
@@ -729,52 +706,6 @@ func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {
 
 	return expression
 }
-
-// func (p *Parser) parseCompoundInfixExpression(left ast.Expression) ast.Expression {
-// 	defer untrace(trace("parseCompoundInfixExpression"))
-// 	fmt.Printf("parseCompoundInfixExpression: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
-// 	precedence := LOWEST
-// 	x := &ast.InfixExpression{
-// 		Token:    p.curToken,
-// 		Operator: p.curToken.Lit,
-// 		Left:     left,
-// 	}
-
-// 	if p.peekTwoTokenIs(token.TIME) {
-// 		p.nextToken()
-// 		p.nextToken()
-// 		if p.peekTokenIs(token.ZONE) {
-// 			p.nextToken()
-// 			x.Operator = "AT TIME ZONE"
-// 		}
-// 	}
-
-// 	precedence = p.curPrecedence()
-// 	p.nextToken()
-
-// 	x.Right = p.parseExpression(precedence)
-
-// 	return x
-// }
-
-// // Not sure if this is the best way to handle this, but it works for now
-// // WITH ORDINALITY is really a modifier on the table result, not an operator
-// func (p *Parser) parseWithInfixExpression(left ast.Expression) ast.Expression {
-// 	defer untrace(trace("parseWithInfixExpression"))
-
-// 	expression := &ast.InfixExpression{
-// 		Token:    p.curToken,
-// 		Operator: p.curToken.Lit,
-// 		Left:     left,
-// 	}
-// 	if p.peekTokenIs(token.ORDINALITY) {
-// 		expression.Operator = "WITH"
-// 		p.nextToken()
-// 		expression.Right = &ast.Identifier{Token: p.curToken, Value: strings.ToUpper(p.curToken.Lit)}
-// 	}
-
-// 	return expression
-// }
 
 func (p *Parser) parseBoolean() ast.Expression {
 	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}

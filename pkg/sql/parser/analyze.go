@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
@@ -38,8 +36,9 @@ func (p *Parser) parseAnalyzeStatement() *ast.AnalyzeStatement {
 					p.nextToken()
 				}
 			case token.IDENT:
-				lit := strings.ToUpper(p.curToken.Lit)
-				if lit == "BUFFER_USAGE_LIMIT" {
+				switch p.curToken.Upper {
+				case "BUFFER_USAGE_LIMIT":
+
 					p.nextToken()
 					stmt.BufferUsageLimit = append(stmt.BufferUsageLimit, p.parseExpression(LOWEST))
 					p.nextToken()
@@ -47,7 +46,8 @@ func (p *Parser) parseAnalyzeStatement() *ast.AnalyzeStatement {
 						stmt.BufferUsageLimit = append(stmt.BufferUsageLimit, p.parseExpression(LOWEST))
 						p.nextToken()
 					}
-				} else if lit == "SKIP_LOCKED" {
+				case "SKIP_LOCKED":
+
 					stmt.SkipLocked = true
 					p.nextToken()
 					if p.curTokenIsOne([]token.TokenType{token.ON, token.TRUE}) {

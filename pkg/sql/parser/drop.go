@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
@@ -18,9 +16,9 @@ func (p *Parser) parseDropStatement() *ast.DropStatement {
 
 	p.nextToken()
 
-	if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "if" {
+	if p.curTokenIs(token.IDENT) && p.curToken.Upper == "IF" {
 		p.nextToken()
-		if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "exists" {
+		if p.curTokenIs(token.IDENT) && p.curToken.Upper == "EXISTS" {
 			stmt.Exists = true
 			p.nextToken()
 		}
@@ -30,7 +28,7 @@ func (p *Parser) parseDropStatement() *ast.DropStatement {
 		stmt.Tables = p.parseDropTableList()
 	}
 
-	if p.curTokenIs(token.IDENT) && (strings.ToLower(p.curToken.Lit) == "cascade" || strings.ToLower(p.curToken.Lit) == "restrict") {
+	if p.curTokenIs(token.IDENT) && (p.curToken.Upper == "CASCADE" || p.curToken.Upper == "RESTRICT") {
 		stmt.Options = p.curToken.Lit
 		p.nextToken()
 	}

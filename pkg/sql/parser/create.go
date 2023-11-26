@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
@@ -12,14 +10,13 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 
 	stmt := &ast.CreateStatement{Token: p.curToken}
 	p.nextToken()
-	lit := strings.ToLower(p.curToken.Lit)
 
 	// Table qualifiers
-	if p.curTokenIs(token.IDENT) && (lit == "temp" || lit == "temporary") {
+	if p.curTokenIs(token.IDENT) && (p.curToken.Upper == "TEMP" || p.curToken.Upper == "TEMPORARY") {
 		stmt.Temp = true
 		p.nextToken()
 	}
-	if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "unlogged" {
+	if p.curTokenIs(token.IDENT) && p.curToken.Upper == "UNLOGGED" {
 		stmt.Unlogged = true
 		p.nextToken()
 	}
@@ -31,8 +28,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 	}
 
 	// Create Object
-	lit = strings.ToLower(p.curToken.Lit)
-	if p.curTokenIs(token.TABLE) || lit == "index" {
+	if p.curTokenIs(token.TABLE) || p.curToken.Upper == "INDEX" {
 		stmt.Object = p.curToken
 		p.nextToken()
 	}
@@ -42,11 +38,11 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 		p.nextToken()
 	}
 
-	if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "if" {
+	if p.curTokenIs(token.IDENT) && p.curToken.Upper == "IF" {
 		p.nextToken()
 		if p.curTokenIs(token.NOT) {
 			p.nextToken()
-			if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "exists" {
+			if p.curTokenIs(token.IDENT) && p.curToken.Upper == "EXISTS" {
 				stmt.Exists = true
 				p.nextToken()
 			}
@@ -66,7 +62,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 					p.nextToken()
 					stmt.OnCommit = "DELETE ROWS"
 				}
-			} else if p.curTokenIs(token.IDENT) && strings.ToLower(p.curToken.Lit) == "preserve" {
+			} else if p.curTokenIs(token.IDENT) && p.curToken.Upper == "PRESERVE" {
 				if p.peekTokenIs(token.ROWS) {
 					p.nextToken()
 					p.nextToken()
@@ -80,7 +76,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 	}
 
 	if p.curTokenIsOne([]token.TokenType{token.AS, token.ON}) {
-		stmt.Operator = strings.ToUpper(p.curToken.Lit)
+		stmt.Operator = p.curToken.Upper
 		p.nextToken()
 	}
 

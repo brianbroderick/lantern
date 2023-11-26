@@ -52,6 +52,7 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 
 func (p *Parser) parseCTESubExpression() ast.Expression {
 	defer untrace(trace("parseCTESubExpression " + p.curToken.Lit))
+
 	x := &ast.CTEAuxiliaryExpression{Token: p.curToken}
 	x.Name = p.parseExpression(LOWEST)
 

@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
@@ -238,12 +236,10 @@ func (p *Parser) parseTable() ast.Expression {
 
 	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 
-	// fmt.Printf("parseTable1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
-
 	// Get the join type
 	if p.peekTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
 		p.nextToken()
-		x.JoinType = strings.ToUpper(p.curToken.Lit)
+		x.JoinType = p.curToken.Upper
 
 		if p.peekTokenIs(token.JOIN) {
 			p.nextToken()
@@ -253,8 +249,6 @@ func (p *Parser) parseTable() ast.Expression {
 		if p.peekTokenIs(token.OUTER) {
 			p.nextToken()
 		}
-
-		// fmt.Printf("parseTable compound join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 	}
 
 	// If just using JOIN, assume INNER
@@ -265,7 +259,6 @@ func (p *Parser) parseTable() ast.Expression {
 		} else {
 			x.JoinType = x.JoinType + " JOIN"
 		}
-		// fmt.Printf("parseTable simple join: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 	}
 
 	if p.peekTokenIs(token.LATERAL) {
@@ -282,16 +275,8 @@ func (p *Parser) parseTable() ast.Expression {
 
 	p.nextToken()
 
-	// fmt.Printf("parseTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
-
 	// Get the table name
 	x.Table = p.parseExpression(LOWEST)
-
-	// if p.curTokenIs(token.IDENT) {
-	// 	table.Table = &ast.Identifier{Token: token.Token{Type: token.IDENT, Lit: p.curToken.Lit}, Value: p.curToken.Lit}
-	// }
-
-	// fmt.Printf("parseTable3: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	if p.peekTokenIs(token.WITH) {
 		p.nextToken()
@@ -312,8 +297,6 @@ func (p *Parser) parseTable() ast.Expression {
 		p.nextToken()
 		x.Alias = p.parseExpression(LOWEST)
 	}
-
-	// fmt.Printf("parseTable4: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
 	// Get the join condition, but skip past the ON keyword
 	if p.peekTokenIs(token.ON) {
@@ -575,7 +558,7 @@ func (p *Parser) parseLock() ast.Expression {
 		p.nextToken()
 	}
 
-	if p.curTokenIs(token.IDENT) && strings.ToUpper(p.curToken.Lit) == "KEY" {
+	if p.curTokenIs(token.IDENT) && p.curToken.Upper == "KEY" {
 		p.nextToken()
 		if p.curTokenIs(token.SHARE) {
 			x.Lock = "KEY SHARE"
@@ -584,7 +567,7 @@ func (p *Parser) parseLock() ast.Expression {
 
 	if p.curTokenIs(token.NO) {
 		p.nextToken()
-		if p.curTokenIs(token.IDENT) && strings.ToUpper(p.curToken.Lit) == "KEY" {
+		if p.curTokenIs(token.IDENT) && p.curToken.Upper == "KEY" {
 			p.nextToken()
 			if p.curTokenIs(token.UPDATE) {
 				p.nextToken()
@@ -645,7 +628,6 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 
 func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
 	exp := &ast.AggregateExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
-	// fmt.Printf("parseAggregateExpression1: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, exp)
 
 	if p.curTokenIs(token.ORDER) {
 		exp.Operator = "ORDER BY"
