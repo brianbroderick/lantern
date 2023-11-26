@@ -8,7 +8,7 @@ import (
 // SET application_name = 'example';
 
 func (p *Parser) parseSetStatement() *ast.SetStatement {
-	defer untrace(trace("parseSetStatement " + p.curToken.Lit))
+	// defer untrace(trace("parseSetStatement " + p.curToken.Lit))
 
 	stmt := &ast.SetStatement{Token: p.curToken}
 	p.nextToken()

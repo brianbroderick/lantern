@@ -8,7 +8,7 @@ import (
 // The CTEStatement is just a thin wrapper around a CTEExpression
 // because CTEExpressions can show up anywhere in a query
 func (p *Parser) parseCTEStatement() *ast.CTEStatement {
-	defer untrace(trace("parseCTEStatement " + p.curToken.Lit))
+	// defer untrace(trace("parseCTEStatement " + p.curToken.Lit))
 
 	x := &ast.CTEStatement{Token: p.curToken}
 	// Don't advance the token. We want to keep the WITH keyword for the CTEExpression
@@ -18,7 +18,7 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 }
 
 func (p *Parser) parseCTEExpression() ast.Expression {
-	defer untrace(trace("parseCTEExpression " + p.curToken.Lit))
+	// defer untrace(trace("parseCTEExpression " + p.curToken.Lit))
 
 	x := &ast.CTEExpression{Token: p.curToken}
 	p.nextToken()
@@ -51,7 +51,7 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 }
 
 func (p *Parser) parseCTESubExpression() ast.Expression {
-	defer untrace(trace("parseCTESubExpression " + p.curToken.Lit))
+	// defer untrace(trace("parseCTESubExpression " + p.curToken.Lit))
 
 	x := &ast.CTEAuxiliaryExpression{Token: p.curToken}
 	x.Name = p.parseExpression(LOWEST)

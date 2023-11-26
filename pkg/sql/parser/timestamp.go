@@ -6,7 +6,7 @@ import (
 )
 
 func (p *Parser) parseTimestampExpression() ast.Expression {
-	defer untrace(trace("parseTimestampExpression " + p.curToken.Lit))
+	// defer untrace(trace("parseTimestampExpression " + p.curToken.Lit))
 
 	x := &ast.TimestampExpression{Token: p.curToken}
 

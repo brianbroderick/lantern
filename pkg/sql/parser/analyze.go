@@ -6,7 +6,7 @@ import (
 )
 
 func (p *Parser) parseAnalyzeStatement() *ast.AnalyzeStatement {
-	defer untrace(trace("parseAnalyzeStatement " + p.curToken.Lit))
+	// defer untrace(trace("parseAnalyzeStatement " + p.curToken.Lit))
 
 	stmt := &ast.AnalyzeStatement{Token: p.curToken}
 	options := false

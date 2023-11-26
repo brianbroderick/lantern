@@ -430,15 +430,15 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
-	defer untrace(trace("ParseProgram"))
+	// defer untrace(trace("ParseProgram"))
+
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
 	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
-		// if stmt != nil {
 		program.Statements = append(program.Statements, stmt)
-		// }
+
 		p.nextToken()
 	}
 
@@ -446,7 +446,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
-	defer untrace(trace("parseStatement"))
+	// defer untrace(trace("parseStatement"))
 
 	switch p.curToken.Type {
 	case token.SELECT:
@@ -467,7 +467,8 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	defer untrace(trace("parseExpressionStatement"))
+	// defer untrace(trace("parseExpressionStatement"))
+
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
 	stmt.Expression = p.parseExpression(STATEMENT)
@@ -480,7 +481,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	defer untrace(trace("parseExpression"))
+	// defer untrace(trace("parseExpression"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -669,7 +670,7 @@ func (p *Parser) parsePrefixKeywordExpression() ast.Expression {
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
-	defer untrace(trace("parseInfixExpression"))
+	// defer untrace(trace("parseInfixExpression"))
 
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
@@ -686,7 +687,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {
-	defer untrace(trace("parseUnionExpression"))
+	// defer untrace(trace("parseUnionExpression"))
 
 	expression := &ast.UnionExpression{
 		Token:    p.curToken,
@@ -736,7 +737,7 @@ func (p *Parser) parseUnknown() ast.Expression {
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
-	defer untrace(trace("parseGroupedExpression"))
+	// defer untrace(trace("parseGroupedExpression"))
 
 	p.setContext(XGROUPED) // sets the context for the parseExpressionListItem function
 	p.nextToken()

@@ -14,7 +14,7 @@ import (
 var defaultListSeparators = []token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
-	defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
+	// defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
 
 	stmt := &ast.SelectStatement{Token: p.curToken}
 	stmt.Expressions = []ast.Expression{}
@@ -28,7 +28,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 }
 
 func (p *Parser) parseSelectExpression() ast.Expression {
-	defer untrace(trace("parseSelectExpression " + p.curToken.Lit))
+	// defer untrace(trace("parseSelectExpression " + p.curToken.Lit))
 
 	x := &ast.SelectExpression{Token: p.curToken}
 	// fmt.Printf("parseSelectExpressionStart: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
@@ -155,7 +155,8 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 }
 
 func (p *Parser) parseDistinct() ast.Expression {
-	defer untrace(trace("parseDistinct"))
+	// defer untrace(trace("parseDistinct"))
+
 	p.context = XDISTINCT
 
 	if p.curTokenIs(token.ALL) {
@@ -187,7 +188,7 @@ func (p *Parser) parseDistinct() ast.Expression {
 }
 
 func (p *Parser) parseTables() []ast.Expression {
-	defer untrace(trace("parseTables"))
+	// defer untrace(trace("parseTables"))
 
 	x := []ast.Expression{}
 	x = append(x, p.parseFirstTable())
@@ -201,7 +202,7 @@ func (p *Parser) parseTables() []ast.Expression {
 
 // parseFirstTable will leave curToken on the last token of the table (name or alias)
 func (p *Parser) parseFirstTable() ast.Expression {
-	defer untrace(trace("parseFirstTable"))
+	// defer untrace(trace("parseFirstTable"))
 
 	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 	x.Table = p.parseExpression(LOWEST)
@@ -232,7 +233,7 @@ func (p *Parser) parseFirstTable() ast.Expression {
 }
 
 func (p *Parser) parseTable() ast.Expression {
-	defer untrace(trace("parseTable"))
+	// defer untrace(trace("parseTable"))
 
 	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 
@@ -309,7 +310,7 @@ func (p *Parser) parseTable() ast.Expression {
 }
 
 func (p *Parser) parseFetch() ast.Expression {
-	defer untrace(trace("parseFetch"))
+	// defer untrace(trace("parseFetch"))
 
 	if p.curTokenIs(token.FETCH) {
 		p.nextToken()
@@ -350,7 +351,7 @@ func (p *Parser) parseFetch() ast.Expression {
 }
 
 func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
-	defer untrace(trace("parseSortList"))
+	// defer untrace(trace("parseSortList"))
 
 	x := []ast.Expression{}
 
@@ -370,7 +371,7 @@ func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
 }
 
 func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression {
-	defer untrace(trace("parseSort"))
+	// defer untrace(trace("parseSort"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -408,7 +409,7 @@ func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression
 }
 
 func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
-	defer untrace(trace("parseWindowList"))
+	// defer untrace(trace("parseWindowList"))
 
 	list := []ast.Expression{}
 
@@ -429,7 +430,7 @@ func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
 
 // w as (partition by c1 order by c2)
 func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
-	defer untrace(trace("parseWindow"))
+	// defer untrace(trace("parseWindow"))
 
 	x := &ast.WindowExpression{
 		Token: p.curToken,
@@ -460,7 +461,7 @@ func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
 }
 
 func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
-	defer untrace(trace("parseColumnList"))
+	// defer untrace(trace("parseColumnList"))
 
 	x := []ast.Expression{}
 
@@ -480,7 +481,7 @@ func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 }
 
 func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expression {
-	defer untrace(trace("parseColumn"))
+	// defer untrace(trace("parseColumn"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
