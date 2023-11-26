@@ -593,29 +593,39 @@ func (p *Parser) parseLock() ast.Expression {
 	return x
 }
 
-// TODO handle other NOT expressions (NOT LIKE, NOT ILIKE, NOT BETWEEN)
-func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
-	p.context = XNOT // sets the context for the parseExpressionListItem function
-	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
-	p.nextToken()
-
-	// If we're missing another NOT expression, add it here.
-	if p.curTokenIsOne([]token.TokenType{token.IN, token.LIKE, token.ILIKE, token.BETWEEN}) {
-		x.Operator = "NOT " + p.curToken.Lit
-		p.nextToken()
-	}
-
-	if p.curTokenIs(token.LPAREN) {
-		p.nextToken()
-		x.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
-	}
-
-	return x
+// TODO handle other NOT expressions (NOT IN, NOT LIKE, NOT ILIKE, NOT BETWEEN)
+func (p *Parser) parseNotExpression(x ast.Expression) ast.Expression {
+	p.not = true // sets the next expression to be a NOT expression
+	return p.determineInfix(LOWEST, x)
 }
+
+// // TODO handle other NOT expressions (NOT LIKE, NOT ILIKE, NOT BETWEEN)
+// func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
+// 	p.context = XNOT // sets the context for the parseExpressionListItem function
+// 	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+// 	p.nextToken()
+
+// 	// If we're missing another NOT expression, add it here.
+// 	if p.curTokenIsOne([]token.TokenType{token.IN, token.LIKE, token.ILIKE, token.BETWEEN}) {
+// 		x.Operator = "NOT " + p.curToken.Lit
+// 		p.nextToken()
+// 	}
+
+// 	if p.curTokenIs(token.LPAREN) {
+// 		p.nextToken()
+// 		x.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+// 	}
+
+// 	return x
+// }
 
 func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 	p.context = XIN // sets the context for the parseExpressionListItem function
 	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	if p.not {
+		x.Not = true
+		p.not = false
+	}
 	p.nextToken()
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()

@@ -18,10 +18,6 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
-		// {"select id from users WHERE rownum BETWEEN 1 AND sample_size", 1, "(SELECT id FROM users WHERE (rownum BETWEEN (1 AND sample_size)));"},         // BETWEEN
-		// {"select id from users WHERE rownum NOT BETWEEN 1 AND sample_size", 1, "(SELECT id FROM users WHERE (rownum NOT BETWEEN (1 AND sample_size)));"}, // BETWEEN
-		// {"select id from users where name not like 'brian';", 1, "(SELECT id FROM users WHERE (name NOT LIKE 'brian'));"}, // basic not like
-
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -175,8 +171,17 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select option_id, external_id from modules group by option_id, external_id having (option_id, external_id) IN ((1, 7), (2, 9))", "(SELECT option_id, external_id FROM modules GROUP BY option_id, external_id HAVING (option_id, external_id) IN ((1, 7), (2, 9)));"},
 
 		// Select: LIKE operator
-		{"select id from users where name like 'brian';", "(SELECT id FROM users WHERE (name LIKE 'brian'));"},         // basic like
-		{"select id from users where name not like 'brian';", "(SELECT id FROM users WHERE (name NOT LIKE 'brian'));"}, // basic not like
+		{"select id from users where name like 'brian';", "(SELECT id FROM users WHERE (name LIKE 'brian'));"},                                        // basic like
+		{"select id from users where name not like 'brian';", "(SELECT id FROM users WHERE (name NOT LIKE 'brian'));"},                                // basic not like
+		{"select id from users where rownum between 1 and sample_size", "(SELECT id FROM users WHERE (rownum BETWEEN (1 AND sample_size)));"},         // BETWEEN
+		{"select id from users where rownum not between 1 and sample_size", "(SELECT id FROM users WHERE (rownum NOT BETWEEN (1 AND sample_size)));"}, // BETWEEN
+		// {"select select 'abc' similar to 'abc' from users;", ""}, // TODO: handle similar to
+		// {"select select 'abc' not similar to 'abc' from users;", ""}, // TODO: handle similar to
+
+		// Select: EXISTS operator. In this case, NOT is a prefix operator
+		{"select id from users where exists (select id from addresses where user_id = users.id);", "(SELECT id FROM users WHERE exists((SELECT id FROM addresses WHERE (user_id = users.id))));"},
+		{"select id from users where not exists (select id from addresses where user_id = users.id);",
+			"(SELECT id FROM users WHERE (NOT exists((SELECT id FROM addresses WHERE (user_id = users.id)))));"},
 
 		// Select: UNION clause
 		//   No tables

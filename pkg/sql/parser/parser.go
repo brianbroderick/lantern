@@ -150,6 +150,7 @@ type Parser struct {
 	infixParseFns  map[token.TokenType]infixParseFn
 
 	context parseContext
+	not     bool // This is used to determine if the NOT keyword is being used in a condition
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -173,7 +174,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.EXPONENTIATION, p.parsePrefixExpression)
-	// p.registerPrefix(token.NOT, p.parsePrefixKeywordExpression)
 
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
@@ -213,6 +213,7 @@ func New(l *lexer.Lexer) *Parser {
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
 	p.registerPrefix(token.ALL, p.parseKeywordExpression)
+	p.registerPrefix(token.NOT, p.parsePrefixKeywordExpression) // for things like NOT EXISTS (select...)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.PLUS, p.parseInfixExpression)
@@ -503,7 +504,19 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		return nil
 	}
 	leftExp := prefix()
+	leftExp = p.determineInfix(precedence, leftExp)
 
+	// This is why all expressions must have a SetCast method
+	if p.peekTokenIs(token.DOUBLECOLON) {
+		p.nextToken()
+		p.nextToken()
+		leftExp.SetCast(p.parseExpression(CAST))
+	}
+
+	return leftExp
+}
+
+func (p *Parser) determineInfix(precedence int, leftExp ast.Expression) ast.Expression {
 	var end []token.TokenType
 	switch p.context {
 	case XCALL: // Allow order by to denote an aggregate function
@@ -511,8 +524,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	default:
 		end = []token.TokenType{token.COMMA, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 	}
-
-	// fmt.Printf("parseExpression1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)
 
 	for !p.peekTokenIsOne(end) && precedence < p.peekPrecedence() {
 		infix := p.infixParseFns[p.peekToken.Type]
@@ -524,13 +535,6 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 		p.nextToken()
 
 		leftExp = infix(leftExp)
-	}
-
-	// This is why all expressions must have a SetCast method
-	if p.peekTokenIs(token.DOUBLECOLON) {
-		p.nextToken()
-		p.nextToken()
-		leftExp.SetCast(p.parseExpression(CAST))
 	}
 
 	return leftExp
@@ -690,6 +694,11 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 		Token:    p.curToken,
 		Operator: p.curToken.Lit,
 		Left:     left,
+	}
+
+	if p.not {
+		expression.Not = true
+		p.not = false
 	}
 
 	precedence := p.curPrecedence()

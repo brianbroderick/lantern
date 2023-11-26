@@ -345,6 +345,7 @@ func (x *PrefixKeywordExpression) SetCast(cast Expression) {
 type InfixExpression struct {
 	Token    token.Token `json:"token,omitempty"` // The operator token, e.g. +
 	Left     Expression  `json:"left,omitempty"`
+	Not      bool        `json:"not,omitempty"` // prefix NOT to the operator
 	Operator string      `json:"operator,omitempty"`
 	Right    Expression  `json:"right,omitempty"`
 	Cast     Expression  `json:"cast,omitempty"`
@@ -357,6 +358,9 @@ func (x *InfixExpression) String(maskParams bool) string {
 
 	out.WriteString("(")
 	out.WriteString(x.Left.String(maskParams))
+	if x.Not {
+		out.WriteString(" NOT")
+	}
 	out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
 	if x.Right != nil {
 		out.WriteString(x.Right.String(maskParams))

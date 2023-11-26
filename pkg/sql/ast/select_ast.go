@@ -551,6 +551,7 @@ func (x *LockExpression) SetCast(cast Expression) {
 type InExpression struct {
 	Token    token.Token  `json:"token,omitempty"` // The operator token, e.g. IN, NOT IN
 	Left     Expression   `json:"left,omitempty"`
+	Not      bool         `json:"not,omitempty"`
 	Operator string       `json:"operator,omitempty"`
 	Right    []Expression `json:"right,omitempty"`
 	Cast     Expression   `json:"cast,omitempty"`
@@ -562,6 +563,9 @@ func (x *InExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString(x.Left.String(maskParams))
+	if x.Not {
+		out.WriteString(" NOT")
+	}
 	out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
 
 	out.WriteString("(")
