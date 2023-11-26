@@ -19,6 +19,8 @@ func TestMultipleStatements(t *testing.T) {
 		output         string
 	}{
 		// Multiple Statements
+		// left and right can be function names
+		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
@@ -60,6 +62,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select sum(a,b) from users;", "(SELECT sum(a, b) FROM users);"},                                                                                                // function call
 		{"select key, value from example where id = 20 AND key IN ( 'a', 'b', 'c' );", "(SELECT key, value FROM example WHERE ((id = 20) AND key IN ('a', 'b', 'c')));"}, // removed the token KEY since it's not a PG reserved key word: https://www.postgresql.org/docs/13/sql-keywords-appendix.html
 		{"SELECT translate(name, '''', '' ) as name FROM people WHERE id = 0;", "(SELECT translate(name, '''', '') AS name FROM people WHERE (id = 0));"},                // escaped apostrophes
+		{"select coalesce ( u.first_name || ' ' || u.last_name, u.first_name, u.last_name ) AS name from users u", "(SELECT coalesce(((u.first_name || ' ') || u.last_name), u.first_name, u.last_name) AS name FROM users u);"}, // coalesce
 
 		// Select: distinct & all tokens
 		{"select distinct id from users;", "(SELECT DISTINCT id FROM users);"},
@@ -88,6 +91,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from customers left outer join addresses on id = customer_id;", "(SELECT id FROM customers LEFT JOIN addresses ON (id = customer_id));"},
 		{"select id from addresses AS a JOIN states AS s ON (s.id = a.state_id AND s.code > 'ut')", "(SELECT id FROM addresses a INNER JOIN states s ON ((s.id = a.state_id) AND (s.code > 'ut')));"},
 		{"SELECT r.* FROM roles r, rights ri WHERE r.id = ri.role_id AND ri.deleted_by IS NULL AND ri.id = 12;", "(SELECT r.* FROM roles r , rights ri WHERE (((r.id = ri.role_id) AND (ri.deleted_by IS NULL)) AND (ri.id = 12)));"},
+		{"select left('abc', 2);", "(SELECT left('abc', 2));"},   // in this case, left is a string function getting the left 2 characters
+		{"select right('abc', 2);", "(SELECT right('abc', 2));"}, // in this case, right is a string function getting the right 2 characters
 
 		// Select: where clause
 		{"select id from users where id = 42;", "(SELECT id FROM users WHERE (id = 42));"},

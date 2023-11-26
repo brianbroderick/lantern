@@ -206,6 +206,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.CURRENT_TIME, p.parseIdentifier)
 	p.registerPrefix(token.CURRENT_TIMESTAMP, p.parseIdentifier)
 	p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
+	p.registerPrefix(token.LEFT, p.parseIdentifier)
+	p.registerPrefix(token.RIGHT, p.parseIdentifier)
 	// p.registerPrefix(token.GROUP, p.parseIdentifier) // can be used as a column alias
 
 	// p.registerPrefix(token.AT, p.parseIdentifier)
