@@ -11,7 +11,7 @@ import (
 // If it's found, advance the token twice to skip past the clause token (from peek, to current, to next).
 // Otherwise, you'll get off by one errors and have a hard time figuring out why.
 
-var defaultListSeparators = []token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
+var defaultListSeparators = []token.TokenType{token.COMMA, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	// defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
@@ -73,11 +73,8 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		}
 
 		// GROUP BY CLAUSE
-		if p.peekTokenIs(token.GROUP) {
+		if p.peekTokenIs(token.GROUP_BY) {
 			p.nextToken()
-			if !p.expectPeek(token.BY) {
-				return nil
-			}
 			p.nextToken()
 			x.GroupBy = p.parseColumnList(defaultListSeparators)
 		}
@@ -596,6 +593,7 @@ func (p *Parser) parseLock() ast.Expression {
 	return x
 }
 
+// TODO handle other NOT expressions (NOT LIKE, NOT ILIKE, NOT BETWEEN)
 func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
 	p.context = XNOT // sets the context for the parseExpressionListItem function
 	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}

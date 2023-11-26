@@ -16,6 +16,7 @@ func TestCTEs(t *testing.T) {
 		output string
 	}{
 		// Select: CTEs
+		{"with foo as (select bar from orders) select baz from sales group by bar;", "(WITH foo AS (SELECT bar FROM orders) (SELECT baz FROM sales GROUP BY bar));"},
 		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales;", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"},
 		{"with sales as (select sum(amount) as total_sales from orders) select total_sales from sales", "(WITH sales AS (SELECT sum(amount) AS total_sales FROM orders) (SELECT total_sales FROM sales));"}, // no semi-colon
 		{"with regional_sales as (select region, sum(amount) as total_sales from orders group by region), top_regions as (select region from regional_sales where total_sales > 42)	select region, product, sum(quantity) AS product_units, sum(amount) as product_sales from orders group by region, product;",

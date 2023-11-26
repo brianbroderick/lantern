@@ -144,7 +144,7 @@ const (
 	FROM
 	FULL
 	GRANT
-	GROUP
+	GROUP_BY
 	GROUPING
 	HAVING
 	ILIKE
@@ -356,7 +356,7 @@ var Tokens = [...]string{
 	FROM:              "FROM",
 	FULL:              "FULL",
 	GRANT:             "GRANT",
-	GROUP:             "GROUP",
+	GROUP_BY:          "GROUP_BY",
 	GROUPING:          "GROUPING",
 	HAVING:            "HAVING",
 	ILIKE:             "ILIKE",

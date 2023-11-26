@@ -18,14 +18,15 @@ const (
 	USING          // USING in a JOIN or an index
 	FILTER         // FILTER i.e. COUNT(*) FILTER (WHERE i < 5)
 	AGGREGATE      // ORDER BY in a function call
+	BETWEEN        // BETWEEN
+	NOT            // NOT
 	OR             // OR
 	AND            // AND
-	NOT            // NOT
 	IS             // IS, IS NULL, IS NOT NULL, IS DISTINCT FROM, IS NOT DISTINCT FROM
 	FROM           // FROM i.e. substring('foobar' from 1 for 3)
 	EQUALS         // ==
 	LESSGREATER    // > or <
-	COMPARE        // BETWEEN, IN, LIKE, ILIKE, SIMILAR
+	COMPARE        // IN, LIKE, ILIKE, SIMILAR
 	WINDOW         // OVER
 	SUM            // +
 	PRODUCT        // *
@@ -65,7 +66,7 @@ var precedences = map[token.TokenType]int{
 	token.NOTNULL:           IS,
 	token.FROM:              FROM,
 	token.OVER:              WINDOW,
-	token.BETWEEN:           COMPARE,
+	token.BETWEEN:           BETWEEN,
 	token.IN:                COMPARE,
 	token.LIKE:              COMPARE,
 	token.ILIKE:             COMPARE,
@@ -172,7 +173,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 	p.registerPrefix(token.EXPONENTIATION, p.parsePrefixExpression)
-	p.registerPrefix(token.NOT, p.parsePrefixKeywordExpression)
+	// p.registerPrefix(token.NOT, p.parsePrefixKeywordExpression)
 
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
 	p.registerPrefix(token.LBRACKET, p.parseArrayLiteral)
@@ -291,13 +292,26 @@ func (p *Parser) nextToken() {
 	p.posPeekFour = pos
 
 	// Read into the future for AT TIME ZONE since AT isn't a reserved word (it's often used as a column or table alias)
-	if p.peekTwoToken.Type == token.IDENT && p.peekTwoToken.Upper == "AT" {
-		if p.peekThreeToken.Type == token.IDENT && p.peekThreeToken.Upper == "TIME" {
-			if p.peekFourToken.Type == token.IDENT && p.peekFourToken.Upper == "ZONE" {
-				p.peekTwoToken = token.Token{Type: token.AT_TIME_ZONE, Lit: "AT TIME ZONE"}
-				newToken, pos = p.advanceToken()
-				p.posPeekThree = pos
-				p.peekThreeToken = newToken
+	if p.peekTwoToken.Type == token.IDENT {
+
+		switch p.peekTwoToken.Upper {
+		case "AT":
+			if p.peekThreeToken.Type == token.IDENT && p.peekThreeToken.Upper == "TIME" {
+				if p.peekFourToken.Type == token.IDENT && p.peekFourToken.Upper == "ZONE" {
+					p.peekTwoToken = token.Token{Type: token.AT_TIME_ZONE, Lit: "AT TIME ZONE"}
+					newToken, pos = p.advanceToken()
+					p.posPeekThree = pos
+					p.peekThreeToken = newToken
+					newToken, pos = p.advanceToken()
+					p.peekFourToken = newToken
+					p.posPeekFour = pos
+				}
+			}
+		case "GROUP":
+			if p.peekThreeToken.Type == token.BY {
+				p.peekTwoToken = token.Token{Type: token.GROUP_BY, Lit: "GROUP BY"}
+				p.peekThreeToken = p.peekFourToken
+				p.posPeekThree = p.posPeekFour
 				newToken, pos = p.advanceToken()
 				p.peekFourToken = newToken
 				p.posPeekFour = pos
@@ -495,7 +509,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	case XCALL: // Allow order by to denote an aggregate function
 		end = []token.TokenType{token.COMMA}
 	default:
-		end = []token.TokenType{token.COMMA, token.WHERE, token.GROUP, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
+		end = []token.TokenType{token.COMMA, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 	}
 
 	// fmt.Printf("parseExpression1: %s :: %s\n", p.curToken.Lit, p.peekToken.Lit)

@@ -18,7 +18,9 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
-		// the e is getting consumed by the lexer. need to fix.
+		// {"select id from users WHERE rownum BETWEEN 1 AND sample_size", 1, "(SELECT id FROM users WHERE (rownum BETWEEN (1 AND sample_size)));"},         // BETWEEN
+		// {"select id from users WHERE rownum NOT BETWEEN 1 AND sample_size", 1, "(SELECT id FROM users WHERE (rownum NOT BETWEEN (1 AND sample_size)));"}, // BETWEEN
+		// {"select id from users where name not like 'brian';", 1, "(SELECT id FROM users WHERE (name NOT LIKE 'brian'));"}, // basic not like
 
 		// Multiple Statements
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
@@ -114,7 +116,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select foo,bar from my_table where foo is not distinct from bar;", "(SELECT foo, bar FROM my_table WHERE (foo IS NOT DISTINCT FROM bar));"},
 
 		// Select: group by
-		{"select id from users group by id", "(SELECT id FROM users GROUP BY id);"},
+		{"select baz from sales group by bar;", "(SELECT baz FROM sales GROUP BY bar);"},
 		{"select id from users group by id, name;", "(SELECT id FROM users GROUP BY id, name);"},
 
 		// Select: combined clauses
@@ -163,13 +165,18 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users for update of users, addresses nowait;", "(SELECT id FROM users FOR UPDATE OF users, addresses NOWAIT);"},
 		{"select id from users for update of users, addresses skip locked;", "(SELECT id FROM users FOR UPDATE OF users, addresses SKIP LOCKED);"},
 
-		// Select: IN clause
+		// Select: IN operator
 		{"select id from users where id IN ('1','2','3','4');", "(SELECT id FROM users WHERE id IN ('1', '2', '3', '4'));"},
+		{"select id from users where id NOT IN ('1','2','3','4');", "(SELECT id FROM users WHERE id NOT IN ('1', '2', '3', '4'));"},
 		{"select id from users where id IN ('1','2','3','4') AND name = 'brian';", "(SELECT id FROM users WHERE (id IN ('1', '2', '3', '4') AND (name = 'brian')));"},
 		{"select id from users where id IN (1,2,3,4);", "(SELECT id FROM users WHERE id IN (1, 2, 3, 4));"},
 		{"select id from modules where (option_id, external_id) IN ((1, 7))", "(SELECT id FROM modules WHERE (option_id, external_id) IN ((1, 7)));"},                 // single tuple
 		{"select id from modules where (option_id, external_id) IN ((1, 7), (2, 9))", "(SELECT id FROM modules WHERE (option_id, external_id) IN ((1, 7), (2, 9)));"}, // multiple tuples
 		{"select option_id, external_id from modules group by option_id, external_id having (option_id, external_id) IN ((1, 7), (2, 9))", "(SELECT option_id, external_id FROM modules GROUP BY option_id, external_id HAVING (option_id, external_id) IN ((1, 7), (2, 9)));"},
+
+		// Select: LIKE operator
+		{"select id from users where name like 'brian';", "(SELECT id FROM users WHERE (name LIKE 'brian'));"},         // basic like
+		{"select id from users where name not like 'brian';", "(SELECT id FROM users WHERE (name NOT LIKE 'brian'));"}, // basic not like
 
 		// Select: UNION clause
 		//   No tables
