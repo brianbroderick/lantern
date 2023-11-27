@@ -8,7 +8,7 @@ import (
 // This currently handles DROP TABLE, but does not handle DROP DATABASE, DROP INDEX, etc. yet.
 
 func (p *Parser) parseDropStatement() *ast.DropStatement {
-	// defer untrace(trace("parseDropStatement " + p.curToken.Lit))
+	// defer p.untrace(p.trace("parseDropStatement"))
 
 	stmt := &ast.DropStatement{Token: p.curToken}
 	p.nextToken()
@@ -41,7 +41,7 @@ func (p *Parser) parseDropStatement() *ast.DropStatement {
 }
 
 func (p *Parser) parseDropTableList() []ast.Expression {
-	// defer untrace(trace("parseDropTableList"))
+	// defer p.untrace(p.trace("parseDropTableList"))
 
 	list := []ast.Expression{}
 

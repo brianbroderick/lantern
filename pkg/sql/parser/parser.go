@@ -26,7 +26,7 @@ const (
 	FROM           // FROM i.e. substring('foobar' from 1 for 3)
 	EQUALS         // ==
 	LESSGREATER    // > or <
-	COMPARE        // IN, LIKE, ILIKE, SIMILAR
+	COMPARE        // IN, LIKE, ILIKE, SIMILAR, REGEX
 	WINDOW         // OVER
 	SUM            // +
 	PRODUCT        // *
@@ -72,6 +72,10 @@ var precedences = map[token.TokenType]int{
 	token.ILIKE:             COMPARE,
 	token.SIMILAR:           COMPARE,
 	token.OVERLAP:           COMPARE,
+	token.REGEXMATCH:        COMPARE,
+	token.REGEXIMATCH:       COMPARE,
+	token.REGEXNOTMATCH:     COMPARE,
+	token.REGEXNOTIMATCH:    COMPARE,
 	token.EXPONENTIATION:    EXPONENTIATION,
 	token.JSONGETBYKEY:      JSON,
 	token.JSONGETBYTEXT:     JSON,
@@ -134,6 +138,7 @@ type Parser struct {
 	l            *lexer.Lexer
 	errors       []string
 	paramOffset  int
+	traceLevel   int
 	pos          lexer.Pos
 	posPeek      lexer.Pos
 	posPeekTwo   lexer.Pos
@@ -208,7 +213,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
 	p.registerPrefix(token.LEFT, p.parseIdentifier)
 	p.registerPrefix(token.RIGHT, p.parseIdentifier)
-	// p.registerPrefix(token.GROUP, p.parseIdentifier) // can be used as a column alias
 
 	// p.registerPrefix(token.AT, p.parseIdentifier)
 
@@ -237,6 +241,10 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.ILIKE, p.parseInfixExpression)
 	p.registerInfix(token.SIMILAR, p.parseInfixExpression)
 	p.registerInfix(token.BETWEEN, p.parseInfixExpression)
+	p.registerInfix(token.REGEXMATCH, p.parseInfixExpression)
+	p.registerInfix(token.REGEXIMATCH, p.parseInfixExpression)
+	p.registerInfix(token.REGEXNOTMATCH, p.parseInfixExpression)
+	p.registerInfix(token.REGEXNOTIMATCH, p.parseInfixExpression)
 	p.registerInfix(token.OVER, p.parseInfixExpression)
 	p.registerInfix(token.JSONGETBYKEY, p.parseInfixExpression)
 	p.registerInfix(token.JSONGETBYTEXT, p.parseInfixExpression)
@@ -447,7 +455,7 @@ func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
-	// defer untrace(trace("ParseProgram"))
+	defer p.untrace(p.trace("ParseProgram"))
 
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
@@ -463,7 +471,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
-	// defer untrace(trace("parseStatement"))
+	defer p.untrace(p.trace("parseStatement"))
 
 	switch p.curToken.Type {
 	case token.SELECT:
@@ -484,7 +492,7 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
-	// defer untrace(trace("parseExpressionStatement"))
+	defer p.untrace(p.trace("parseExpressionStatement"))
 
 	stmt := &ast.ExpressionStatement{Token: p.curToken}
 
@@ -498,7 +506,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	// defer untrace(trace("parseExpression"))
+	defer p.untrace(p.trace("parseExpression"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -559,6 +567,8 @@ func (p *Parser) curPrecedence() int {
 }
 
 func (p *Parser) parseColumnSection() ast.Expression {
+	defer p.untrace(p.trace("parseColumnSection"))
+
 	if p.peekTokenIs(token.DOT) {
 		p.nextToken()
 		p.nextToken()
@@ -572,6 +582,8 @@ func (p *Parser) parseColumnSection() ast.Expression {
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
+	defer p.untrace(p.trace("parseIdentifier"))
+
 	x := &ast.Identifier{Token: p.curToken}
 	x.Value = append(x.Value, &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit})
 
@@ -588,14 +600,20 @@ func (p *Parser) parseIdentifier() ast.Expression {
 }
 
 func (p *Parser) parseWildcardLiteral() ast.Expression {
+	defer p.untrace(p.trace("parseWildcardLiteral"))
+
 	return &ast.WildcardLiteral{Token: p.curToken, Value: p.curToken.Lit}
 }
 
 func (p *Parser) parseKeywordExpression() ast.Expression {
+	defer p.untrace(p.trace("parseKeywordExpression"))
+
 	return &ast.KeywordExpression{Token: p.curToken}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
+	defer p.untrace(p.trace("parseIntegerLiteral"))
+
 	// Incrementing the offset is to help when masking parameters in the AST
 	p.paramOffset++
 	lit := &ast.IntegerLiteral{Token: p.curToken, ParamOffset: p.paramOffset}
@@ -619,6 +637,8 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *Parser) parseFloatLiteral() ast.Expression {
+	defer p.untrace(p.trace("parseFloatLiteral"))
+
 	// Incrementing the offset is to help when masking parameters in the AST
 	p.paramOffset++
 	lit := &ast.FloatLiteral{Token: p.curToken, ParamOffset: p.paramOffset}
@@ -642,6 +662,8 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 }
 
 func (p *Parser) parseStringLiteral() ast.Expression {
+	defer p.untrace(p.trace("parseStringLiteral"))
+
 	p.paramOffset++
 	str := &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit, ParamOffset: p.paramOffset}
 	if p.peekTokenIs(token.DOUBLECOLON) {
@@ -653,6 +675,8 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 }
 
 func (p *Parser) parseEscapeStringLiteral() ast.Expression {
+	defer p.untrace(p.trace("parseEscapeStringLiteral"))
+
 	p.paramOffset++
 	str := &ast.EscapeStringLiteral{Token: p.curToken, Value: p.curToken.Lit, ParamOffset: p.paramOffset}
 	if p.peekTokenIs(token.DOUBLECOLON) {
@@ -664,6 +688,8 @@ func (p *Parser) parseEscapeStringLiteral() ast.Expression {
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
+	defer p.untrace(p.trace("parsePrefixExpression"))
+
 	expression := &ast.PrefixExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Lit,
@@ -677,6 +703,8 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 }
 
 func (p *Parser) parsePrefixKeywordExpression() ast.Expression {
+	defer p.untrace(p.trace("parsePrefixKeywordExpression"))
+
 	expression := &ast.PrefixKeywordExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Lit,
@@ -690,7 +718,7 @@ func (p *Parser) parsePrefixKeywordExpression() ast.Expression {
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
-	// defer untrace(trace("parseInfixExpression"))
+	defer p.untrace(p.trace("parseInfixExpression"))
 
 	expression := &ast.InfixExpression{
 		Token:    p.curToken,
@@ -712,7 +740,7 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {
-	// defer untrace(trace("parseUnionExpression"))
+	defer p.untrace(p.trace("parseUnionExpression"))
 
 	expression := &ast.UnionExpression{
 		Token:    p.curToken,
@@ -734,10 +762,14 @@ func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseBoolean() ast.Expression {
+	defer p.untrace(p.trace("parseBoolean"))
+
 	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }
 
 func (p *Parser) parseNull() ast.Expression {
+	defer p.untrace(p.trace("parseNull"))
+
 	x := &ast.Null{Token: p.curToken}
 
 	// This is why all expressions must have a SetCast method
@@ -750,6 +782,8 @@ func (p *Parser) parseNull() ast.Expression {
 }
 
 func (p *Parser) parseUnknown() ast.Expression {
+	defer p.untrace(p.trace("parseUnknown"))
+
 	x := &ast.Unknown{Token: p.curToken}
 
 	// This is why all expressions must have a SetCast method
@@ -762,9 +796,11 @@ func (p *Parser) parseUnknown() ast.Expression {
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
-	// defer untrace(trace("parseGroupedExpression"))
+	defer p.untrace(p.trace("parseGroupedExpression"))
+	context := p.context
+	p.setContext(XGROUPED)        // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
 
-	p.setContext(XGROUPED) // sets the context for the parseExpressionListItem function
 	p.nextToken()
 
 	x := &ast.GroupedExpression{Token: p.curToken}
@@ -807,6 +843,8 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 // }
 
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseCallExpression"))
+
 	x := &ast.CallExpression{Token: p.curToken, Function: function}
 
 	p.nextToken()
@@ -815,8 +853,10 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
 		x.Distinct = p.parseDistinct()
 	}
+	context := p.context
+	p.setContext(XCALL)           // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
 
-	p.setContext(XCALL) // sets the context for the parseExpressionListItem function
 	x.Arguments = p.parseExpressionList([]token.TokenType{token.RPAREN})
 
 	if p.peekTokenIs(token.DOUBLECOLON) {
@@ -829,6 +869,8 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
+	defer p.untrace(p.trace("parseExpressionList"))
+
 	list := []ast.Expression{}
 
 	if p.curTokenIsOne(end) {
@@ -853,7 +895,12 @@ func (p *Parser) parseExpressionList(end []token.TokenType) []ast.Expression {
 }
 
 func (p *Parser) parseArrayLiteral() ast.Expression {
-	p.context = LITARRAY // sets the context for the parseExpressionListItem function
+	defer p.untrace(p.trace("parseArrayLiteral"))
+
+	context := p.context
+	p.setContext(LITARRAY)        // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
+
 	array := &ast.ArrayLiteral{Token: p.curToken}
 	p.nextToken()
 	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
@@ -862,9 +909,12 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 }
 
 func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseArrayExpression"))
+
 	context := p.context
 	p.setContext(XARRAY)          // sets the context for the parseExpressionListItem function
 	defer p.resetContext(context) // reset to prior context
+
 	array := &ast.ArrayLiteral{Token: p.curToken, Left: left}
 	p.nextToken()
 	array.Elements = p.parseExpressionList([]token.TokenType{token.RBRACKET})
@@ -879,6 +929,8 @@ func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parseIntervalExpression() ast.Expression {
+	defer p.untrace(p.trace("parseIntervalExpression"))
+
 	interval := &ast.IntervalExpression{Token: p.curToken}
 	p.nextToken()
 	interval.Value = &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}

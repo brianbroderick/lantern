@@ -62,6 +62,11 @@ const (
 	DOUBLECOLON // ::
 	DOT         // .
 
+	REGEXMATCH     // ~
+	REGEXIMATCH    // ~*
+	REGEXNOTMATCH  // !~
+	REGEXNOTIMATCH // !~*
+
 	JSONGETBYKEY      // ->
 	JSONGETBYTEXT     // ->>
 	JSONGETBYPATH     // #>
@@ -267,6 +272,11 @@ var Tokens = [...]string{
 
 	EQ:     "EQ",     // ==
 	NOT_EQ: "NOT_EQ", // != or <>
+
+	REGEXMATCH:     "REGEXMATCH",     // ~
+	REGEXIMATCH:    "REGEXIMATCH",    // ~*
+	REGEXNOTMATCH:  "REGEXNOTMATCH",  // !~
+	REGEXNOTIMATCH: "REGEXNOTIMATCH", // !~*
 
 	JSONGETBYKEY:      "JSONGETBYKEY",
 	JSONGETBYTEXT:     "JSONGETBYTEXT",

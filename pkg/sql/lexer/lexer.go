@@ -138,12 +138,27 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 			tok = newToken(token.ASSIGN, l.ch)
 		}
 	case '!':
-		if l.peek() == '=' {
+		switch l.peek() {
+		case '=':
 			l.read()
 			tok = token.Token{Type: token.NOT_EQ, Lit: "!=", Upper: "!="}
-		} else {
+		case '~':
+			l.read()
+			if l.peek() == '*' {
+				l.read()
+				tok = token.Token{Type: token.REGEXNOTIMATCH, Lit: "!~*", Upper: "!~*"}
+			} else {
+				tok = token.Token{Type: token.REGEXNOTMATCH, Lit: "!~", Upper: "!~"}
+			}
+		default:
 			tok = newToken(token.BANG, l.ch)
 		}
+		// if l.peek() == '=' {
+		// 	l.read()
+		// 	tok = token.Token{Type: token.NOT_EQ, Lit: "!=", Upper: "!="}
+		// } else {
+		// 	tok = newToken(token.BANG, l.ch)
+		// }
 	case '/':
 		// This is a comment; however, it should be skipped by skipWhitespace()
 		if l.peek() == '*' {
@@ -198,6 +213,13 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 			tok = token.Token{Type: token.OVERLAP, Lit: "&&", Upper: "&&"}
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
+		}
+	case '~': // REGEX OPERATORS
+		if l.peek() == '*' {
+			l.read()
+			tok = token.Token{Type: token.REGEXIMATCH, Lit: "~*", Upper: "~*"}
+		} else {
+			tok = token.Token{Type: token.REGEXMATCH, Lit: "~", Upper: "~"}
 		}
 	case 0:
 		tok = token.Token{Type: token.EOF}

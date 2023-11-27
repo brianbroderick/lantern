@@ -1,31 +1,38 @@
 package parser
 
 import (
+	"fmt"
 	"strings"
 )
 
-var traceLevel int = 0
+const DEBUG = false
+const traceIdentPlaceholder string = "  "
 
-const traceIdentPlaceholder string = "\t"
-
-func identLevel() string {
-	return strings.Repeat(traceIdentPlaceholder, traceLevel-1)
+func (p *Parser) identLevel() string {
+	return strings.Repeat(traceIdentPlaceholder, p.traceLevel-1)
 }
 
-func tracePrint(fs string) {
-	// fmt.Printf("%s%s\n", identLevel(), fs)
+func (p *Parser) tracePrint(fs string) {
+	fmt.Printf("%s%s\n", p.identLevel(), fs)
 }
 
-func incIdent() { traceLevel = traceLevel + 1 }
-func decIdent() { traceLevel = traceLevel - 1 }
+func (p *Parser) incIdent() { p.traceLevel = p.traceLevel + 1 }
+func (p *Parser) decIdent() { p.traceLevel = p.traceLevel - 1 }
 
-func trace(msg string) string {
-	incIdent()
-	tracePrint("BEGIN " + msg)
+func (p *Parser) trace(msg string) string {
+	if !DEBUG {
+		return ""
+	}
+
+	p.incIdent()
+	p.tracePrint(fmt.Sprintf("BEGIN %s: %s %s :: %s %s", msg, p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit))
 	return msg
 }
 
-func untrace(msg string) {
-	tracePrint("END " + msg)
-	decIdent()
+func (p *Parser) untrace(msg string) {
+	if !DEBUG {
+		return
+	}
+	p.tracePrint(fmt.Sprintf("END %s: %s %s :: %s %s", msg, p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit))
+	p.decIdent()
 }

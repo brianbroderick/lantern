@@ -6,7 +6,7 @@ import (
 )
 
 func (p *Parser) parseCreateStatement() *ast.CreateStatement {
-	// defer untrace(trace("parseCreateStatement " + p.curToken.Lit))
+	// defer p.untrace(p.trace("parseCreateStatement"))
 
 	stmt := &ast.CreateStatement{Token: p.curToken}
 	p.nextToken()

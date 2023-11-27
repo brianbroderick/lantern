@@ -8,6 +8,8 @@ import (
 // CASE WHEN id = 1 THEN 'one' WHEN id = 2 THEN 'two' ELSE 'other' end
 
 func (p *Parser) parseCaseExpression() ast.Expression {
+	// defer p.untrace(p.trace("parseCaseExpression"))
+
 	x := &ast.CaseExpression{Token: p.curToken}
 
 	if !p.peekTokenIs(token.WHEN) {

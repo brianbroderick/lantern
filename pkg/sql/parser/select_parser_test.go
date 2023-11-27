@@ -18,6 +18,7 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
+
 		// Multiple Statements
 		// left and right can be function names
 		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
@@ -83,6 +84,7 @@ func TestSingleSelectStatements(t *testing.T) {
 
 		// Select: joins
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;", "(SELECT c.id FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id));"},
+		{"select c.id from customers c join addresses a on (c.id = a.customer_id) join states s on (s.id = a.state_id);", "(SELECT c.id FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id) INNER JOIN states s ON (s.id = a.state_id));"},
 		{"select id from customers join addresses on id = customer_id;", "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id));"},
 		{"select id from customers join addresses on id = customer_id join phones on id = phone_id;", "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) INNER JOIN phones ON (id = phone_id));"},
 		{"select id from customers join addresses on customers.id = addresses.customer_id", "(SELECT id FROM customers INNER JOIN addresses ON (customers.id = addresses.customer_id));"},
@@ -174,12 +176,18 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from modules where (option_id, external_id) IN ((1, 7))", "(SELECT id FROM modules WHERE (option_id, external_id) IN ((1, 7)));"},                 // single tuple
 		{"select id from modules where (option_id, external_id) IN ((1, 7), (2, 9))", "(SELECT id FROM modules WHERE (option_id, external_id) IN ((1, 7), (2, 9)));"}, // multiple tuples
 		{"select option_id, external_id from modules group by option_id, external_id having (option_id, external_id) IN ((1, 7), (2, 9))", "(SELECT option_id, external_id FROM modules GROUP BY option_id, external_id HAVING (option_id, external_id) IN ((1, 7), (2, 9)));"},
+		{"select position('b' IN 'brian') as foo from cars", "(SELECT position('b' IN ('brian')) AS foo FROM cars);"}, // in inside a function call
+		{"select count(1) from cars c left join models m ON ( position((c.key) in m.formula)<>0 )", "(SELECT count(1) FROM cars c LEFT JOIN models m ON (position(c.key IN (m.formula)) <> 0));"},
 
 		// Select: LIKE operator
 		{"select id from users where name like 'brian';", "(SELECT id FROM users WHERE (name LIKE 'brian'));"},                                        // basic like
 		{"select id from users where name not like 'brian';", "(SELECT id FROM users WHERE (name NOT LIKE 'brian'));"},                                // basic not like
 		{"select id from users where rownum between 1 and sample_size", "(SELECT id FROM users WHERE (rownum BETWEEN (1 AND sample_size)));"},         // BETWEEN
 		{"select id from users where rownum not between 1 and sample_size", "(SELECT id FROM users WHERE (rownum NOT BETWEEN (1 AND sample_size)));"}, // BETWEEN
+		{"select * from mytable where mycolumn ~ 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn ~ 'regexp'));"},                                  // basic regex (case sensitive)
+		{"select * from mytable where mycolumn ~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn ~* 'regexp'));"},                                // basic regex (case insensitive)
+		{"select * from mytable where mycolumn !~ 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~ 'regexp'));"},                                // basic not regex (case sensitive)
+		{"select * from mytable where mycolumn !~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~* 'regexp'));"},                              // basic not regex (case insensitive)
 		// {"select select 'abc' similar to 'abc' from users;", ""}, // TODO: handle similar to
 		// {"select select 'abc' not similar to 'abc' from users;", ""}, // TODO: handle similar to
 
@@ -237,6 +245,12 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Select: CASE
 		{"select case when id = 1 then 'one' when id = 2 then 'two' else 'other' end from users;", "(SELECT CASE WHEN (id = 1) THEN 'one' WHEN (id = 2) THEN 'two' ELSE 'other' END FROM users);"},
 		{`SELECT case when (type_id = 3) then 1 else 0 end::text as is_complete FROM users`, "(SELECT CASE WHEN (type_id = 3) THEN 1 ELSE 0 END::TEXT AS is_complete FROM users);"},
+		{"select array_agg(name order by name) as names from users", "(SELECT array_agg(name ORDER BY name) AS names FROM users);"},
+		{"SELECT case when (id = 3) then 1 else 0 end AS names from users", "(SELECT CASE WHEN (id = 3) THEN 1 ELSE 0 END AS names FROM users);"},
+		{"SELECT (case when (id = 3) then 1 else 0 end) AS names from users", "(SELECT CASE WHEN (id = 3) THEN 1 ELSE 0 END AS names FROM users);"},
+		{"SELECT array_agg(case when id = 3 then 1 else 0 end order by name, id) AS names from users", "(SELECT array_agg(CASE WHEN (id = 3) THEN 1 ELSE 0 END ORDER BY (name, id)) AS names FROM users);"},
+		{"SELECT array_agg(case when (uid = 3) then 1 else 0 end order by name) AS names from users",
+			"(SELECT array_agg(CASE WHEN (uid = 3) THEN 1 ELSE 0 END ORDER BY name) AS names FROM users);"},
 
 		// Select: Functions
 		{"select w() from a", "(SELECT w() FROM a);"},

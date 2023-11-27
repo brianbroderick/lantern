@@ -23,6 +23,7 @@ func TestCaseExpressions(t *testing.T) {
 		{"case when id = 1 then 'one' when id = 2 then 'two' else 'other' end", "CASE WHEN (id = 1) THEN 'one' WHEN (id = 2) THEN 'two' ELSE 'other' END"},
 		{"case when type_id = 3 then 1 else 0 end::text", "CASE WHEN (type_id = 3) THEN 1 ELSE 0 END::TEXT"},
 		{"case rating when 'G' then 'General Audiences' end", "CASE rating WHEN 'G' THEN 'General Audiences' END"},
+		{"case when (id = 3) then 1 else 0 end", "CASE WHEN (id = 3) THEN 1 ELSE 0 END"},
 	}
 
 	for _, tt := range tests {

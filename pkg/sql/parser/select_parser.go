@@ -14,7 +14,7 @@ import (
 var defaultListSeparators = []token.TokenType{token.COMMA, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
-	// defer untrace(trace("parseSelectStatement1 " + p.curToken.Lit))
+	defer p.untrace(p.trace("parseSelectStatement"))
 
 	stmt := &ast.SelectStatement{Token: p.curToken}
 	stmt.Expressions = []ast.Expression{}
@@ -28,16 +28,10 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 }
 
 func (p *Parser) parseSelectExpression() ast.Expression {
-	// defer untrace(trace("parseSelectExpression " + p.curToken.Lit))
+	defer p.untrace(p.trace("parseSelectExpression"))
 
 	x := &ast.SelectExpression{Token: p.curToken}
-	// fmt.Printf("parseSelectExpressionStart: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 	p.nextToken()
-
-	// COLUMNS
-	// if !p.expectPeekIsOne([]token.TokenType{token.CAST, token.NULL, token.LPAREN, token.IDENT, token.INT, token.STRING, token.ASTERISK, token.ALL, token.DISTINCT, token.CASE}) {
-	// 	return nil
-	// }
 
 	// DISTINCT CLAUSE
 	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
@@ -152,9 +146,11 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 }
 
 func (p *Parser) parseDistinct() ast.Expression {
-	// defer untrace(trace("parseDistinct"))
+	defer p.untrace(p.trace("parseDistinct"))
 
-	p.context = XDISTINCT
+	context := p.context
+	p.setContext(XDISTINCT)       // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
 
 	if p.curTokenIs(token.ALL) {
 		x := &ast.DistinctExpression{Token: p.curToken}
@@ -185,7 +181,7 @@ func (p *Parser) parseDistinct() ast.Expression {
 }
 
 func (p *Parser) parseTables() []ast.Expression {
-	// defer untrace(trace("parseTables"))
+	defer p.untrace(p.trace("parseTables"))
 
 	x := []ast.Expression{}
 	x = append(x, p.parseFirstTable())
@@ -199,7 +195,7 @@ func (p *Parser) parseTables() []ast.Expression {
 
 // parseFirstTable will leave curToken on the last token of the table (name or alias)
 func (p *Parser) parseFirstTable() ast.Expression {
-	// defer untrace(trace("parseFirstTable"))
+	defer p.untrace(p.trace("parseFirstTable"))
 
 	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 	x.Table = p.parseExpression(LOWEST)
@@ -230,7 +226,7 @@ func (p *Parser) parseFirstTable() ast.Expression {
 }
 
 func (p *Parser) parseTable() ast.Expression {
-	// defer untrace(trace("parseTable"))
+	defer p.untrace(p.trace("parseTable"))
 
 	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 
@@ -307,7 +303,7 @@ func (p *Parser) parseTable() ast.Expression {
 }
 
 func (p *Parser) parseFetch() ast.Expression {
-	// defer untrace(trace("parseFetch"))
+	defer p.untrace(p.trace("parseFetch"))
 
 	if p.curTokenIs(token.FETCH) {
 		p.nextToken()
@@ -348,7 +344,7 @@ func (p *Parser) parseFetch() ast.Expression {
 }
 
 func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
-	// defer untrace(trace("parseSortList"))
+	defer p.untrace(p.trace("parseSortList"))
 
 	x := []ast.Expression{}
 
@@ -368,7 +364,7 @@ func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
 }
 
 func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression {
-	// defer untrace(trace("parseSort"))
+	defer p.untrace(p.trace("parseSort"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -406,7 +402,7 @@ func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression
 }
 
 func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
-	// defer untrace(trace("parseWindowList"))
+	defer p.untrace(p.trace("parseWindowList"))
 
 	list := []ast.Expression{}
 
@@ -427,7 +423,7 @@ func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
 
 // w as (partition by c1 order by c2)
 func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
-	// defer untrace(trace("parseWindow"))
+	defer p.untrace(p.trace("parseWindow"))
 
 	x := &ast.WindowExpression{
 		Token: p.curToken,
@@ -458,7 +454,7 @@ func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
 }
 
 func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
-	// defer untrace(trace("parseColumnList"))
+	defer p.untrace(p.trace("parseColumnList"))
 
 	x := []ast.Expression{}
 
@@ -478,7 +474,7 @@ func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 }
 
 func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expression {
-	// defer untrace(trace("parseColumn"))
+	defer p.untrace(p.trace("parseColumn"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
@@ -493,13 +489,14 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 		if infix == nil {
 			return leftExp
 		}
+		// fmt.Printf("parseColumn1: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, leftExp.String(false))
 
 		p.nextToken()
-
 		leftExp = infix(leftExp)
 	}
 
 	x := &ast.ColumnExpression{Token: p.curToken, Value: leftExp}
+	// fmt.Printf("parseColumn2: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x.String(false))
 
 	// AS is optional, but opens up additional keywords that can be used as an alias.
 	if p.peekTokenIs(token.AS) {
@@ -517,6 +514,8 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 }
 
 func (p *Parser) parseWindowExpression() ast.Expression {
+	defer p.untrace(p.trace("parseWindowExpression"))
+
 	x := &ast.WindowExpression{
 		Token: p.curToken,
 	}
@@ -542,7 +541,12 @@ func (p *Parser) parseWindowExpression() ast.Expression {
 }
 
 func (p *Parser) parseLock() ast.Expression {
-	p.context = XLOCK // sets the context for the parseExpressionListItem function
+	defer p.untrace(p.trace("parseLock"))
+
+	context := p.context
+	p.setContext(XLOCK)           // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
+
 	x := &ast.LockExpression{
 		Token: p.curToken,
 	}
@@ -595,32 +599,19 @@ func (p *Parser) parseLock() ast.Expression {
 
 // TODO handle other NOT expressions (NOT IN, NOT LIKE, NOT ILIKE, NOT BETWEEN)
 func (p *Parser) parseNotExpression(x ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseNotExpression"))
+
 	p.not = true // sets the next expression to be a NOT expression
 	return p.determineInfix(LOWEST, x)
 }
 
-// // TODO handle other NOT expressions (NOT LIKE, NOT ILIKE, NOT BETWEEN)
-// func (p *Parser) parseNotExpression(left ast.Expression) ast.Expression {
-// 	p.context = XNOT // sets the context for the parseExpressionListItem function
-// 	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
-// 	p.nextToken()
-
-// 	// If we're missing another NOT expression, add it here.
-// 	if p.curTokenIsOne([]token.TokenType{token.IN, token.LIKE, token.ILIKE, token.BETWEEN}) {
-// 		x.Operator = "NOT " + p.curToken.Lit
-// 		p.nextToken()
-// 	}
-
-// 	if p.curTokenIs(token.LPAREN) {
-// 		p.nextToken()
-// 		x.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
-// 	}
-
-// 	return x
-// }
-
 func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
-	p.context = XIN // sets the context for the parseExpressionListItem function
+	defer p.untrace(p.trace("parseInExpression"))
+
+	context := p.context
+	p.setContext(XIN)             // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
+
 	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
 	if p.not {
 		x.Not = true
@@ -630,12 +621,16 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 	if p.curTokenIs(token.LPAREN) {
 		p.nextToken()
 		x.Right = p.parseExpressionList([]token.TokenType{token.RPAREN})
+	} else {
+		x.Right = append(x.Right, p.parseExpression(LOWEST))
 	}
 
 	return x
 }
 
 func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseAggregateExpression"))
+
 	exp := &ast.AggregateExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
 
 	if p.curTokenIs(token.ORDER) {
@@ -652,6 +647,8 @@ func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
 
 // select substring('Hello World!' from 2 for 4) from users;
 func (p *Parser) parseStringFunctionExpression(left ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseStringFunctionExpression"))
+
 	x := &ast.StringFunctionExpression{Token: p.curToken, Left: left}
 
 	precedence := p.curPrecedence()
@@ -668,6 +665,8 @@ func (p *Parser) parseStringFunctionExpression(left ast.Expression) ast.Expressi
 }
 
 func (p *Parser) parseCastExpression() ast.Expression {
+	defer p.untrace(p.trace("parseCastExpression"))
+
 	x := &ast.CastExpression{Token: p.curToken}
 
 	if p.peekTokenIs(token.LPAREN) {
@@ -690,6 +689,8 @@ func (p *Parser) parseCastExpression() ast.Expression {
 }
 
 func (p *Parser) parseWhereExpression() ast.Expression {
+	defer p.untrace(p.trace("parseWhereExpression"))
+
 	x := &ast.WhereExpression{Token: p.curToken}
 	p.nextToken()
 	x.Right = p.parseExpression(LOWEST)
@@ -700,6 +701,8 @@ func (p *Parser) parseWhereExpression() ast.Expression {
 // trim(both 'x' from 'xTomxx') -> Tom
 // starts at both, leading, or trailing token
 func (p *Parser) parseTrimExpression() ast.Expression {
+	defer p.untrace(p.trace("parseTrimExpression"))
+
 	x := &ast.TrimExpression{Token: p.curToken}
 	p.nextToken()
 
@@ -709,6 +712,8 @@ func (p *Parser) parseTrimExpression() ast.Expression {
 }
 
 func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseIsExpression"))
+
 	x := &ast.IsExpression{Token: p.curToken, Left: left}
 	precedence := p.curPrecedence()
 	p.nextToken()
