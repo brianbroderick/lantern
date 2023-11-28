@@ -241,6 +241,10 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select array['John'] from users;", "(SELECT array['John'] FROM users);"},
 		{"select array['John', 'Joseph'] from users;", "(SELECT array['John', 'Joseph'] FROM users);"},
 		{"select array['John', 'Joseph', 'Anna', 'Henry'] && array['Henry', 'John'] from users;", "(SELECT (array['John', 'Joseph', 'Anna', 'Henry'] && array['Henry', 'John']) FROM users);"},
+		{"select pay[3] FROM emp;", "(SELECT pay[3] FROM emp);"},
+		{"select pay[1:2] FROM emp;", "(SELECT pay[(1 : 2)] FROM emp);"},
+		{"select pay[1:] FROM emp;", "(SELECT pay[(1 : )] FROM emp);"},
+		{"select pay[:1] FROM emp;", "(SELECT pay[( : 1)] FROM emp);"},
 
 		// Select: CASE
 		{"select case when id = 1 then 'one' when id = 2 then 'two' else 'other' end from users;", "(SELECT CASE WHEN (id = 1) THEN 'one' WHEN (id = 2) THEN 'two' ELSE 'other' END FROM users);"},

@@ -10,7 +10,7 @@ type TokenType int
 type Token struct {
 	Type  TokenType `json:"type,omitempty"`
 	Lit   string    `json:"literal,omitempty"`
-	Upper string    `json:"upper,omitempty"`
+	Upper string    `json:"-"`
 }
 
 func (t *Token) MarshalJSON() ([]byte, error) {
@@ -37,6 +37,7 @@ const (
 	FLOAT        // 0.12345
 	STRING       // "foobar"
 	ESCAPESTRING // E'foobar'
+	INFINITY     // Infinity: this is used as a placeholder for array ranges with no right value, i.e. array[1:]
 	literalEnd
 
 	// Operators
@@ -257,6 +258,7 @@ var Tokens = [...]string{
 	FLOAT:        "FLOAT", // 0.12345 or 12345.12345
 	STRING:       "STRING",
 	ESCAPESTRING: "ESCAPESTRING", // E'foobar'
+	INFINITY:     "INFINITY",
 
 	ASSIGN:   "ASSIGN",   // =
 	PLUS:     "PLUS",     // +

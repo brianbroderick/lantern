@@ -216,6 +216,22 @@ func (x *Unknown) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
+// Infinity is used as the token for the hidden value after the colon in array expressions such as array[1:]
+// Infinity is not a true SQL type, and casts cannot be applied to it.
+type Infinity struct {
+	Token token.Token
+	Cast  Expression
+}
+
+func (x *Infinity) expressionNode()      {}
+func (x *Infinity) TokenLiteral() string { return "∞" }
+func (x *Infinity) String(maskParams bool) string {
+	return ""
+}
+func (x *Infinity) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
 type IntegerLiteral struct {
 	Token       token.Token `json:"token,omitempty"`
 	Value       int64       `json:"value,omitempty"`

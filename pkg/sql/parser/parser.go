@@ -36,6 +36,7 @@ const (
 	JSON           // ->, ->>, #>, #>>, @>, <@, ?, ?&, ?|
 	CALL           // myFunction(X)
 	INDEX          // array[index]
+	ARRAYRANGE     // array[:index], array[index:], array[start:end]
 	CAST
 )
 
@@ -58,6 +59,7 @@ var precedences = map[token.TokenType]int{
 	token.ASTERISK:          PRODUCT,
 	token.LPAREN:            CALL,
 	token.LBRACKET:          INDEX,
+	token.COLON:             ARRAYRANGE,
 	token.AND:               AND,
 	token.OR:                OR,
 	token.NOT:               NOT,
@@ -195,6 +197,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.BOTH, p.parseTrimExpression)
 	p.registerPrefix(token.LEADING, p.parseTrimExpression)
 	p.registerPrefix(token.TRAILING, p.parseTrimExpression)
+	p.registerPrefix(token.COLON, p.parsePrefixArrayRangeExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -213,8 +216,6 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
 	p.registerPrefix(token.LEFT, p.parseIdentifier)
 	p.registerPrefix(token.RIGHT, p.parseIdentifier)
-
-	// p.registerPrefix(token.AT, p.parseIdentifier)
 
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
@@ -272,6 +273,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.IN, p.parseInExpression)
 	p.registerInfix(token.LPAREN, p.parseCallExpression)
 	p.registerInfix(token.LBRACKET, p.parseArrayExpression)
+	p.registerInfix(token.COLON, p.parseArrayRangeExpression)
 	p.registerInfix(token.ORDER, p.parseAggregateExpression)
 	p.registerInfix(token.FROM, p.parseStringFunctionExpression)
 
@@ -926,6 +928,42 @@ func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 	}
 
 	return array
+}
+
+func (p *Parser) parsePrefixArrayRangeExpression() ast.Expression {
+	defer p.untrace(p.trace("parseArrayRangeExpression"))
+
+	expression := &ast.InfixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Lit,
+		Left:     &ast.Infinity{Token: p.curToken},
+	}
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+	expression.Right = p.parseExpression(precedence)
+
+	return expression
+}
+
+func (p *Parser) parseArrayRangeExpression(left ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseArrayRangeExpression"))
+
+	expression := &ast.InfixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Lit,
+		Left:     left,
+	}
+
+	if p.peekTokenIs(token.RBRACKET) {
+		expression.Right = &ast.Infinity{Token: p.curToken}
+	} else {
+		precedence := p.curPrecedence()
+		p.nextToken()
+		expression.Right = p.parseExpression(precedence)
+	}
+
+	return expression
 }
 
 func (p *Parser) parseIntervalExpression() ast.Expression {
