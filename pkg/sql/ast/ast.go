@@ -175,7 +175,7 @@ type Boolean struct {
 
 func (x *Boolean) expressionNode()               {}
 func (x *Boolean) TokenLiteral() string          { return x.Token.Lit }
-func (x *Boolean) String(maskParams bool) string { return strings.ToUpper(x.Token.Lit) }
+func (x *Boolean) String(maskParams bool) string { return x.Token.Upper }
 func (x *Boolean) SetCast(cast Expression) {
 	x.Cast = cast
 }
@@ -188,7 +188,7 @@ type Null struct {
 func (x *Null) expressionNode()      {}
 func (x *Null) TokenLiteral() string { return x.Token.Lit }
 func (x *Null) String(maskParams bool) string {
-	literal := strings.ToUpper(x.Token.Lit)
+	literal := x.Token.Upper
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}
@@ -206,7 +206,7 @@ type Unknown struct {
 func (x *Unknown) expressionNode()      {}
 func (x *Unknown) TokenLiteral() string { return x.Token.Lit }
 func (x *Unknown) String(maskParams bool) string {
-	literal := strings.ToUpper(x.Token.Lit)
+	literal := x.Token.Upper
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}
@@ -287,7 +287,7 @@ func (x *KeywordExpression) expressionNode()      {}
 func (x *KeywordExpression) TokenLiteral() string { return x.Token.Lit }
 func (x *KeywordExpression) String(maskParams bool) string {
 	var out bytes.Buffer
-	out.WriteString(strings.ToUpper(x.Token.Lit))
+	out.WriteString(x.Token.Upper)
 	if x.Cast != nil {
 		out.WriteString("::")
 		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))

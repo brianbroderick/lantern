@@ -360,7 +360,7 @@ func TestSubSelects(t *testing.T) {
 		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "select", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
+		assert.Equal(t, "SELECT", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectStmt, ok := stmt.(*ast.SelectStatement)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectStatement. got=%T", tt.input, stmt)
@@ -455,7 +455,7 @@ func TestMaskParams(t *testing.T) {
 		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "select", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
+		assert.Equal(t, "SELECT", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SelectStatement. got=%T", tt.input, stmt)
 
 		selectStmt, ok := stmt.(*ast.SelectStatement)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectStatement. got=%T", tt.input, stmt)

@@ -15,7 +15,7 @@ type SelectStatement struct {
 }
 
 func (s *SelectStatement) statementNode()       {}
-func (s *SelectStatement) TokenLiteral() string { return s.Token.Lit }
+func (s *SelectStatement) TokenLiteral() string { return s.Token.Upper }
 func (s *SelectStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -60,7 +60,7 @@ type SelectExpression struct {
 }
 
 func (x *SelectExpression) expressionNode()      {}
-func (x *SelectExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *SelectExpression) TokenLiteral() string { return x.Token.Upper }
 
 // String() is incomplete and only returns the most basic of select statements
 func (x *SelectExpression) String(maskParams bool) string {
@@ -77,7 +77,7 @@ func (x *SelectExpression) String(maskParams bool) string {
 	// Subqueries need to be surrounded by parentheses. A primary query may also have parentheses, so we'll add them here to be consistent.
 	out.WriteString("(")
 
-	out.WriteString(strings.ToUpper(x.TokenLiteral()) + " ")
+	out.WriteString(x.TokenLiteral() + " ")
 
 	// Distinct
 	if x.Distinct != nil {
@@ -167,15 +167,6 @@ func (x *SelectExpression) String(maskParams bool) string {
 		out.WriteString(x.Lock.String(maskParams))
 	}
 
-	// // Compound
-	// if x.CompoundExpression != nil {
-	// 	out.WriteString(" " + strings.ToUpper(x.CompoundToken.Lit) + " ")
-	// 	if x.CompoundTokenModifier.Type == token.ALL {
-	// 		out.WriteString(strings.ToUpper(x.CompoundTokenModifier.Lit) + " ")
-	// 	}
-	// 	out.WriteString(x.CompoundExpression.String(maskParams))
-	// }
-
 	out.WriteString(")")
 
 	if x.Cast != nil {
@@ -196,11 +187,11 @@ type DistinctExpression struct {
 }
 
 func (x *DistinctExpression) expressionNode()      {}
-func (x *DistinctExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *DistinctExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *DistinctExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(strings.ToUpper(x.Token.Lit))
+	out.WriteString(x.Token.Upper)
 	if len(x.Right) > 0 {
 		out.WriteString(" ON ")
 	}
@@ -233,7 +224,7 @@ type ColumnExpression struct {
 }
 
 func (x *ColumnExpression) expressionNode()      {}
-func (x *ColumnExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *ColumnExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *ColumnExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -267,7 +258,7 @@ type SortExpression struct {
 }
 
 func (x *SortExpression) expressionNode()      {}
-func (x *SortExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *SortExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *SortExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -302,7 +293,7 @@ type FetchExpression struct {
 }
 
 func (x *FetchExpression) expressionNode()      {}
-func (x *FetchExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *FetchExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *FetchExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -334,7 +325,7 @@ type AggregateExpression struct {
 }
 
 func (x *AggregateExpression) expressionNode()      {}
-func (x *AggregateExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *AggregateExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *AggregateExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -373,7 +364,7 @@ type WindowExpression struct {
 }
 
 func (x *WindowExpression) expressionNode()      {}
-func (x *WindowExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *WindowExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *WindowExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -422,7 +413,7 @@ type WildcardLiteral struct {
 }
 
 func (x *WildcardLiteral) expressionNode()      {}
-func (x *WildcardLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *WildcardLiteral) TokenLiteral() string { return x.Token.Upper }
 func (x *WildcardLiteral) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Value)
@@ -445,10 +436,10 @@ type TimestampExpression struct {
 }
 
 func (x *TimestampExpression) expressionNode()      {}
-func (x *TimestampExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *TimestampExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *TimestampExpression) String(maskParams bool) string {
 	var out bytes.Buffer
-	out.WriteString(strings.ToUpper(x.Token.Lit))
+	out.WriteString(x.Token.Upper)
 	if x.WithTimeZone {
 		out.WriteString(" WITH TIME ZONE")
 	}
@@ -480,7 +471,7 @@ type TableExpression struct {
 }
 
 func (x *TableExpression) expressionNode()      {}
-func (x *TableExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *TableExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *TableExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -521,7 +512,7 @@ type LockExpression struct {
 }
 
 func (x *LockExpression) expressionNode()      {}
-func (x *LockExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *LockExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *LockExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Lock)
@@ -558,7 +549,7 @@ type InExpression struct {
 }
 
 func (x *InExpression) expressionNode()      {}
-func (x *InExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *InExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *InExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -596,7 +587,7 @@ type CastExpression struct {
 }
 
 func (x *CastExpression) expressionNode()      {}
-func (x *CastExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *CastExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *CastExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -619,11 +610,11 @@ type WhereExpression struct {
 }
 
 func (x *WhereExpression) expressionNode()      {}
-func (x *WhereExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *WhereExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *WhereExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(strings.ToUpper(x.Token.Lit))
+	out.WriteString(x.Token.Upper)
 
 	if x.Right != nil {
 		out.WriteString("(")
@@ -652,7 +643,7 @@ type IsExpression struct {
 }
 
 func (x *IsExpression) expressionNode()      {}
-func (x *IsExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *IsExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *IsExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(")
@@ -690,13 +681,13 @@ type TrimExpression struct {
 }
 
 func (x *TrimExpression) expressionNode()      {}
-func (x *TrimExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *TrimExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *TrimExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 func (x *TrimExpression) String(maskParams bool) string {
 	var out bytes.Buffer
-	out.WriteString(strings.ToUpper(x.Token.Lit) + " ")
+	out.WriteString(x.Token.Upper + " ")
 	if x.Expression != nil {
 		out.WriteString(x.Expression.String(maskParams))
 	}
@@ -714,7 +705,7 @@ type StringFunctionExpression struct {
 }
 
 func (x *StringFunctionExpression) expressionNode()      {}
-func (x *StringFunctionExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *StringFunctionExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *StringFunctionExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
@@ -746,7 +737,7 @@ type UnionExpression struct {
 }
 
 func (x *UnionExpression) expressionNode()      {}
-func (x *UnionExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *UnionExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *UnionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 

@@ -44,7 +44,7 @@ func (x *CreateStatement) String(maskParams bool) string {
 		out.WriteString("UNLOGGED ")
 	}
 	if x.Object.Type != token.ILLEGAL {
-		out.WriteString(strings.ToUpper(x.Object.Lit) + " ")
+		out.WriteString(x.Object.Upper + " ")
 	}
 	if x.Concurrently {
 		out.WriteString("CONCURRENTLY ")

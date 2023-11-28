@@ -37,7 +37,7 @@ func TestSetStatements(t *testing.T) {
 		assert.Equal(t, tt.stmtCount, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, tt.stmtCount, len(program.Statements))
 
 		stmt := program.Statements[0]
-		assert.Equal(t, "set", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SetStatement. got=%T", tt.input, stmt)
+		assert.Equal(t, "SET", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.SetStatement. got=%T", tt.input, stmt)
 
 		_, ok := stmt.(*ast.SetStatement)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.SetStatement. got=%T", tt.input, stmt)
