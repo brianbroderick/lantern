@@ -13,9 +13,9 @@ func TestString(t *testing.T) {
 		Statements: []Statement{
 			&SelectStatement{
 				Expressions: []Expression{&SelectExpression{
-					Token: token.Token{Type: token.SELECT, Lit: "select"},
+					Token: token.Token{Type: token.SELECT, Lit: "select", Upper: "SELECT"},
 					Columns: []Expression{&ColumnExpression{
-						Token: token.Token{Type: token.AS, Lit: "AS"},
+						Token: token.Token{Type: token.AS, Lit: "AS", Upper: "AS"},
 						Name: &SimpleIdentifier{
 							Token: token.Token{Type: token.IDENT, Lit: "id"},
 						},
