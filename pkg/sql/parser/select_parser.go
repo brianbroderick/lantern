@@ -40,9 +40,13 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 
 	x.Columns = p.parseColumnList([]token.TokenType{token.COMMA, token.FROM, token.AS})
 
-	// FROM CLAUSE: if the next token is FROM, advance the token and move on. Otherwise, return the statement.
+	// Sometimes the FROM clause is already to the curToken if there are not any columns
 	if p.peekTokenIs(token.FROM) {
 		p.nextToken()
+	}
+
+	// FROM CLAUSE: if the next token is FROM, advance the token and move on. Otherwise, return the statement.
+	if p.curTokenIs(token.FROM) {
 		p.nextToken()
 
 		// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
@@ -128,19 +132,6 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 			x.Lock = p.parseLock()
 		}
 	}
-
-	// if p.peekTokenIsOne([]token.TokenType{token.UNION, token.INTERSECT, token.EXCEPT}) {
-	// 	p.nextToken()
-	// 	x.CompoundToken = p.curToken
-	// 	p.nextToken()
-	// 	if p.curTokenIs(token.ALL) {
-	// 		x.CompoundTokenModifier = p.curToken
-	// 		p.nextToken()
-	// 	}
-	// 	x.CompoundExpression = p.parseExpression(LOWEST)
-	// }
-
-	// fmt.Printf("parseSelectExpressionEnd: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 
 	return x
 }

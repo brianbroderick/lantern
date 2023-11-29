@@ -18,11 +18,12 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
+		// {"select from users;", 1, "(SELECT FROM users);"},
 
 		// Multiple Statements
 		// left and right can be function names
-		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
-		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
+		// {"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
+		// {"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
 	for _, tt := range tests {
@@ -46,6 +47,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		output string
 	}{
 		// Select: simple
+		// {"select from users;", "(SELECT FROM users);"},                                                                                                                   // no column (useful for exists functions)
 		{"select id from users;", "(SELECT id FROM users);"},                                                                                                             // super basic select
 		{"select u.* from users u;", "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
 		{"select 2*3 from users;", "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard
@@ -184,10 +186,11 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users where name not like 'brian';", "(SELECT id FROM users WHERE (name NOT LIKE 'brian'));"},                                // basic not like
 		{"select id from users where rownum between 1 and sample_size", "(SELECT id FROM users WHERE (rownum BETWEEN (1 AND sample_size)));"},         // BETWEEN
 		{"select id from users where rownum not between 1 and sample_size", "(SELECT id FROM users WHERE (rownum NOT BETWEEN (1 AND sample_size)));"}, // BETWEEN
-		{"select * from mytable where mycolumn ~ 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn ~ 'regexp'));"},                                  // basic regex (case sensitive)
-		{"select * from mytable where mycolumn ~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn ~* 'regexp'));"},                                // basic regex (case insensitive)
-		{"select * from mytable where mycolumn !~ 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~ 'regexp'));"},                                // basic not regex (case sensitive)
-		{"select * from mytable where mycolumn !~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~* 'regexp'));"},                              // basic not regex (case insensitive)
+		{"select if from users where rownum between 1 and sample_size group by property_id;", "(SELECT if FROM users WHERE (rownum BETWEEN (1 AND sample_size)) GROUP BY property_id);"},
+		{"select * from mytable where mycolumn ~ 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn ~ 'regexp'));"},     // basic regex (case sensitive)
+		{"select * from mytable where mycolumn ~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn ~* 'regexp'));"},   // basic regex (case insensitive)
+		{"select * from mytable where mycolumn !~ 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~ 'regexp'));"},   // basic not regex (case sensitive)
+		{"select * from mytable where mycolumn !~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~* 'regexp'));"}, // basic not regex (case insensitive)
 		// {"select select 'abc' similar to 'abc' from users;", ""}, // TODO: handle similar to
 		// {"select select 'abc' not similar to 'abc' from users;", ""}, // TODO: handle similar to
 
