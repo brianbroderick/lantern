@@ -47,7 +47,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		output string
 	}{
 		// Select: simple
-		// {"select from users;", "(SELECT FROM users);"},                                                                                                                   // no column (useful for exists functions)
+		{"select from users;", "(SELECT FROM users);"},                                                                                                                   // no column (useful for exists functions)
 		{"select id from users;", "(SELECT id FROM users);"},                                                                                                             // super basic select
 		{"select u.* from users u;", "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
 		{"select 2*3 from users;", "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard

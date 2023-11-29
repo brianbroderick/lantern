@@ -80,7 +80,10 @@ func (x *SelectExpression) String(maskParams bool) string {
 
 	// Tables
 	if len(x.Tables) > 0 {
-		out.WriteString(" FROM ")
+		if len(x.Columns) > 0 { // add a space between columns and tables, if both exist
+			out.WriteString(" ")
+		}
+		out.WriteString("FROM ")
 		tables := []string{}
 		for _, t := range x.Tables {
 			tables = append(tables, t.String(maskParams))
