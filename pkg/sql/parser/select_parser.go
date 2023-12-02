@@ -16,15 +16,15 @@ var defaultListSeparators = []token.TokenType{token.COMMA, token.WHERE, token.GR
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 	defer p.untrace(p.trace("parseSelectStatement"))
 
-	stmt := &ast.SelectStatement{Token: p.curToken}
-	stmt.Expressions = []ast.Expression{}
-	stmt.Expressions = append(stmt.Expressions, p.parseExpression(STATEMENT))
+	s := &ast.SelectStatement{Token: p.curToken}
+	s.Expressions = []ast.Expression{}
+	s.Expressions = append(s.Expressions, p.parseExpression(STATEMENT))
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
-	return stmt
+	return s
 }
 
 func (p *Parser) parseSelectExpression() ast.Expression {

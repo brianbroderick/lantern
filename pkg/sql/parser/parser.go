@@ -187,6 +187,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.PARTITION, p.parseWindowExpression)
 	p.registerPrefix(token.ORDER, p.parseWindowExpression)
 	p.registerPrefix(token.SELECT, p.parseSelectExpression)
+	p.registerPrefix(token.INSERT, p.parseInsertExpression)
 	p.registerPrefix(token.DISTINCT, p.parseDistinct)
 	p.registerPrefix(token.ALL, p.parseDistinct)
 	p.registerPrefix(token.CASE, p.parseCaseExpression)
@@ -488,6 +489,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseCreateStatement()
 	case token.ANALYZE:
 		return p.parseAnalyzeStatement()
+	case token.INSERT:
+		return p.parseInsertStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
