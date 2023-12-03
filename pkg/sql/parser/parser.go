@@ -3,7 +3,6 @@ package parser
 import (
 	"fmt"
 	"strconv"
-	"strings"
 
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
@@ -352,9 +351,10 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
-func (p *Parser) peekTwoTokenIs(t token.TokenType) bool {
-	return p.peekTwoToken.Type == t
-}
+// Uncomment this if you want to use it
+// func (p *Parser) peekTwoTokenIs(t token.TokenType) bool {
+// 	return p.peekTwoToken.Type == t
+// }
 
 // This is essentially an OR on curTokenIs
 func (p *Parser) curTokenIsOne(tokens []token.TokenType) bool {
@@ -438,16 +438,17 @@ func (p *Parser) PrintErrors() {
 	}
 }
 
-func (p *Parser) peekErrorIsOne(tokens []token.TokenType) {
-	toks := []string{}
-	for _, t := range tokens {
-		toks = append(toks, t.String())
-	}
+// Uncomment this if you want to use it
+// func (p *Parser) peekErrorIsOne(tokens []token.TokenType) {
+// 	toks := []string{}
+// 	for _, t := range tokens {
+// 		toks = append(toks, t.String())
+// 	}
 
-	msg := fmt.Sprintf("expected next token to be one of %s, got %s: %s instead. current token is: %s: %s",
-		strings.Join(toks, ", "), p.peekToken.Type, p.peekToken.Lit, p.curToken.Type, p.curToken.Lit)
-	p.errors = append(p.errors, msg)
-}
+// 	msg := fmt.Sprintf("expected next token to be one of %s, got %s: %s instead. current token is: %s: %s",
+// 		strings.Join(toks, ", "), p.peekToken.Type, p.peekToken.Lit, p.curToken.Type, p.curToken.Lit)
+// 	p.errors = append(p.errors, msg)
+// }
 
 func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s: %s instead. current token is: %s: %s",
