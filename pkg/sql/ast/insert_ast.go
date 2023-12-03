@@ -41,7 +41,8 @@ type InsertExpression struct {
 	Values         [][]Expression `json:"values,omitempty"`
 	Query          Expression     `json:"query,omitempty"`
 	ConflictTarget []Expression   `json:"conflict_target,omitempty"`
-	ConflictAction []Expression   `json:"conflict_action,omitempty"`
+	ConflictAction string         `json:"conflict_action,omitempty"`
+	ConflictUpdate []Expression   `json:"conflict_update,omitempty"`
 	Returning      []Expression   `json:"returning,omitempty"`
 	Cast           Expression     `json:"cast,omitempty"`
 }
@@ -75,7 +76,7 @@ func (x *InsertExpression) String(maskParams bool) string {
 		out.WriteString(")")
 	}
 	if x.Default {
-		out.WriteString(" DEFAULT ")
+		out.WriteString(" DEFAULT VALUES")
 	}
 	if len(x.Values) > 0 {
 		out.WriteString(" VALUES ")
@@ -107,9 +108,13 @@ func (x *InsertExpression) String(maskParams bool) string {
 		}
 		out.WriteString(")")
 	}
-	if len(x.ConflictAction) > 0 {
+	if x.ConflictAction != "" {
 		out.WriteString(" DO ")
-		for i, c := range x.ConflictAction {
+		out.WriteString(x.ConflictAction)
+	}
+	if len(x.ConflictUpdate) > 0 {
+		out.WriteString(" SET ")
+		for i, c := range x.ConflictUpdate {
 			if i > 0 {
 				out.WriteString(", ")
 			}
