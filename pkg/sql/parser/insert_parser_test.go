@@ -30,6 +30,7 @@ func TestInsertStatements(t *testing.T) {
 		{"insert into distributors (did, dname) values (7, 'Redline GmbH') on conflict (did) do update set dname = excluded.dname;", "(INSERT INTO distributors (did, dname) VALUES (7, 'Redline GmbH') ON CONFLICT (did) DO UPDATE SET (dname = excluded.dname));"},
 		{"insert into people (id, fname, lname) values (42, 'Brian', 'Broderick') on conflict (id) do update set fname = excluded.fname, lname = excluded.lname;", "(INSERT INTO people (id, fname, lname) VALUES (42, 'Brian', 'Broderick') ON CONFLICT (id) DO UPDATE SET (fname = excluded.fname), (lname = excluded.lname));"},
 		{"insert into people (id, fname, lname) values (42, 'Brian', 'Broderick') on conflict (id) do update set (fname = excluded.fname, lname = excluded.lname);", "(INSERT INTO people (id, fname, lname) VALUES (42, 'Brian', 'Broderick') ON CONFLICT (id) DO UPDATE SET ((fname = excluded.fname), (lname = excluded.lname)));"},
+		{"insert into distributors as d (did, dname) values (8, 'Anvil Distribution') on conflict (did) do update set dname = excluded.dname where d.zipcode <> '21201';", "(INSERT INTO distributors AS d (did, dname) VALUES (8, 'Anvil Distribution') ON CONFLICT (did) DO UPDATE SET (dname = excluded.dname) WHERE (d.zipcode <> '21201'));"},
 	}
 
 	for _, tt := range tests {

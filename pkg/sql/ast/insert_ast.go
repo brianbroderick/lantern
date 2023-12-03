@@ -43,6 +43,7 @@ type InsertExpression struct {
 	ConflictTarget []Expression   `json:"conflict_target,omitempty"`
 	ConflictAction string         `json:"conflict_action,omitempty"`
 	ConflictUpdate []Expression   `json:"conflict_update,omitempty"`
+	ConflictWhere  Expression     `json:"conflict_where,omitempty"`
 	Returning      []Expression   `json:"returning,omitempty"`
 	Cast           Expression     `json:"cast,omitempty"`
 }
@@ -119,6 +120,10 @@ func (x *InsertExpression) String(maskParams bool) string {
 				out.WriteString(", ")
 			}
 			out.WriteString(c.String(maskParams))
+		}
+		if x.ConflictWhere != nil {
+			out.WriteString(" WHERE ")
+			out.WriteString(x.ConflictWhere.String(maskParams))
 		}
 	}
 	if len(x.Returning) > 0 {

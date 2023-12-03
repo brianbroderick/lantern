@@ -111,7 +111,12 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 					p.nextToken()
 					p.nextToken()
 				}
-				x.ConflictUpdate = p.parseExpressionList([]token.TokenType{token.RPAREN, token.RETURNING, token.SEMICOLON, token.EOF})
+				x.ConflictUpdate = p.parseExpressionList([]token.TokenType{token.RPAREN, token.RETURNING, token.SEMICOLON, token.EOF, token.WHERE})
+
+				if p.curTokenIs(token.WHERE) {
+					p.nextToken()
+					x.ConflictWhere = p.parseExpression(LOWEST)
+				}
 			}
 		}
 	}
