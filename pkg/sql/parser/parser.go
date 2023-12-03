@@ -367,7 +367,8 @@ func (p *Parser) curTokenIsOne(tokens []token.TokenType) bool {
 	return found
 }
 
-// // This is essentially !curTokenIsOne, but it can't match any token in the list
+// This is essentially !curTokenIsOne, but it can't match any token in the list
+// Uncomment this if you want to use it
 // func (p *Parser) curTokenIsNot(tokens []token.TokenType) bool {
 // 	for _, t := range tokens {
 // 		if p.curTokenIs(t) { // The token matches one of the tokens in the list
@@ -387,14 +388,15 @@ func (p *Parser) peekTokenIsOne(tokens []token.TokenType) bool {
 	return false
 }
 
-func (p *Parser) peekTwoTokenIsOne(tokens []token.TokenType) bool {
-	for _, t := range tokens {
-		if p.peekTwoTokenIs(t) {
-			return true
-		}
-	}
-	return false
-}
+// Uncomment this if you want to use it
+// func (p *Parser) peekTwoTokenIsOne(tokens []token.TokenType) bool {
+// 	for _, t := range tokens {
+// 		if p.peekTwoTokenIs(t) {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
@@ -406,21 +408,22 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	}
 }
 
-func (p *Parser) expectPeekIsOne(tokens []token.TokenType) bool {
-	found := false
-	for _, t := range tokens {
-		if p.peekTokenIs(t) {
-			found = true
-		}
-	}
-	if found {
-		p.nextToken()
-		return true
-	} else {
-		p.peekErrorIsOne(tokens)
-		return false
-	}
-}
+// Uncomment this if you want to use it
+// func (p *Parser) expectPeekIsOne(tokens []token.TokenType) bool {
+// 	found := false
+// 	for _, t := range tokens {
+// 		if p.peekTokenIs(t) {
+// 			found = true
+// 		}
+// 	}
+// 	if found {
+// 		p.nextToken()
+// 		return true
+// 	} else {
+// 		p.peekErrorIsOne(tokens)
+// 		return false
+// 	}
+// }
 
 func (p *Parser) Errors() []string {
 	return p.errors
@@ -820,33 +823,6 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	return x
 }
 
-// func (p *Parser) parseFunctionParameters() []*ast.Identifier {
-// 	identifiers := []*ast.Identifier{}
-
-// 	if p.peekTokenIs(token.RPAREN) {
-// 		p.nextToken()
-// 		return identifiers
-// 	}
-
-// 	p.nextToken()
-
-// 	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
-// 	identifiers = append(identifiers, ident)
-
-// 	for p.peekTokenIs(token.COMMA) {
-// 		p.nextToken()
-// 		p.nextToken()
-// 		ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Lit}
-// 		identifiers = append(identifiers, ident)
-// 	}
-
-// 	if !p.expectPeek(token.RPAREN) {
-// 		return nil
-// 	}
-
-// 	return identifiers
-// }
-
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	defer p.untrace(p.trace("parseCallExpression"))
 
@@ -978,21 +954,6 @@ func (p *Parser) parseIntervalExpression() ast.Expression {
 
 	return interval
 }
-
-// This would parse an index lookup such as array[0], but PG uses this form to define an array
-// that looks like array[1,2,3]. For that reason, parseArrayExpression is used instead.
-// func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
-// 	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
-
-// 	p.nextToken()
-// 	exp.Index = p.parseExpression(LOWEST)
-
-// 	if !p.expectPeek(token.RBRACKET) {
-// 		return nil
-// 	}
-
-// 	return exp
-// }
 
 func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
