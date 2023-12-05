@@ -46,7 +46,7 @@ func (p *Parser) parseCaseExpression() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.parseExpression(CAST))
+		x.SetCast(p.parseDoubleColonExpression())
 	}
 
 	return x

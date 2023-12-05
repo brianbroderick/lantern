@@ -581,11 +581,15 @@ func (x *CastExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *CastExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString("CAST(")
-	out.WriteString(x.Left.String(maskParams))
-	out.WriteString(" AS ")
-	out.WriteString(x.Cast.String(maskParams))
-	out.WriteString(")")
+	if x.Left == nil && x.Cast != nil {
+		out.WriteString(x.Cast.String(maskParams))
+	} else {
+		out.WriteString("CAST(")
+		out.WriteString(x.Left.String(maskParams))
+		out.WriteString(" AS ")
+		out.WriteString(x.Cast.String(maskParams))
+		out.WriteString(")")
+	}
 
 	return out.String()
 }

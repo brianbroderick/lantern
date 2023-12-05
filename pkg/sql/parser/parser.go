@@ -179,6 +179,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
+	p.registerPrefix(token.PLUS, p.parsePrefixExpression)
 	p.registerPrefix(token.EXPONENTIATION, p.parsePrefixExpression)
 
 	p.registerPrefix(token.LPAREN, p.parseGroupedExpression)
@@ -187,6 +188,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.ORDER, p.parseWindowExpression)
 	p.registerPrefix(token.SELECT, p.parseSelectExpression)
 	p.registerPrefix(token.INSERT, p.parseInsertExpression)
+	p.registerPrefix(token.UPDATE, p.parseUpdateExpression)
 	p.registerPrefix(token.DISTINCT, p.parseDistinct)
 	p.registerPrefix(token.ALL, p.parseDistinct)
 	p.registerPrefix(token.CASE, p.parseCaseExpression)
@@ -198,6 +200,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LEADING, p.parseTrimExpression)
 	p.registerPrefix(token.TRAILING, p.parseTrimExpression)
 	p.registerPrefix(token.COLON, p.parsePrefixArrayRangeExpression)
+	p.registerPrefix(token.VALUES, p.parseValuesExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -495,6 +498,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseAnalyzeStatement()
 	case token.INSERT:
 		return p.parseInsertStatement()
+	case token.UPDATE:
+		return p.parseUpdateStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -529,7 +534,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		leftExp.SetCast(p.parseExpression(CAST))
+		leftExp.SetCast(p.parseDoubleColonExpression())
 	}
 
 	return leftExp
@@ -603,7 +608,7 @@ func (p *Parser) parseIdentifier() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.parseExpression(CAST))
+		x.SetCast(p.parseDoubleColonExpression())
 	}
 	return x
 }
@@ -639,7 +644,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		lit.SetCast(p.parseExpression(CAST))
+		lit.SetCast(p.parseDoubleColonExpression())
 	}
 
 	return lit
@@ -664,7 +669,7 @@ func (p *Parser) parseFloatLiteral() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		lit.SetCast(p.parseExpression(CAST))
+		lit.SetCast(p.parseDoubleColonExpression())
 	}
 
 	return lit
@@ -678,7 +683,7 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		str.SetCast(p.parseExpression(CAST))
+		str.SetCast(p.parseDoubleColonExpression())
 	}
 	return str
 }
@@ -691,7 +696,7 @@ func (p *Parser) parseEscapeStringLiteral() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		str.SetCast(p.parseExpression(CAST))
+		str.SetCast(p.parseDoubleColonExpression())
 	}
 	return str
 }
@@ -785,7 +790,7 @@ func (p *Parser) parseNull() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.parseExpression(CAST))
+		x.SetCast(p.parseDoubleColonExpression())
 	}
 	return x
 }
@@ -799,7 +804,7 @@ func (p *Parser) parseUnknown() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.parseExpression(CAST))
+		x.SetCast(p.parseDoubleColonExpression())
 	}
 	return x
 }
@@ -818,7 +823,7 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.parseExpression(CAST))
+		x.SetCast(p.parseDoubleColonExpression())
 	}
 
 	return x
@@ -844,7 +849,7 @@ func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		x.SetCast(p.parseExpression(CAST))
+		x.SetCast(p.parseDoubleColonExpression())
 	}
 
 	return x
@@ -904,7 +909,7 @@ func (p *Parser) parseArrayExpression(left ast.Expression) ast.Expression {
 	if p.peekTokenIs(token.DOUBLECOLON) {
 		p.nextToken()
 		p.nextToken()
-		array.SetCast(p.parseExpression(CAST))
+		array.SetCast(p.parseDoubleColonExpression())
 	}
 
 	return array

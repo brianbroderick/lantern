@@ -655,6 +655,20 @@ func (p *Parser) parseStringFunctionExpression(left ast.Expression) ast.Expressi
 	return x
 }
 
+func (p *Parser) parseDoubleColonExpression() ast.Expression {
+	defer p.untrace(p.trace("parseDoubleColonExpression"))
+	x := &ast.CastExpression{Token: p.curToken}
+
+	switch p.curToken.Type {
+	case token.TIMESTAMP:
+		x.Cast = p.parseTimestampExpression()
+	default: // Catch IDENT and INTERVALS
+		x.Cast = p.parseIdentifier()
+	}
+
+	return x
+}
+
 func (p *Parser) parseCastExpression() ast.Expression {
 	defer p.untrace(p.trace("parseCastExpression"))
 
@@ -668,7 +682,7 @@ func (p *Parser) parseCastExpression() ast.Expression {
 		if p.peekTokenIs(token.AS) {
 			p.nextToken()
 			p.nextToken()
-			x.SetCast(p.parseExpression(CAST))
+			x.SetCast(p.parseDoubleColonExpression())
 		}
 
 		if p.peekTokenIs(token.RPAREN) {

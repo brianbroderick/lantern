@@ -18,6 +18,7 @@ func TestMultipleStatements(t *testing.T) {
 		statementCount int
 		output         string
 	}{
+
 		// {"select from users;", 1, "(SELECT FROM users);"},
 
 		// Multiple Statements
@@ -51,6 +52,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users;", "(SELECT id FROM users);"},                                                                                                             // super basic select
 		{"select u.* from users u;", "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
 		{"select 2*3 from users;", "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard
+		{"select +2 -3 from users;", "(SELECT ((+2) - 3) FROM users);"},                                                                                                  // PG allows + as a prefix operator
+		{"select -2 +3 from users;", "(SELECT ((-2) + 3) FROM users);"},                                                                                                  // Negative numbers
 		{`select "blah".id from users`, `(SELECT "blah".id FROM users);`},                                                                                                // check for double quotes around the table name
 		{"select 1 * (2 + (6 / 4)) - 9 from users;", "(SELECT ((1 * (2 + (6 / 4))) - 9) FROM users);"},                                                                   // math expression
 		{"select id, name from users", "(SELECT id, name FROM users);"},                                                                                                  // multiple columns
@@ -225,6 +228,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select jsonb_array_length ( ( options ->> 'country_codes' ) :: jsonb ) from modules", "(SELECT jsonb_array_length((options ->> 'country_codes')::JSONB) FROM modules);"},
 		{"select now()::timestamp from users;", "(SELECT now()::TIMESTAMP FROM users);"},
 		{"select ( junk_drawer->>'ids' )::INT[] from dashboards", "(SELECT (junk_drawer ->> 'ids')::INT[] FROM dashboards);"},
+		{"select end_date + '1 day' ::INTERVAL from some_dates;", "(SELECT (end_date + '1 day'::INTERVAL) FROM some_dates);"},
 
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';", "(SELECT id FROM users WHERE ((data -> 'name') = 'brian'));"},
@@ -294,6 +298,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select substring('Hello World!' from 2 for 4) from users;", "(SELECT substring('Hello World!' FROM 2 FOR 4) FROM users);"},
 		{"select id from extra where number ilike e'001';", "(SELECT id FROM extra WHERE (number ILIKE E'001'));"}, // escapestring of the form e'...'
 		{"select id from extra where number ilike E'%6%';", "(SELECT id FROM extra WHERE (number ILIKE E'%6%'));"}, // escapestring of the form E'...'
+		{"SELECT * FROM ( VALUES (41, 1), (42, 2), (43, 3), (44, 4), (45, 5), (46, 6) ) AS t ( id, type_id )", "(SELECT * FROM (VALUES (41, 1), (42, 2), (43, 3), (44, 4), (45, 5), (46, 6)) t(id, type_id));"},
 
 		// Multi word keywords: AT TIME ZONE, and TIMESTAMP WITH TIME ZONE
 		{"select id from my_table where '2020-01-01' at time zone 'MDT' = '2023-01-01';", "(SELECT id FROM my_table WHERE (('2020-01-01' AT TIME ZONE 'MDT') = '2023-01-01'));"},

@@ -15,7 +15,6 @@ func TestInsertStatements(t *testing.T) {
 		input  string
 		output string
 	}{
-		// Select: simple
 		{"insert into films values ('UA502', 'Bananas', 105, '1971-07-13', 'Comedy', '82 minutes');", "(INSERT INTO films VALUES ('UA502', 'Bananas', 105, '1971-07-13', 'Comedy', '82 minutes'));"},
 		{"insert into films values ('UA502', 'Bananas', 105, DEFAULT, 'Comedy', '82 minutes');", "(INSERT INTO films VALUES ('UA502', 'Bananas', 105, DEFAULT, 'Comedy', '82 minutes'));"},
 		{"insert into users (name, email) values ('Brian', 'foo@bar.com');", "(INSERT INTO users (name, email) VALUES ('Brian', 'foo@bar.com'));"},

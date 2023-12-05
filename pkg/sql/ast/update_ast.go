@@ -37,6 +37,7 @@ type UpdateExpression struct {
 	Alias     Expression   `json:"alias,omitempty"`
 	Set       []Expression `json:"set,omitempty"`
 	From      []Expression `json:"from,omitempty"`
+	Cursor    Expression   `json:"cursor,omitempty"`
 	Where     Expression   `json:"where,omitempty"`
 	Returning []Expression `json:"returning,omitempty"`
 	Cast      Expression   `json:"cast,omitempty"`
@@ -62,7 +63,7 @@ func (x *UpdateExpression) String(maskParams bool) string {
 		out.WriteString(" *")
 	}
 	if x.Alias != nil {
-		out.WriteString(" AS ")
+		out.WriteString(" ")
 		out.WriteString(x.Alias.String(maskParams))
 	}
 	if len(x.Set) > 0 {
@@ -83,6 +84,10 @@ func (x *UpdateExpression) String(maskParams bool) string {
 			out.WriteString(f.String(maskParams))
 		}
 	}
+	if x.Cursor != nil {
+		out.WriteString(" WHERE CURRENT OF ")
+		out.WriteString(x.Cursor.String(maskParams))
+	}
 	if x.Where != nil {
 		out.WriteString(" WHERE ")
 		out.WriteString(x.Where.String(maskParams))
@@ -96,5 +101,6 @@ func (x *UpdateExpression) String(maskParams bool) string {
 			out.WriteString(r.String(maskParams))
 		}
 	}
+	out.WriteString(")")
 	return out.String()
 }
