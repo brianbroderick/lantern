@@ -17,29 +17,29 @@ type CaseExpression struct {
 
 func (ce *CaseExpression) expressionNode()      {}
 func (ce *CaseExpression) TokenLiteral() string { return ce.Token.Lit }
-func (ce *CaseExpression) String(maskParams bool, alias map[string]string) string {
+func (ce *CaseExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("CASE")
 
 	if ce.Expression != nil {
 		out.WriteString(" ")
-		out.WriteString(ce.Expression.String(maskParams, alias))
+		out.WriteString(ce.Expression.String(maskParams))
 	}
 
 	for _, c := range ce.Conditions {
-		out.WriteString(c.String(maskParams, alias))
+		out.WriteString(c.String(maskParams))
 	}
 
 	if ce.Alternative != nil {
 		out.WriteString(" ELSE ")
-		out.WriteString(ce.Alternative.String(maskParams, alias))
+		out.WriteString(ce.Alternative.String(maskParams))
 	}
 	out.WriteString(" END")
 
 	if ce.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(ce.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(ce.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -57,22 +57,22 @@ type ConditionExpression struct {
 
 func (x *ConditionExpression) expressionNode()      {}
 func (x *ConditionExpression) TokenLiteral() string { return x.Token.Lit }
-func (x *ConditionExpression) String(maskParams bool, alias map[string]string) string {
+func (x *ConditionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if x.Condition != nil {
 		out.WriteString(" WHEN ")
-		out.WriteString(x.Condition.String(maskParams, alias))
+		out.WriteString(x.Condition.String(maskParams))
 	}
 
 	if x.Consequence != nil {
 		out.WriteString(" THEN ")
-		out.WriteString(x.Consequence.String(maskParams, alias))
+		out.WriteString(x.Consequence.String(maskParams))
 	}
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()

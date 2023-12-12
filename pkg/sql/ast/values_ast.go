@@ -17,7 +17,7 @@ func (x *ValuesExpression) TokenLiteral() string { return x.Token.Lit }
 func (x *ValuesExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
-func (x *ValuesExpression) String(maskParams bool, alias map[string]string) string {
+func (x *ValuesExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(VALUES")
 	for _, t := range x.Tuples {
@@ -26,7 +26,7 @@ func (x *ValuesExpression) String(maskParams bool, alias map[string]string) stri
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(e.String(maskParams, alias))
+			out.WriteString(e.String(maskParams))
 		}
 		out.WriteString("),")
 	}

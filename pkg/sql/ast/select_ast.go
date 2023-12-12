@@ -16,18 +16,18 @@ type SelectStatement struct {
 
 func (s *SelectStatement) statementNode()       {}
 func (s *SelectStatement) TokenLiteral() string { return s.Token.Upper }
-func (s *SelectStatement) String(maskParams bool, alias map[string]string) string {
+func (s *SelectStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	for _, e := range s.Expressions {
-		out.WriteString(e.String(maskParams, alias))
+		out.WriteString(e.String(maskParams))
 	}
 
 	out.WriteString(";")
 
 	return out.String()
 }
-func (s *SelectStatement) Inspect(maskParams bool, alias map[string]string) string {
+func (s *SelectStatement) Inspect(maskParams bool) string {
 	j, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)
@@ -52,14 +52,14 @@ type SelectExpression struct {
 	Fetch        Expression        `json:"fetch,omitempty"`
 	Lock         Expression        `json:"lock,omitempty"`
 	Cast         Expression        `json:"cast,omitempty"` // probably not needed, but used for the interface
-	TableAliases map[string]string `json:"-"`              // used to resolve table aliases in the other clauses
+	TableAliases map[string]string `json:"-"`
 }
 
 func (x *SelectExpression) expressionNode()      {}
 func (x *SelectExpression) TokenLiteral() string { return x.Token.Upper }
 
 // String() is incomplete and only returns the most basic of select statements
-func (x *SelectExpression) String(maskParams bool, alias map[string]string) string {
+func (x *SelectExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	// Subqueries need to be surrounded by parentheses. A primary query may also have parentheses, so we'll add them here to be consistent.
@@ -69,13 +69,13 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 
 	// Distinct
 	if x.Distinct != nil {
-		out.WriteString(x.Distinct.String(maskParams, alias) + " ")
+		out.WriteString(x.Distinct.String(maskParams) + " ")
 	}
 
 	// Columns
 	columns := []string{}
 	for _, c := range x.Columns {
-		columns = append(columns, c.String(maskParams, alias))
+		columns = append(columns, c.String(maskParams))
 	}
 	out.WriteString(strings.Join(columns, ", "))
 
@@ -87,7 +87,7 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 		out.WriteString("FROM ")
 		tables := []string{}
 		for _, t := range x.Tables {
-			tables = append(tables, t.String(maskParams, alias))
+			tables = append(tables, t.String(maskParams))
 		}
 		out.WriteString(strings.Join(tables, " "))
 	}
@@ -97,7 +97,7 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 		out.WriteString(" WINDOW ")
 		windows := []string{}
 		for _, w := range x.Window {
-			windows = append(windows, w.String(maskParams, alias))
+			windows = append(windows, w.String(maskParams))
 		}
 		out.WriteString(strings.Join(windows, ", "))
 	}
@@ -105,7 +105,7 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 	// Where
 	if x.Where != nil {
 		out.WriteString(" WHERE ")
-		out.WriteString(x.Where.String(maskParams, alias))
+		out.WriteString(x.Where.String(maskParams))
 	}
 
 	// Group By
@@ -113,7 +113,7 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 		out.WriteString(" GROUP BY ")
 		groupBy := []string{}
 		for _, g := range x.GroupBy {
-			groupBy = append(groupBy, g.String(maskParams, alias))
+			groupBy = append(groupBy, g.String(maskParams))
 		}
 		out.WriteString(strings.Join(groupBy, ", "))
 	}
@@ -121,7 +121,7 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 	// Having
 	if x.Having != nil {
 		out.WriteString(" HAVING ")
-		out.WriteString(x.Having.String(maskParams, alias))
+		out.WriteString(x.Having.String(maskParams))
 	}
 
 	// Order By
@@ -129,7 +129,7 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 		out.WriteString(" ORDER BY ")
 		orderBy := []string{}
 		for _, g := range x.OrderBy {
-			orderBy = append(orderBy, g.String(maskParams, alias))
+			orderBy = append(orderBy, g.String(maskParams))
 		}
 		out.WriteString(strings.Join(orderBy, ", "))
 	}
@@ -137,32 +137,32 @@ func (x *SelectExpression) String(maskParams bool, alias map[string]string) stri
 	// Limit
 	if x.Limit != nil {
 		out.WriteString(" LIMIT ")
-		out.WriteString(x.Limit.String(maskParams, alias))
+		out.WriteString(x.Limit.String(maskParams))
 	}
 
 	// Offset
 	if x.Offset != nil {
 		out.WriteString(" OFFSET ")
-		out.WriteString(x.Offset.String(maskParams, alias))
+		out.WriteString(x.Offset.String(maskParams))
 	}
 
 	// Fetch
 	if x.Fetch != nil {
 		out.WriteString(" FETCH NEXT ")
-		out.WriteString(x.Fetch.String(maskParams, alias))
+		out.WriteString(x.Fetch.String(maskParams))
 	}
 
 	// Lock
 	if x.Lock != nil {
 		out.WriteString(" FOR ")
-		out.WriteString(x.Lock.String(maskParams, alias))
+		out.WriteString(x.Lock.String(maskParams))
 	}
 
 	out.WriteString(")")
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -179,7 +179,7 @@ type DistinctExpression struct {
 
 func (x *DistinctExpression) expressionNode()      {}
 func (x *DistinctExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *DistinctExpression) String(maskParams bool, alias map[string]string) string {
+func (x *DistinctExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString(x.Token.Upper)
@@ -190,7 +190,7 @@ func (x *DistinctExpression) String(maskParams bool, alias map[string]string) st
 		out.WriteString("(")
 		right := []string{}
 		for _, r := range x.Right {
-			right = append(right, r.String(maskParams, alias))
+			right = append(right, r.String(maskParams))
 		}
 		out.WriteString(strings.Join(right, ", "))
 		out.WriteString(")")
@@ -198,7 +198,7 @@ func (x *DistinctExpression) String(maskParams bool, alias map[string]string) st
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -216,22 +216,22 @@ type ColumnExpression struct {
 
 func (x *ColumnExpression) expressionNode()      {}
 func (x *ColumnExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *ColumnExpression) String(maskParams bool, alias map[string]string) string {
+func (x *ColumnExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	val := x.Value.String(maskParams, alias)
+	val := x.Value.String(maskParams)
 	out.WriteString(val)
 	if x.Name != nil {
-		name := x.Name.String(maskParams, alias)
+		name := x.Name.String(maskParams)
 		if name != val && name != "" {
 			out.WriteString(" AS ")
-			out.WriteString(x.Name.String(maskParams, alias))
+			out.WriteString(x.Name.String(maskParams))
 		}
 	}
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -250,10 +250,10 @@ type SortExpression struct {
 
 func (x *SortExpression) expressionNode()      {}
 func (x *SortExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *SortExpression) String(maskParams bool, alias map[string]string) string {
+func (x *SortExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(x.Value.String(maskParams, alias))
+	out.WriteString(x.Value.String(maskParams))
 	if x.Direction.Type == token.DESC {
 		out.WriteString(" DESC")
 	}
@@ -265,7 +265,7 @@ func (x *SortExpression) String(maskParams bool, alias map[string]string) string
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -285,10 +285,10 @@ type FetchExpression struct {
 
 func (x *FetchExpression) expressionNode()      {}
 func (x *FetchExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *FetchExpression) String(maskParams bool, alias map[string]string) string {
+func (x *FetchExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(x.Value.String(maskParams, alias))
+	out.WriteString(x.Value.String(maskParams))
 	out.WriteString(" ROWS")
 	if x.Option.Type == token.TIES {
 		out.WriteString(" WITH TIES")
@@ -298,7 +298,7 @@ func (x *FetchExpression) String(maskParams bool, alias map[string]string) strin
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -317,10 +317,10 @@ type AggregateExpression struct {
 
 func (x *AggregateExpression) expressionNode()      {}
 func (x *AggregateExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *AggregateExpression) String(maskParams bool, alias map[string]string) string {
+func (x *AggregateExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(x.Left.String(maskParams, alias))
+	out.WriteString(x.Left.String(maskParams))
 	if x.Operator != "" {
 		out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
 	}
@@ -331,7 +331,7 @@ func (x *AggregateExpression) String(maskParams bool, alias map[string]string) s
 	if len(x.Right) > 0 {
 		right := []string{}
 		for _, r := range x.Right {
-			right = append(right, r.String(maskParams, alias))
+			right = append(right, r.String(maskParams))
 		}
 		out.WriteString(strings.Join(right, ", "))
 	}
@@ -356,11 +356,11 @@ type WindowExpression struct {
 
 func (x *WindowExpression) expressionNode()      {}
 func (x *WindowExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *WindowExpression) String(maskParams bool, alias map[string]string) string {
+func (x *WindowExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if x.Alias != nil {
-		out.WriteString(x.Alias.String(maskParams, alias) + " AS ")
+		out.WriteString(x.Alias.String(maskParams) + " AS ")
 	}
 
 	out.WriteString("(")
@@ -368,7 +368,7 @@ func (x *WindowExpression) String(maskParams bool, alias map[string]string) stri
 		out.WriteString("PARTITION BY ")
 		partitionBy := []string{}
 		for _, p := range x.PartitionBy {
-			partitionBy = append(partitionBy, p.String(maskParams, alias))
+			partitionBy = append(partitionBy, p.String(maskParams))
 		}
 		out.WriteString(strings.Join(partitionBy, ", "))
 	}
@@ -379,7 +379,7 @@ func (x *WindowExpression) String(maskParams bool, alias map[string]string) stri
 		out.WriteString("ORDER BY ")
 		orderBy := []string{}
 		for _, o := range x.OrderBy {
-			orderBy = append(orderBy, o.String(maskParams, alias))
+			orderBy = append(orderBy, o.String(maskParams))
 		}
 		out.WriteString(strings.Join(orderBy, ", "))
 	}
@@ -388,7 +388,7 @@ func (x *WindowExpression) String(maskParams bool, alias map[string]string) stri
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -405,13 +405,13 @@ type WildcardLiteral struct {
 
 func (x *WildcardLiteral) expressionNode()      {}
 func (x *WildcardLiteral) TokenLiteral() string { return x.Token.Upper }
-func (x *WildcardLiteral) String(maskParams bool, alias map[string]string) string {
+func (x *WildcardLiteral) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Value)
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -428,7 +428,7 @@ type TimestampExpression struct {
 
 func (x *TimestampExpression) expressionNode()      {}
 func (x *TimestampExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *TimestampExpression) String(maskParams bool, alias map[string]string) string {
+func (x *TimestampExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Token.Upper)
 	if x.WithTimeZone {
@@ -437,7 +437,7 @@ func (x *TimestampExpression) String(maskParams bool, alias map[string]string) s
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -463,29 +463,29 @@ type TableExpression struct {
 
 func (x *TableExpression) expressionNode()      {}
 func (x *TableExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *TableExpression) String(maskParams bool, alias map[string]string) string {
+func (x *TableExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if x.JoinType != "" {
 		out.WriteString(x.JoinType + " ")
 	}
 
-	out.WriteString(x.Table.String(maskParams, alias))
+	out.WriteString(x.Table.String(maskParams))
 	if x.Ordinality {
 		out.WriteString(" WITH ORDINALITY")
 	}
 
-	if x.Alias != nil && x.Alias.String(maskParams, alias) != "" {
-		out.WriteString(" " + x.Alias.String(maskParams, alias))
+	if x.Alias != nil && x.Alias.String(maskParams) != "" {
+		out.WriteString(" " + x.Alias.String(maskParams))
 	}
 
 	if x.JoinCondition != nil {
-		out.WriteString(" ON " + x.JoinCondition.String(maskParams, alias))
+		out.WriteString(" ON " + x.JoinCondition.String(maskParams))
 	}
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -504,14 +504,14 @@ type LockExpression struct {
 
 func (x *LockExpression) expressionNode()      {}
 func (x *LockExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *LockExpression) String(maskParams bool, alias map[string]string) string {
+func (x *LockExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Lock)
 	if len(x.Tables) > 0 {
 		tables := []string{}
 		out.WriteString(" OF ")
 		for _, t := range x.Tables {
-			tables = append(tables, t.String(maskParams, alias))
+			tables = append(tables, t.String(maskParams))
 		}
 		out.WriteString(strings.Join(tables, ", "))
 	}
@@ -521,7 +521,7 @@ func (x *LockExpression) String(maskParams bool, alias map[string]string) string
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -541,10 +541,10 @@ type InExpression struct {
 
 func (x *InExpression) expressionNode()      {}
 func (x *InExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *InExpression) String(maskParams bool, alias map[string]string) string {
+func (x *InExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(x.Left.String(maskParams, alias))
+	out.WriteString(x.Left.String(maskParams))
 	if x.Not {
 		out.WriteString(" NOT")
 	}
@@ -553,7 +553,7 @@ func (x *InExpression) String(maskParams bool, alias map[string]string) string {
 	out.WriteString("(")
 	oneLess := len(x.Right) - 1
 	for i, e := range x.Right {
-		out.WriteString(e.String(maskParams, alias))
+		out.WriteString(e.String(maskParams))
 		if i < oneLess {
 			out.WriteString(", ")
 		}
@@ -562,7 +562,7 @@ func (x *InExpression) String(maskParams bool, alias map[string]string) string {
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -579,16 +579,16 @@ type CastExpression struct {
 
 func (x *CastExpression) expressionNode()      {}
 func (x *CastExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *CastExpression) String(maskParams bool, alias map[string]string) string {
+func (x *CastExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if x.Left == nil && x.Cast != nil {
-		out.WriteString(x.Cast.String(maskParams, alias))
+		out.WriteString(x.Cast.String(maskParams))
 	} else {
 		out.WriteString("CAST(")
-		out.WriteString(x.Left.String(maskParams, alias))
+		out.WriteString(x.Left.String(maskParams))
 		out.WriteString(" AS ")
-		out.WriteString(x.Cast.String(maskParams, alias))
+		out.WriteString(x.Cast.String(maskParams))
 		out.WriteString(")")
 	}
 
@@ -606,20 +606,20 @@ type WhereExpression struct {
 
 func (x *WhereExpression) expressionNode()      {}
 func (x *WhereExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *WhereExpression) String(maskParams bool, alias map[string]string) string {
+func (x *WhereExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString(x.Token.Upper)
 
 	if x.Right != nil {
 		out.WriteString("(")
-		out.WriteString(x.Right.String(maskParams, alias))
+		out.WriteString(x.Right.String(maskParams))
 		out.WriteString(")")
 	}
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -639,10 +639,10 @@ type IsExpression struct {
 
 func (x *IsExpression) expressionNode()      {}
 func (x *IsExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *IsExpression) String(maskParams bool, alias map[string]string) string {
+func (x *IsExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(")
-	out.WriteString(x.Left.String(maskParams, alias))
+	out.WriteString(x.Left.String(maskParams))
 
 	out.WriteString(" IS ")
 
@@ -653,13 +653,13 @@ func (x *IsExpression) String(maskParams bool, alias map[string]string) string {
 		out.WriteString("DISTINCT FROM ")
 	}
 	if x.Right != nil {
-		out.WriteString(x.Right.String(maskParams, alias))
+		out.WriteString(x.Right.String(maskParams))
 	}
 	out.WriteString(")")
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
@@ -680,11 +680,11 @@ func (x *TrimExpression) TokenLiteral() string { return x.Token.Upper }
 func (x *TrimExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
-func (x *TrimExpression) String(maskParams bool, alias map[string]string) string {
+func (x *TrimExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Token.Upper + " ")
 	if x.Expression != nil {
-		out.WriteString(x.Expression.String(maskParams, alias))
+		out.WriteString(x.Expression.String(maskParams))
 	}
 	return out.String()
 }
@@ -704,18 +704,18 @@ func (x *StringFunctionExpression) TokenLiteral() string { return x.Token.Upper 
 func (x *StringFunctionExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
-func (x *StringFunctionExpression) String(maskParams bool, alias map[string]string) string {
+func (x *StringFunctionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	if x.Left != nil {
-		out.WriteString(x.Left.String(maskParams, alias))
+		out.WriteString(x.Left.String(maskParams))
 		if x.From != nil {
 			out.WriteString(" FROM ")
-			out.WriteString(x.From.String(maskParams, alias))
+			out.WriteString(x.From.String(maskParams))
 		}
 		if x.For != nil {
 			out.WriteString(" FOR ")
-			out.WriteString(x.For.String(maskParams, alias))
+			out.WriteString(x.For.String(maskParams))
 		}
 	}
 
@@ -733,23 +733,23 @@ type UnionExpression struct {
 
 func (x *UnionExpression) expressionNode()      {}
 func (x *UnionExpression) TokenLiteral() string { return x.Token.Upper }
-func (x *UnionExpression) String(maskParams bool, alias map[string]string) string {
+func (x *UnionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(x.Left.String(maskParams, alias))
+	out.WriteString(x.Left.String(maskParams))
 	out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
 	if x.All {
 		out.WriteString("ALL ")
 	}
 	if x.Right != nil {
-		out.WriteString(x.Right.String(maskParams, alias))
+		out.WriteString(x.Right.String(maskParams))
 	}
 	out.WriteString(")")
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams, alias)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()

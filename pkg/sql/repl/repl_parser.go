@@ -32,7 +32,7 @@ func StartParser(in io.Reader, out io.Writer) {
 		}
 
 		if line == "inspect" {
-			io.WriteString(out, inspect.Inspect(maskParams, nil))
+			io.WriteString(out, inspect.Inspect(maskParams))
 			io.WriteString(out, "\n")
 			continue
 		}
@@ -47,9 +47,9 @@ func StartParser(in io.Reader, out io.Writer) {
 		}
 
 		inspect = program
-		io.WriteString(out, program.String(maskParams, nil))
+		io.WriteString(out, program.String(maskParams))
 		io.WriteString(out, "\n\n")
-		io.WriteString(out, program.Inspect(maskParams, nil))
+		io.WriteString(out, program.Inspect(maskParams))
 		io.WriteString(out, "\n")
 	}
 }

@@ -41,7 +41,7 @@ func TestUpdateStatements(t *testing.T) {
 		_, ok := stmt.(*ast.UpdateStatement)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.UpdateStatement. got=%T", tt.input, stmt)
 
-		output := program.String(maskParams, nil)
+		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 		// fmt.Printf("output: %s\n", output)
 	}

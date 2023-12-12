@@ -225,12 +225,12 @@ func (p *Parser) parseFirstTable() (ast.Expression, string, string) {
 
 		switch tbl := x.Table.(type) {
 		case *ast.Identifier:
-			table = tbl.String(false, nil)
+			table = tbl.String(false)
 		}
 
 		switch a := x.Alias.(type) {
 		case *ast.Identifier:
-			alias = a.String(false, nil)
+			alias = a.String(false)
 		}
 	}
 
@@ -309,12 +309,12 @@ func (p *Parser) parseTable() (ast.Expression, string, string) {
 
 		switch tbl := x.Table.(type) {
 		case *ast.Identifier:
-			table = tbl.String(false, nil)
+			table = tbl.String(false)
 		}
 
 		switch a := x.Alias.(type) {
 		case *ast.Identifier:
-			alias = a.String(false, nil)
+			alias = a.String(false)
 		}
 	}
 

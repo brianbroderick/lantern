@@ -19,7 +19,7 @@ type AnalyzeStatement struct {
 
 func (x *AnalyzeStatement) statementNode()       {}
 func (x *AnalyzeStatement) TokenLiteral() string { return x.Token.Lit }
-func (x *AnalyzeStatement) String(maskParams bool, alias map[string]string) string {
+func (x *AnalyzeStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	count := 0
 	parens := false
@@ -57,7 +57,7 @@ func (x *AnalyzeStatement) String(maskParams bool, alias map[string]string) stri
 	if len(x.BufferUsageLimit) != 0 {
 		out.WriteString("BUFFER_USAGE_LIMIT ")
 		for _, e := range x.BufferUsageLimit {
-			out.WriteString(strings.ToUpper(e.String(maskParams, alias)))
+			out.WriteString(strings.ToUpper(e.String(maskParams)))
 		}
 	}
 	if parens {
@@ -65,14 +65,14 @@ func (x *AnalyzeStatement) String(maskParams bool, alias map[string]string) stri
 	}
 
 	if x.Name != nil {
-		out.WriteString(x.Name.String(maskParams, alias))
+		out.WriteString(x.Name.String(maskParams))
 	}
 	out.WriteString(");")
 
 	return out.String()
 }
 
-func (x *AnalyzeStatement) Inspect(maskParams bool, alias map[string]string) string {
+func (x *AnalyzeStatement) Inspect(maskParams bool) string {
 	j, err := json.MarshalIndent(x, "", "  ")
 	if err != nil {
 		fmt.Printf("Error marshalling data: %#v\n\n", err)

@@ -18,7 +18,7 @@ type SetStatement struct {
 
 func (s *SetStatement) statementNode()       {}
 func (s *SetStatement) TokenLiteral() string { return s.Token.Upper }
-func (s *SetStatement) String(maskParams bool, alias map[string]string) string {
+func (s *SetStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("SET ")
@@ -33,13 +33,13 @@ func (s *SetStatement) String(maskParams bool, alias map[string]string) string {
 		out.WriteString("TIME ZONE ")
 	}
 
-	out.WriteString(s.Expression.String(maskParams, alias))
+	out.WriteString(s.Expression.String(maskParams))
 
 	out.WriteString(";")
 
 	return out.String()
 }
-func (s *SetStatement) Inspect(maskParams bool, alias map[string]string) string {
+func (s *SetStatement) Inspect(maskParams bool) string {
 	j, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)

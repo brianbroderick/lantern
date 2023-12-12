@@ -15,13 +15,13 @@ type UpdateStatement struct {
 
 func (s *UpdateStatement) statementNode()       {}
 func (s *UpdateStatement) TokenLiteral() string { return s.Token.Upper }
-func (s *UpdateStatement) String(maskParams bool, alias map[string]string) string {
+func (s *UpdateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
-	out.WriteString(s.Expression.String(maskParams, alias))
+	out.WriteString(s.Expression.String(maskParams))
 	out.WriteString(";")
 	return out.String()
 }
-func (s *UpdateStatement) Inspect(maskParams bool, alias map[string]string) string {
+func (s *UpdateStatement) Inspect(maskParams bool) string {
 	j, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)
@@ -49,7 +49,7 @@ func (x *UpdateExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
-func (x *UpdateExpression) String(maskParams bool, alias map[string]string) string {
+func (x *UpdateExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(UPDATE ")
 
@@ -57,14 +57,14 @@ func (x *UpdateExpression) String(maskParams bool, alias map[string]string) stri
 		out.WriteString("ONLY ")
 	}
 	if x.Table != nil {
-		out.WriteString(x.Table.String(maskParams, alias))
+		out.WriteString(x.Table.String(maskParams))
 	}
 	if x.Asterisk {
 		out.WriteString(" *")
 	}
 	if x.Alias != nil {
 		out.WriteString(" ")
-		out.WriteString(x.Alias.String(maskParams, alias))
+		out.WriteString(x.Alias.String(maskParams))
 	}
 	if len(x.Set) > 0 {
 		out.WriteString(" SET ")
@@ -72,7 +72,7 @@ func (x *UpdateExpression) String(maskParams bool, alias map[string]string) stri
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(s.String(maskParams, alias))
+			out.WriteString(s.String(maskParams))
 		}
 	}
 	if len(x.From) > 0 {
@@ -81,16 +81,16 @@ func (x *UpdateExpression) String(maskParams bool, alias map[string]string) stri
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(f.String(maskParams, alias))
+			out.WriteString(f.String(maskParams))
 		}
 	}
 	if x.Cursor != nil {
 		out.WriteString(" WHERE CURRENT OF ")
-		out.WriteString(x.Cursor.String(maskParams, alias))
+		out.WriteString(x.Cursor.String(maskParams))
 	}
 	if x.Where != nil {
 		out.WriteString(" WHERE ")
-		out.WriteString(x.Where.String(maskParams, alias))
+		out.WriteString(x.Where.String(maskParams))
 	}
 	if len(x.Returning) > 0 {
 		out.WriteString(" RETURNING ")
@@ -98,7 +98,7 @@ func (x *UpdateExpression) String(maskParams bool, alias map[string]string) stri
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(r.String(maskParams, alias))
+			out.WriteString(r.String(maskParams))
 		}
 	}
 	out.WriteString(")")

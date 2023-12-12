@@ -28,7 +28,7 @@ type CreateStatement struct {
 
 func (x *CreateStatement) statementNode()       {}
 func (x *CreateStatement) TokenLiteral() string { return x.Token.Lit }
-func (x *CreateStatement) String(maskParams bool, alias map[string]string) string {
+func (x *CreateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(CREATE ")
 	if x.Scope != "" {
@@ -53,7 +53,7 @@ func (x *CreateStatement) String(maskParams bool, alias map[string]string) strin
 		out.WriteString("IF NOT EXISTS ")
 	}
 	if x.Name != nil {
-		out.WriteString(x.Name.String(maskParams, alias) + " ")
+		out.WriteString(x.Name.String(maskParams) + " ")
 	}
 	if x.OnCommit != "" {
 		out.WriteString("ON COMMIT " + strings.ToUpper(x.OnCommit) + " ")
@@ -62,14 +62,14 @@ func (x *CreateStatement) String(maskParams bool, alias map[string]string) strin
 		out.WriteString(strings.ToUpper(x.Operator) + " ")
 	}
 	if x.Expression != nil {
-		out.WriteString(x.Expression.String(maskParams, alias))
+		out.WriteString(x.Expression.String(maskParams))
 	}
 	out.WriteString(");")
 
 	return out.String()
 }
 
-func (x *CreateStatement) Inspect(maskParams bool, alias map[string]string) string {
+func (x *CreateStatement) Inspect(maskParams bool) string {
 	j, err := json.MarshalIndent(x, "", "  ")
 	if err != nil {
 		fmt.Printf("Error marshalling data: %#v\n\n", err)
