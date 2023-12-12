@@ -328,7 +328,7 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 		program := p.ParseProgram()
 		checkParserErrors(t, p, tt.input)
 
-		actual := program.String(maskParams)
+		actual := program.String(maskParams, nil)
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}
@@ -453,9 +453,9 @@ func TestCallExpressionParameterParsing(t *testing.T) {
 		}
 
 		for i, arg := range tt.expectedArgs {
-			if exp.Arguments[i].String(maskParams) != arg {
+			if exp.Arguments[i].String(maskParams, nil) != arg {
 				t.Errorf("argument %d wrong. want=%q, got=%q", i,
-					arg, exp.Arguments[i].String(maskParams))
+					arg, exp.Arguments[i].String(maskParams, nil))
 			}
 		}
 	}

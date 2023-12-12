@@ -61,7 +61,7 @@ func TestCTEs(t *testing.T) {
 		cteExp, ok := cteExpr.Auxiliary[0].(*ast.CTEAuxiliaryExpression)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.CTEAuxiliaryExpression. got=%T", tt.input, cteExp)
 
-		output := program.String(maskParams)
+		output := program.String(maskParams, nil)
 		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 		// fmt.Printf("output: %s\n", output)
 	}

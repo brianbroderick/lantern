@@ -35,7 +35,7 @@ func TestMultipleStatements(t *testing.T) {
 
 		assert.Equal(t, tt.statementCount, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, tt.statementCount, len(program.Statements))
 
-		output := program.String(maskParams)
+		output := program.String(maskParams, nil)
 		assert.Equal(t, tt.output, output, "input: %s\n\noutput: %s\n\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 	}
 }
@@ -337,8 +337,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		assert.True(t, reflectType == "*ast.SelectExpression" || reflectType == "*ast.UnionExpression",
 			"input: %s\nstmt is the wrong type. got=%T", tt.input, selectStmt.Expressions[0])
 
-		output := program.String(maskParams)
-		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s\nJSON:\n%s", tt.input, tt.output, output, program.Inspect(maskParams))
+		output := program.String(maskParams, nil)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s\nJSON:\n%s", tt.input, tt.output, output, program.Inspect(maskParams, nil))
 		// fmt.Printf("output: %s\n", output)
 	}
 }
@@ -376,7 +376,7 @@ func TestSubSelects(t *testing.T) {
 		selectExp, ok := selectStmt.Expressions[0].(*ast.SelectExpression)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectExpression. got=%T", tt.input, selectExp)
 
-		output := program.String(maskParams)
+		output := program.String(maskParams, nil)
 		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 		// fmt.Printf("output: %s\n", output)
 	}
@@ -472,7 +472,7 @@ func TestMaskParams(t *testing.T) {
 		assert.True(t, ok, "input: %s\nstmt is not *ast.SelectExpression. got=%T", tt.input, selectExp)
 
 		assert.Equal(t, tt.tableCount, len(selectExp.Tables), "input: %s\nlen(selectStmt.Tables) not %d. got=%d", tt.input, tt.tableCount, len(selectExp.Tables))
-		output := program.String(maskParams)
+		output := program.String(maskParams, nil)
 		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 		// fmt.Printf("output: %s\n", output)
 	}
@@ -496,7 +496,7 @@ func TestExpressionStatements(t *testing.T) {
 		program := p.ParseProgram()
 		checkParserErrors(t, p, tt.input)
 
-		output := program.String(maskParams)
+		output := program.String(maskParams, nil)
 		assert.Equal(t, tt.output, output, "input: %s\n\noutput: %s\n\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 	}
 }

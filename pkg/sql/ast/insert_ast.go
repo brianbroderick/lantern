@@ -15,15 +15,15 @@ type InsertStatement struct {
 
 func (s *InsertStatement) statementNode()       {}
 func (s *InsertStatement) TokenLiteral() string { return s.Token.Upper }
-func (s *InsertStatement) String(maskParams bool) string {
+func (s *InsertStatement) String(maskParams bool, alias map[string]string) string {
 	var out bytes.Buffer
-	out.WriteString(s.Expression.String(maskParams))
+	out.WriteString(s.Expression.String(maskParams, alias))
 
 	out.WriteString(";")
 
 	return out.String()
 }
-func (s *InsertStatement) Inspect(maskParams bool) string {
+func (s *InsertStatement) Inspect(maskParams bool, alias map[string]string) string {
 	j, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)
@@ -55,16 +55,16 @@ func (x *InsertExpression) SetCast(cast Expression) {
 }
 
 // String() is incomplete and only returns the most basic of select statements
-func (x *InsertExpression) String(maskParams bool) string {
+func (x *InsertExpression) String(maskParams bool, alias map[string]string) string {
 	var out bytes.Buffer
 	out.WriteString("(INSERT INTO ")
 
 	if x.Table != nil {
-		out.WriteString(x.Table.String(maskParams))
+		out.WriteString(x.Table.String(maskParams, alias))
 	}
 	if x.Alias != nil {
 		out.WriteString(" AS ")
-		out.WriteString(x.Alias.String(maskParams))
+		out.WriteString(x.Alias.String(maskParams, alias))
 	}
 	if len(x.Columns) > 0 {
 		out.WriteString(" (")
@@ -72,7 +72,7 @@ func (x *InsertExpression) String(maskParams bool) string {
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(c.String(maskParams))
+			out.WriteString(c.String(maskParams, alias))
 		}
 		out.WriteString(")")
 	}
@@ -90,14 +90,14 @@ func (x *InsertExpression) String(maskParams bool) string {
 				if j > 0 {
 					out.WriteString(", ")
 				}
-				out.WriteString(e.String(maskParams))
+				out.WriteString(e.String(maskParams, alias))
 			}
 			out.WriteString(")")
 		}
 	}
 	if x.Query != nil {
 		out.WriteString(" ")
-		out.WriteString(x.Query.String(maskParams))
+		out.WriteString(x.Query.String(maskParams, alias))
 	}
 	if len(x.ConflictTarget) > 0 {
 		out.WriteString(" ON CONFLICT (")
@@ -105,7 +105,7 @@ func (x *InsertExpression) String(maskParams bool) string {
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(c.String(maskParams))
+			out.WriteString(c.String(maskParams, alias))
 		}
 		out.WriteString(")")
 	}
@@ -119,11 +119,11 @@ func (x *InsertExpression) String(maskParams bool) string {
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(c.String(maskParams))
+			out.WriteString(c.String(maskParams, alias))
 		}
 		if x.ConflictWhere != nil {
 			out.WriteString(" WHERE ")
-			out.WriteString(x.ConflictWhere.String(maskParams))
+			out.WriteString(x.ConflictWhere.String(maskParams, alias))
 		}
 	}
 	if len(x.Returning) > 0 {
@@ -132,12 +132,12 @@ func (x *InsertExpression) String(maskParams bool) string {
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(c.String(maskParams))
+			out.WriteString(c.String(maskParams, alias))
 		}
 	}
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(x.Cast.String(maskParams))
+		out.WriteString(x.Cast.String(maskParams, alias))
 	}
 	out.WriteString(")")
 

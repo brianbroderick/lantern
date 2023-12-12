@@ -19,7 +19,7 @@ type DropStatement struct {
 
 func (x *DropStatement) statementNode()       {}
 func (x *DropStatement) TokenLiteral() string { return x.Token.Lit }
-func (x *DropStatement) String(maskParams bool) string {
+func (x *DropStatement) String(maskParams bool, alias map[string]string) string {
 	var out bytes.Buffer
 
 	out.WriteString(fmt.Sprintf("(DROP %s ", x.Object.Type.String()))
@@ -31,7 +31,7 @@ func (x *DropStatement) String(maskParams bool) string {
 			if i > 0 {
 				out.WriteString(", ")
 			}
-			out.WriteString(t.String(maskParams))
+			out.WriteString(t.String(maskParams, alias))
 		}
 	}
 
@@ -43,7 +43,7 @@ func (x *DropStatement) String(maskParams bool) string {
 
 	return out.String()
 }
-func (x *DropStatement) Inspect(maskParams bool) string {
+func (x *DropStatement) Inspect(maskParams bool, alias map[string]string) string {
 	j, err := json.MarshalIndent(x, "", "  ")
 	if err != nil {
 		fmt.Printf("Error marshalling data: %#v\n\n", err)

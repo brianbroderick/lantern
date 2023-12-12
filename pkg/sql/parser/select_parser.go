@@ -52,7 +52,8 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 
 		// p.nextToken()
-		x.Tables = p.parseTables()
+		x.Tables, x.TableAliases = p.parseTables()
+		// x.TableAliases = x.ResolveTableAliases()
 
 		// fmt.Printf("parseSelectExpression002: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 
@@ -171,24 +172,36 @@ func (p *Parser) parseDistinct() ast.Expression {
 	return nil
 }
 
-func (p *Parser) parseTables() []ast.Expression {
+func (p *Parser) parseTables() ([]ast.Expression, map[string]string) {
 	defer p.untrace(p.trace("parseTables"))
+	aliasMap := map[string]string{}
 
 	x := []ast.Expression{}
-	x = append(x, p.parseFirstTable())
-
-	for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL, token.COMMA}) {
-		x = append(x, p.parseTable())
+	firstTable, table, alias := p.parseFirstTable()
+	x = append(x, firstTable)
+	if alias != "" && table != "" {
+		aliasMap[alias] = table
 	}
 
-	return x
+	for p.peekTokenIsOne([]token.TokenType{token.JOIN, token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL, token.COMMA}) {
+		nextTable, table, alias := p.parseTable()
+		x = append(x, nextTable)
+		if alias != "" && table != "" {
+			aliasMap[alias] = table
+		}
+	}
+
+	return x, aliasMap
 }
 
 // parseFirstTable will leave curToken on the last token of the table (name or alias)
-func (p *Parser) parseFirstTable() ast.Expression {
+func (p *Parser) parseFirstTable() (ast.Expression, string, string) {
 	defer p.untrace(p.trace("parseFirstTable"))
+	var table string
+	var alias string
 
 	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
+
 	x.Table = p.parseExpression(LOWEST)
 
 	if p.peekTokenIs(token.WITH) {
@@ -209,15 +222,27 @@ func (p *Parser) parseFirstTable() ast.Expression {
 	if p.peekTokenIsOne([]token.TokenType{token.IDENT}) {
 		p.nextToken()
 		x.Alias = p.parseExpression(LOWEST)
+
+		switch tbl := x.Table.(type) {
+		case *ast.Identifier:
+			table = tbl.String(false, nil)
+		}
+
+		switch a := x.Alias.(type) {
+		case *ast.Identifier:
+			alias = a.String(false, nil)
+		}
 	}
 
 	// fmt.Printf("parseFirstTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
-	return &x
+	return &x, table, alias
 }
 
-func (p *Parser) parseTable() ast.Expression {
+func (p *Parser) parseTable() (ast.Expression, string, string) {
 	defer p.untrace(p.trace("parseTable"))
+	var table string
+	var alias string
 
 	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
 
@@ -281,6 +306,16 @@ func (p *Parser) parseTable() ast.Expression {
 	if p.peekTokenIsOne([]token.TokenType{token.IDENT}) {
 		p.nextToken()
 		x.Alias = p.parseExpression(LOWEST)
+
+		switch tbl := x.Table.(type) {
+		case *ast.Identifier:
+			table = tbl.String(false, nil)
+		}
+
+		switch a := x.Alias.(type) {
+		case *ast.Identifier:
+			alias = a.String(false, nil)
+		}
 	}
 
 	// Get the join condition, but skip past the ON keyword
@@ -290,7 +325,7 @@ func (p *Parser) parseTable() ast.Expression {
 		x.JoinCondition = p.parseExpression(LOWEST)
 	}
 
-	return &x
+	return &x, table, alias
 }
 
 func (p *Parser) parseFetch() ast.Expression {

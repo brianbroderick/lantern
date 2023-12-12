@@ -35,7 +35,7 @@ func TestString(t *testing.T) {
 		},
 	}
 
-	if program.String(maskParams) != "(SELECT id FROM users);" {
-		t.Errorf("program.String() wrong. got=%q", program.String(maskParams))
+	if program.String(maskParams, nil) != "(SELECT id FROM users);" {
+		t.Errorf("program.String() wrong. got=%q", program.String(maskParams, nil))
 	}
 }

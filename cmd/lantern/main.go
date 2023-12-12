@@ -16,5 +16,5 @@ func main() {
 	fmt.Printf("Hello %s! This is Lantern, a SQL parser.\n",
 		user.Username)
 	fmt.Printf("Try typing a select statement or exit to quit.\n")
-	repl.Start(os.Stdin, os.Stdout)
+	repl.StartParser(os.Stdin, os.Stdout)
 }

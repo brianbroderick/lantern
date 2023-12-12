@@ -20,13 +20,13 @@ type CTEStatement struct {
 
 func (s *CTEStatement) statementNode()       {}
 func (s *CTEStatement) TokenLiteral() string { return s.Token.Lit }
-func (s *CTEStatement) String(maskParams bool) string {
+func (s *CTEStatement) String(maskParams bool, alias map[string]string) string {
 	var out bytes.Buffer
-	out.WriteString(s.Expression.String(maskParams))
+	out.WriteString(s.Expression.String(maskParams, alias))
 	out.WriteString(";")
 	return out.String()
 }
-func (s *CTEStatement) Inspect(maskParams bool) string {
+func (s *CTEStatement) Inspect(maskParams bool, alias map[string]string) string {
 	j, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		fmt.Printf("Error loading data: %#v\n\n", err)
@@ -44,7 +44,7 @@ type CTEExpression struct {
 
 func (x *CTEExpression) expressionNode()      {}
 func (x *CTEExpression) TokenLiteral() string { return x.Token.Lit }
-func (x *CTEExpression) String(maskParams bool) string {
+func (x *CTEExpression) String(maskParams bool, alias map[string]string) string {
 	var out bytes.Buffer
 
 	out.WriteString("(WITH ")
@@ -54,7 +54,7 @@ func (x *CTEExpression) String(maskParams bool) string {
 	}
 	if len(x.Auxiliary) > 0 {
 		for _, a := range x.Auxiliary {
-			out.WriteString(a.String(maskParams))
+			out.WriteString(a.String(maskParams, alias))
 			if a != x.Auxiliary[len(x.Auxiliary)-1] {
 				out.WriteString(", ")
 			}
@@ -62,11 +62,11 @@ func (x *CTEExpression) String(maskParams bool) string {
 		out.WriteString(" ")
 	}
 	if x.Primary != nil {
-		out.WriteString(x.Primary.String(maskParams))
+		out.WriteString(x.Primary.String(maskParams, alias))
 	}
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(x.Cast.String(maskParams))
+		out.WriteString(x.Cast.String(maskParams, alias))
 	}
 	out.WriteString(")")
 
@@ -86,21 +86,21 @@ type CTEAuxiliaryExpression struct {
 
 func (x *CTEAuxiliaryExpression) expressionNode()      {}
 func (x *CTEAuxiliaryExpression) TokenLiteral() string { return x.Token.Lit }
-func (x *CTEAuxiliaryExpression) String(maskParams bool) string {
+func (x *CTEAuxiliaryExpression) String(maskParams bool, alias map[string]string) string {
 	var out bytes.Buffer
-	out.WriteString(x.Name.String(maskParams))
+	out.WriteString(x.Name.String(maskParams, alias))
 	out.WriteString(" AS ")
 	if x.Materialized != "" {
 		out.WriteString(fmt.Sprintf("%s ", x.Materialized))
 	}
 
 	if x.Expression != nil {
-		out.WriteString(x.Expression.String(maskParams))
+		out.WriteString(x.Expression.String(maskParams, alias))
 	}
 
 	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(x.Cast.String(maskParams))
+		out.WriteString(x.Cast.String(maskParams, alias))
 	}
 	return out.String()
 }
