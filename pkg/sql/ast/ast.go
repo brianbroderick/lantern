@@ -607,6 +607,26 @@ func (x *IntervalExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
+// For errors in the Resolver
+type IllegalExpression struct {
+	Token token.Token `json:"token,omitempty"` // the token.ILLEGAL token
+	Value string      `json:"value,omitempty"`
+	Cast  Expression  `json:"cast,omitempty"`
+}
+
+func (x *IllegalExpression) expressionNode()      {}
+func (x *IllegalExpression) TokenLiteral() string { return x.Token.Upper }
+func (x *IllegalExpression) String(maskParams bool) string {
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast.String(maskParams)))
+	}
+
+	return x.Value
+}
+func (x *IllegalExpression) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
 // type HashLiteral struct {
 // 	Token token.Token // the '{' token
 // 	Pairs map[Expression]Expression
