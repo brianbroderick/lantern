@@ -134,40 +134,6 @@ func (x *Identifier) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
-type ColumnLiteral struct {
-	Token  token.Token `json:"token,omitempty"` // the token.IDENT token
-	Schema Expression  `json:"schema,omitempty"`
-	Table  Expression  `json:"table,omitempty"`
-	Column Expression  `json:"column,omitempty"`
-	Cast   Expression  `json:"cast,omitempty"`
-}
-
-func (x *ColumnLiteral) expressionNode()      {}
-func (x *ColumnLiteral) TokenLiteral() string { return x.Token.Lit }
-func (x *ColumnLiteral) String(maskParams bool) string {
-	var out bytes.Buffer
-	if x.Schema != nil {
-		out.WriteString(x.Schema.String(maskParams))
-		out.WriteString(".")
-	}
-	if x.Table != nil {
-		out.WriteString(x.Table.String(maskParams))
-		out.WriteString(".")
-	}
-	if x.Column != nil {
-		out.WriteString(x.Column.String(maskParams))
-	}
-	if x.Cast != nil {
-		out.WriteString("::")
-		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
-	}
-
-	return out.String()
-}
-func (x *ColumnLiteral) SetCast(cast Expression) {
-	x.Cast = cast
-}
-
 type Boolean struct {
 	Token token.Token
 	Value bool
@@ -626,25 +592,3 @@ func (x *IllegalExpression) String(maskParams bool) string {
 func (x *IllegalExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
-
-// type HashLiteral struct {
-// 	Token token.Token // the '{' token
-// 	Pairs map[Expression]Expression
-// }
-
-// func (x *HashLiteral) expressionNode()      {}
-// func (x *HashLiteral) TokenLiteral() string { return x.Token.Lit }
-// func (x *HashLiteral) String(maskParams bool) string {
-// 	var out bytes.Buffer
-
-// 	pairs := []string{}
-// 	for key, value := range x.Pairs {
-// 		pairs = append(pairs, key.String()+":"+value.String())
-// 	}
-
-// 	out.WriteString("{")
-// 	out.WriteString(strings.Join(pairs, ", "))
-// 	out.WriteString("}")
-
-// 	return out.String()
-// }

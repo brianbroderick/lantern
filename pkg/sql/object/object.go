@@ -15,14 +15,16 @@ const (
 	INTEGER
 	BOOLEAN
 	STRING
+	STRING_HASH_OBJ // This is only used internally. It is not a part of the language.
 )
 
 var Objects = [...]string{
-	NULL:    "NULL",
-	ERROR:   "ERROR",
-	INTEGER: "INTEGER",
-	BOOLEAN: "BOOLEAN",
-	STRING:  "STRING",
+	NULL:            "NULL",
+	ERROR:           "ERROR",
+	INTEGER:         "INTEGER",
+	BOOLEAN:         "BOOLEAN",
+	STRING:          "STRING",
+	STRING_HASH_OBJ: "STRING_HASH",
 }
 
 type HashKey struct {
@@ -91,3 +93,11 @@ func (s *String) HashKey() HashKey {
 
 	return HashKey{Type: s.Type(), Value: h.Sum64()}
 }
+
+// This is only used internally. It is not a part of the language.
+type StringHash struct {
+	Value map[string]string
+}
+
+func (s *StringHash) Type() ObjectType { return STRING }
+func (s *StringHash) Inspect() string  { return fmt.Sprintf("%v", s.Value) }
