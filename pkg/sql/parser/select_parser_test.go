@@ -23,8 +23,8 @@ func TestMultipleStatements(t *testing.T) {
 
 		// Multiple Statements
 		// left and right can be function names
-		// {"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
-		// {"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
+		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
+		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
 
 	for _, tt := range tests {
@@ -54,7 +54,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select 2*3 from users;", "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard
 		{"select +2 -3 from users;", "(SELECT ((+2) - 3) FROM users);"},                                                                                                  // PG allows + as a prefix operator
 		{"select -2 +3 from users;", "(SELECT ((-2) + 3) FROM users);"},                                                                                                  // Negative numbers
-		{`select "blah".id from users`, `(SELECT "blah".id FROM users);`},                                                                                                // check for double quotes around the table name
+		{`select "blah".id from blah`, `(SELECT "blah".id FROM blah);`},                                                                                                  // check for double quotes around the table name
 		{"select 1 * (2 + (6 / 4)) - 9 from users;", "(SELECT ((1 * (2 + (6 / 4))) - 9) FROM users);"},                                                                   // math expression
 		{"select id, name from users", "(SELECT id, name FROM users);"},                                                                                                  // multiple columns
 		{"select id, first_name from users;", "(SELECT id, first_name FROM users);"},                                                                                     // underscore in a column name

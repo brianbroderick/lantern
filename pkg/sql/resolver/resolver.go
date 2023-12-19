@@ -110,7 +110,9 @@ func (r *Resolver) Resolve(node ast.Node, env *object.Environment) {
 			r.Resolve(o, env)
 		}
 	case *ast.TableExpression:
-		// Do nothing right now. Eventually, we'll remove the alias from the table expression
+		// eventually we'll also remove the table alias
+		r.Resolve(node.JoinCondition, env)
+		r.Resolve(node.Table, env)
 	case *ast.LockExpression:
 		for _, t := range node.Tables {
 			r.Resolve(t, env)
@@ -177,6 +179,9 @@ func (r *Resolver) resolveSelectExpression(x *ast.SelectExpression, env *object.
 	for _, c := range x.Columns {
 		r.Resolve(c, env)
 	}
+	for _, t := range x.Tables {
+		r.Resolve(t, env)
+	}
 	r.Resolve(x.Where, env)
 	for _, g := range x.GroupBy {
 		r.Resolve(g, env)
@@ -207,10 +212,14 @@ func (r *Resolver) resolveIdentifier(i *ast.Identifier, env *object.Environment)
 	switch len(i.Value) {
 	case 2:
 		alias := i.Value[0].(*ast.SimpleIdentifier).Value
-		i.Value[0].(*ast.SimpleIdentifier).Value = aliases.(*object.StringHash).Value[alias]
+		if val, ok := aliases.(*object.StringHash).Value[alias]; ok {
+			i.Value[0].(*ast.SimpleIdentifier).Value = val
+		}
 	case 3:
 		alias := i.Value[1].(*ast.SimpleIdentifier).Value
-		i.Value[1].(*ast.SimpleIdentifier).Value = aliases.(*object.StringHash).Value[alias]
+		if val, ok := aliases.(*object.StringHash).Value[alias]; ok {
+			i.Value[1].(*ast.SimpleIdentifier).Value = val
+		}
 	}
 }
 
