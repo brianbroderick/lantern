@@ -19,6 +19,7 @@ func TestResolveAlias(t *testing.T) {
 		input  string
 		output string
 	}{
+		{"select * from users u", "(SELECT * FROM users u);"},
 		{"select u.id from users u", "(SELECT users.id FROM users u);"},
 		{"select u.id, u.name from users u", "(SELECT users.id, users.name FROM users u);"},
 		{"select u.id, u.name as my_name from users u", "(SELECT users.id, users.name AS my_name FROM users u);"},
