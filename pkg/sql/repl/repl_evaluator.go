@@ -1,47 +1,40 @@
 package repl
 
 import (
-	"bufio"
-	"fmt"
 	"io"
-	"os"
-
-	"github.com/brianbroderick/lantern/pkg/sql/evaluator"
-	"github.com/brianbroderick/lantern/pkg/sql/lexer"
-	"github.com/brianbroderick/lantern/pkg/sql/parser"
 )
 
 // REPL stands for Read Eval Print Loop. i.e., console
 
 func StartEval(in io.Reader, out io.Writer) {
-	scanner := bufio.NewScanner(in)
+	// scanner := bufio.NewScanner(in)
 
-	for {
-		fmt.Fprintf(out, PROMPT)
+	// for {
+	// 	fmt.Fprintf(out, PROMPT)
 
-		scanned := scanner.Scan()
-		if !scanned {
-			return
-		}
-		line := scanner.Text()
+	// 	scanned := scanner.Scan()
+	// 	if !scanned {
+	// 		return
+	// 	}
+	// 	line := scanner.Text()
 
-		if line == "exit" {
-			fmt.Fprintln(out, "Bye!")
-			os.Exit(0)
-		}
+	// 	if line == "exit" {
+	// 		fmt.Fprintln(out, "Bye!")
+	// 		os.Exit(0)
+	// 	}
 
-		l := lexer.New(line)
-		p := parser.New(l)
+	// 	l := lexer.New(line)
+	// 	p := parser.New(l)
 
-		program := p.ParseProgram()
-		if len(p.Errors()) != 0 {
-			printParserErrors(out, p.Errors())
-			continue
-		}
-		evaluated := evaluator.Eval(program, nil)
-		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
-		}
-	}
+	// 	program := p.ParseProgram()
+	// 	if len(p.Errors()) != 0 {
+	// 		printParserErrors(out, p.Errors())
+	// 		continue
+	// 	}
+	// 	evaluated := evaluator.Eval(program, nil)
+	// 	if evaluated != nil {
+	// 		io.WriteString(out, evaluated.Inspect())
+	// 		io.WriteString(out, "\n")
+	// 	}
+	// }
 }
