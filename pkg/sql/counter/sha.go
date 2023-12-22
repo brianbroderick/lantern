@@ -1,4 +1,4 @@
-package evaluator
+package counter
 
 import (
 	"crypto/sha1"
