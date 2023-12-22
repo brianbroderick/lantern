@@ -2,6 +2,7 @@ package counter
 
 import (
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
+	"github.com/brianbroderick/lantern/pkg/sql/logit"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
 )
 
@@ -53,6 +54,9 @@ func (q *Queries) ProcessQuery(query string, duration float64) bool {
 	program := p.ParseProgram()
 
 	if len(p.Errors()) > 0 {
+		for _, msg := range p.Errors() {
+			logit.Append("counter_error", msg)
+		}
 		return false
 	}
 
