@@ -11,12 +11,13 @@ import (
 // The counter package parses SQL queries and returns a count of the number of times each query is executed.
 
 type Queries struct {
-	Queries map[string]Query // the key is the sha of the query
+	Queries map[string]*Query // the key is the sha of the query
 }
 
 type Query struct {
 	Sha           string // unique sha of the query
-	Query         string // the original query
+	OriginalQuery string // the original query
+	MaskedQuery   string // the query with parameters masked
 	TotalCount    int64  // the number of times the query was executed
 	TotalDuration int64  // the total duration of all executions of the query in microseconds
 }
@@ -24,34 +25,13 @@ type Query struct {
 // NewQueries creates a new Queries struct
 func NewQueries() *Queries {
 	return &Queries{
-		Queries: make(map[string]Query),
-	}
-}
-
-// AddQuery adds a query to the Queries struct
-func (q *Queries) AddQuery(query string, duration int64) {
-	sha := ShaQuery(query)
-
-	if _, ok := q.Queries[sha]; !ok {
-		q.Queries[sha] = Query{
-			Sha:           sha,
-			Query:         query,
-			TotalCount:    1,
-			TotalDuration: duration,
-		}
-	} else {
-		q.Queries[sha] = Query{
-			Sha:           sha,
-			Query:         query,
-			TotalCount:    q.Queries[sha].TotalCount + 1,
-			TotalDuration: q.Queries[sha].TotalDuration + duration,
-		}
+		Queries: make(map[string]*Query),
 	}
 }
 
 // ProcessQuery processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Queries) ProcessQuery(query string, duration int64) bool {
-	l := lexer.New(query)
+func (q *Queries) ProcessQuery(input string, duration int64) bool {
+	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
@@ -65,10 +45,28 @@ func (q *Queries) ProcessQuery(query string, duration int64) bool {
 	for _, stmt := range program.Statements {
 		output := stmt.String(true) // maskParams = true, i.e. replace all values with $1, $2, etc.
 
-		q.AddQuery(output, duration)
+		q.addQuery(input, output, duration)
 	}
 
 	return true
+}
+
+// addQuery adds a query to the Queries struct
+func (q *Queries) addQuery(input, output string, duration int64) {
+	sha := ShaQuery(output)
+
+	if _, ok := q.Queries[sha]; !ok {
+		q.Queries[sha] = &Query{
+			Sha:           sha,
+			OriginalQuery: input,
+			MaskedQuery:   output,
+			TotalCount:    1,
+			TotalDuration: duration,
+		}
+	} else {
+		q.Queries[sha].TotalCount++
+		q.Queries[sha].TotalDuration += duration
+	}
 }
 
 func (q *Queries) Stats() []string {
