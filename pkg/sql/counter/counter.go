@@ -18,7 +18,7 @@ type Query struct {
 	Sha           string // unique sha of the query
 	Query         string // the original query
 	TotalCount    int64  // the number of times the query was executed
-	TotalDuration int64  // the total duration of all executions of the query in milliseconds
+	TotalDuration int64  // the total duration of all executions of the query in microseconds
 }
 
 // NewQueries creates a new Queries struct
