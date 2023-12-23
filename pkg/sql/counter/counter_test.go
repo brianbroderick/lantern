@@ -15,11 +15,11 @@ func TestProcessQuery(t *testing.T) {
 	tests := []struct {
 		input    string
 		output   string
-		duration float64
+		duration int64
 		sha      string
 	}{
-		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = $1));", 0.01, "913df750171f1aa8b2a6a40c94efe629545f21d3"},
-		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = $1));", 0.01, "913df750171f1aa8b2a6a40c94efe629545f21d3"},
+		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = $1));", 3, "913df750171f1aa8b2a6a40c94efe629545f21d3"},
+		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = $1));", 5, "913df750171f1aa8b2a6a40c94efe629545f21d3"},
 	}
 
 	for _, tt := range tests {
@@ -29,10 +29,10 @@ func TestProcessQuery(t *testing.T) {
 	t2 := time.Now()
 
 	assert.Equal(t, 1, len(queries.Queries))
-	assert.Equal(t, 2, queries.Queries["913df750171f1aa8b2a6a40c94efe629545f21d3"].TotalCount)
-	assert.Equal(t, 0.02, queries.Queries["913df750171f1aa8b2a6a40c94efe629545f21d3"].TotalDuration)
+	assert.Equal(t, int64(2), queries.Queries["913df750171f1aa8b2a6a40c94efe629545f21d3"].TotalCount)
+	assert.Equal(t, int64(8), queries.Queries["913df750171f1aa8b2a6a40c94efe629545f21d3"].TotalDuration)
 
 	timeDiff := t2.Sub(t1)
 	avg := timeDiff / time.Duration(len(tests))
-	fmt.Printf("TestShaQuery, Elapsed Time: %s, Avg per query: %s\n", timeDiff, avg)
+	fmt.Printf("TestProcessQuery, Elapsed Time: %s, Avg per query: %s\n", timeDiff, avg)
 }

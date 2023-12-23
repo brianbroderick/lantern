@@ -1,6 +1,8 @@
 package counter
 
 import (
+	"fmt"
+
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/logit"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
@@ -13,10 +15,10 @@ type Queries struct {
 }
 
 type Query struct {
-	Sha           string  // unique sha of the query
-	Query         string  // the original query
-	TotalCount    int     // the number of times the query was executed
-	TotalDuration float64 // the total duration of all executions of the query
+	Sha           string // unique sha of the query
+	Query         string // the original query
+	TotalCount    int64  // the number of times the query was executed
+	TotalDuration int64  // the total duration of all executions of the query in milliseconds
 }
 
 // NewQueries creates a new Queries struct
@@ -27,7 +29,7 @@ func NewQueries() *Queries {
 }
 
 // AddQuery adds a query to the Queries struct
-func (q *Queries) AddQuery(query string, duration float64) {
+func (q *Queries) AddQuery(query string, duration int64) {
 	sha := ShaQuery(query)
 
 	if _, ok := q.Queries[sha]; !ok {
@@ -48,7 +50,7 @@ func (q *Queries) AddQuery(query string, duration float64) {
 }
 
 // ProcessQuery processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Queries) ProcessQuery(query string, duration float64) bool {
+func (q *Queries) ProcessQuery(query string, duration int64) bool {
 	l := lexer.New(query)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -67,4 +69,12 @@ func (q *Queries) ProcessQuery(query string, duration float64) bool {
 	}
 
 	return true
+}
+
+func (q *Queries) Stats() []string {
+	stats := make([]string, 0)
+
+	stats = append(stats, fmt.Sprintf("Number of unique queries: %d", len(q.Queries)))
+
+	return stats
 }
