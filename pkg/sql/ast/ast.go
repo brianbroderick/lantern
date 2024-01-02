@@ -14,6 +14,7 @@ import (
 type Node interface {
 	TokenLiteral() string
 	String(maskParams bool) string // maskParams is used to mask integers and strings in the output with a $%ed.
+	Command() token.TokenType
 }
 
 // All statement nodes implement this
@@ -21,7 +22,6 @@ type Statement interface {
 	Node
 	statementNode()
 	Inspect(maskParams bool) string
-	Command() token.TokenType
 }
 
 // All expression nodes implement this
@@ -73,9 +73,7 @@ type ExpressionStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-// TODO: This is a hack to get around the fact that the parser is not returning a token for the expression.
-// TODO: Add Command() to expressions too.
-func (x *ExpressionStatement) Command() token.TokenType { return token.EXPRESSION_STATEMENT }
+func (x *ExpressionStatement) Command() token.TokenType { return x.Expression.Command() }
 func (x *ExpressionStatement) statementNode()           {}
 func (x *ExpressionStatement) TokenLiteral() string     { return x.Token.Lit }
 func (x *ExpressionStatement) String(maskParams bool) string {
@@ -95,8 +93,9 @@ type SimpleIdentifier struct {
 	Cast  Expression  `json:"cast,omitempty"`
 }
 
-func (x *SimpleIdentifier) expressionNode()      {}
-func (x *SimpleIdentifier) TokenLiteral() string { return x.Token.Lit }
+func (x *SimpleIdentifier) Command() token.TokenType { return x.Token.Type }
+func (x *SimpleIdentifier) expressionNode()          {}
+func (x *SimpleIdentifier) TokenLiteral() string     { return x.Token.Lit }
 func (x *SimpleIdentifier) String(maskParams bool) string {
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast.String(maskParams)))
@@ -114,8 +113,9 @@ type Identifier struct {
 	Cast  Expression   `json:"cast,omitempty"`
 }
 
-func (x *Identifier) expressionNode()      {}
-func (x *Identifier) TokenLiteral() string { return x.Token.Lit }
+func (x *Identifier) Command() token.TokenType { return x.Token.Type }
+func (x *Identifier) expressionNode()          {}
+func (x *Identifier) TokenLiteral() string     { return x.Token.Lit }
 func (x *Identifier) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -144,6 +144,7 @@ type Boolean struct {
 	Cast  Expression
 }
 
+func (x *Boolean) Command() token.TokenType      { return x.Token.Type }
 func (x *Boolean) expressionNode()               {}
 func (x *Boolean) TokenLiteral() string          { return x.Token.Lit }
 func (x *Boolean) String(maskParams bool) string { return x.Token.Upper }
@@ -156,8 +157,9 @@ type Null struct {
 	Cast  Expression
 }
 
-func (x *Null) expressionNode()      {}
-func (x *Null) TokenLiteral() string { return x.Token.Lit }
+func (x *Null) Command() token.TokenType { return x.Token.Type }
+func (x *Null) expressionNode()          {}
+func (x *Null) TokenLiteral() string     { return x.Token.Lit }
 func (x *Null) String(maskParams bool) string {
 	literal := x.Token.Upper
 	if x.Cast != nil {
@@ -174,8 +176,9 @@ type Unknown struct {
 	Cast  Expression
 }
 
-func (x *Unknown) expressionNode()      {}
-func (x *Unknown) TokenLiteral() string { return x.Token.Lit }
+func (x *Unknown) Command() token.TokenType { return x.Token.Type }
+func (x *Unknown) expressionNode()          {}
+func (x *Unknown) TokenLiteral() string     { return x.Token.Lit }
 func (x *Unknown) String(maskParams bool) string {
 	literal := x.Token.Upper
 	if x.Cast != nil {
@@ -194,8 +197,9 @@ type Infinity struct {
 	Cast  Expression
 }
 
-func (x *Infinity) expressionNode()      {}
-func (x *Infinity) TokenLiteral() string { return "∞" }
+func (x *Infinity) Command() token.TokenType { return x.Token.Type }
+func (x *Infinity) expressionNode()          {}
+func (x *Infinity) TokenLiteral() string     { return "∞" }
 func (x *Infinity) String(maskParams bool) string {
 	return ""
 }
@@ -210,8 +214,9 @@ type IntegerLiteral struct {
 	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
-func (x *IntegerLiteral) expressionNode()      {}
-func (x *IntegerLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *IntegerLiteral) Command() token.TokenType { return x.Token.Type }
+func (x *IntegerLiteral) expressionNode()          {}
+func (x *IntegerLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *IntegerLiteral) String(maskParams bool) string {
 	literal := x.Token.Lit
 	if maskParams {
@@ -233,8 +238,9 @@ type FloatLiteral struct {
 	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
-func (x *FloatLiteral) expressionNode()      {}
-func (x *FloatLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *FloatLiteral) Command() token.TokenType { return x.Token.Type }
+func (x *FloatLiteral) expressionNode()          {}
+func (x *FloatLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *FloatLiteral) String(maskParams bool) string {
 	literal := x.Token.Lit
 	if maskParams {
@@ -254,8 +260,9 @@ type KeywordExpression struct {
 	Cast  Expression  `json:"cast,omitempty"`
 }
 
-func (x *KeywordExpression) expressionNode()      {}
-func (x *KeywordExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *KeywordExpression) Command() token.TokenType { return x.Token.Type }
+func (x *KeywordExpression) expressionNode()          {}
+func (x *KeywordExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *KeywordExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Token.Upper)
@@ -277,8 +284,9 @@ type PrefixExpression struct {
 	Cast     Expression  `json:"cast,omitempty"`
 }
 
-func (x *PrefixExpression) expressionNode()      {}
-func (x *PrefixExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *PrefixExpression) Command() token.TokenType { return x.Token.Type }
+func (x *PrefixExpression) expressionNode()          {}
+func (x *PrefixExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *PrefixExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -307,8 +315,9 @@ type PrefixKeywordExpression struct {
 	Cast     Expression  `json:"cast,omitempty"`
 }
 
-func (x *PrefixKeywordExpression) expressionNode()      {}
-func (x *PrefixKeywordExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *PrefixKeywordExpression) Command() token.TokenType { return x.Token.Type }
+func (x *PrefixKeywordExpression) expressionNode()          {}
+func (x *PrefixKeywordExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *PrefixKeywordExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -338,8 +347,9 @@ type InfixExpression struct {
 	Cast     Expression  `json:"cast,omitempty"`
 }
 
-func (x *InfixExpression) expressionNode()      {}
-func (x *InfixExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *InfixExpression) Command() token.TokenType { return x.Token.Type }
+func (x *InfixExpression) expressionNode()          {}
+func (x *InfixExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *InfixExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -371,8 +381,9 @@ type GroupedExpression struct {
 	Cast     Expression   `json:"cast,omitempty"`
 }
 
-func (x *GroupedExpression) expressionNode()      {}
-func (x *GroupedExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *GroupedExpression) Command() token.TokenType { return x.Token.Type }
+func (x *GroupedExpression) expressionNode()          {}
+func (x *GroupedExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *GroupedExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -409,8 +420,9 @@ type CallExpression struct {
 	Cast      Expression   `json:"cast,omitempty"`
 }
 
-func (x *CallExpression) expressionNode()      {}
-func (x *CallExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *CallExpression) Command() token.TokenType { return x.Token.Type }
+func (x *CallExpression) expressionNode()          {}
+func (x *CallExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *CallExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -448,8 +460,9 @@ type StringLiteral struct {
 	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
-func (x *StringLiteral) expressionNode()      {}
-func (x *StringLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *StringLiteral) Command() token.TokenType { return x.Token.Type }
+func (x *StringLiteral) expressionNode()          {}
+func (x *StringLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *StringLiteral) String(maskParams bool) string {
 	literal := strings.Replace(x.Token.Lit, "'", "''", -1)
 	if maskParams {
@@ -471,8 +484,9 @@ type EscapeStringLiteral struct {
 	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
-func (x *EscapeStringLiteral) expressionNode()      {}
-func (x *EscapeStringLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *EscapeStringLiteral) Command() token.TokenType { return x.Token.Type }
+func (x *EscapeStringLiteral) expressionNode()          {}
+func (x *EscapeStringLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *EscapeStringLiteral) String(maskParams bool) string {
 	literal := x.Token.Lit
 	if maskParams {
@@ -494,8 +508,9 @@ type ArrayLiteral struct {
 	Cast     Expression   `json:"cast,omitempty"`
 }
 
-func (x *ArrayLiteral) expressionNode()      {}
-func (x *ArrayLiteral) TokenLiteral() string { return x.Token.Lit }
+func (x *ArrayLiteral) Command() token.TokenType { return x.Token.Type }
+func (x *ArrayLiteral) expressionNode()          {}
+func (x *ArrayLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *ArrayLiteral) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -530,8 +545,9 @@ type IndexExpression struct {
 	Cast  Expression  `json:"cast,omitempty"`
 }
 
-func (x *IndexExpression) expressionNode()      {}
-func (x *IndexExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *IndexExpression) Command() token.TokenType { return x.Token.Type }
+func (x *IndexExpression) expressionNode()          {}
+func (x *IndexExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *IndexExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -558,8 +574,9 @@ type IntervalExpression struct {
 	Cast  Expression  `json:"cast,omitempty"`
 }
 
-func (x *IntervalExpression) expressionNode()      {}
-func (x *IntervalExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *IntervalExpression) Command() token.TokenType { return x.Token.Type }
+func (x *IntervalExpression) expressionNode()          {}
+func (x *IntervalExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *IntervalExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -584,8 +601,9 @@ type IllegalExpression struct {
 	Cast  Expression  `json:"cast,omitempty"`
 }
 
-func (x *IllegalExpression) expressionNode()      {}
-func (x *IllegalExpression) TokenLiteral() string { return x.Token.Upper }
+func (x *IllegalExpression) Command() token.TokenType { return x.Token.Type }
+func (x *IllegalExpression) expressionNode()          {}
+func (x *IllegalExpression) TokenLiteral() string     { return x.Token.Upper }
 func (x *IllegalExpression) String(maskParams bool) string {
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast.String(maskParams)))

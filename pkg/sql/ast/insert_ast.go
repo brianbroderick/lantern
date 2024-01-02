@@ -49,8 +49,9 @@ type InsertExpression struct {
 	Cast           Expression     `json:"cast,omitempty"`
 }
 
-func (x *InsertExpression) expressionNode()      {}
-func (x *InsertExpression) TokenLiteral() string { return x.Token.Upper }
+func (x *InsertExpression) Command() token.TokenType { return x.Token.Type }
+func (x *InsertExpression) expressionNode()          {}
+func (x *InsertExpression) TokenLiteral() string     { return x.Token.Upper }
 func (x *InsertExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }

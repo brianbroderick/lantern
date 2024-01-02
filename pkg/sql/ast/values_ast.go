@@ -12,8 +12,9 @@ type ValuesExpression struct {
 	Cast   Expression     `json:"cast,omitempty"`
 }
 
-func (x *ValuesExpression) expressionNode()      {}
-func (x *ValuesExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *ValuesExpression) Command() token.TokenType { return x.Token.Type }
+func (x *ValuesExpression) expressionNode()          {}
+func (x *ValuesExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *ValuesExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }

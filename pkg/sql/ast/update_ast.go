@@ -44,8 +44,9 @@ type UpdateExpression struct {
 	Cast      Expression   `json:"cast,omitempty"`
 }
 
-func (x *UpdateExpression) expressionNode()      {}
-func (x *UpdateExpression) TokenLiteral() string { return x.Token.Upper }
+func (x *UpdateExpression) Command() token.TokenType { return x.Token.Type }
+func (x *UpdateExpression) expressionNode()          {}
+func (x *UpdateExpression) TokenLiteral() string     { return x.Token.Upper }
 func (x *UpdateExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }

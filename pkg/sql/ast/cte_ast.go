@@ -43,8 +43,9 @@ type CTEExpression struct {
 	Cast      Expression   `json:"cast,omitempty"`
 }
 
-func (x *CTEExpression) expressionNode()      {}
-func (x *CTEExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *CTEExpression) Command() token.TokenType { return x.Token.Type }
+func (x *CTEExpression) expressionNode()          {}
+func (x *CTEExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *CTEExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -85,8 +86,9 @@ type CTEAuxiliaryExpression struct {
 	Cast         Expression  `json:"cast,omitempty"`
 }
 
-func (x *CTEAuxiliaryExpression) expressionNode()      {}
-func (x *CTEAuxiliaryExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *CTEAuxiliaryExpression) Command() token.TokenType { return x.Token.Type }
+func (x *CTEAuxiliaryExpression) expressionNode()          {}
+func (x *CTEAuxiliaryExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *CTEAuxiliaryExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Name.String(maskParams))

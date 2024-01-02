@@ -15,37 +15,38 @@ type CaseExpression struct {
 	Cast        Expression             `json:"cast,omitempty"`
 }
 
-func (ce *CaseExpression) expressionNode()      {}
-func (ce *CaseExpression) TokenLiteral() string { return ce.Token.Lit }
-func (ce *CaseExpression) String(maskParams bool) string {
+func (x *CaseExpression) Command() token.TokenType { return x.Token.Type }
+func (x *CaseExpression) expressionNode()          {}
+func (x *CaseExpression) TokenLiteral() string     { return x.Token.Lit }
+func (x *CaseExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
 	out.WriteString("CASE")
 
-	if ce.Expression != nil {
+	if x.Expression != nil {
 		out.WriteString(" ")
-		out.WriteString(ce.Expression.String(maskParams))
+		out.WriteString(x.Expression.String(maskParams))
 	}
 
-	for _, c := range ce.Conditions {
+	for _, c := range x.Conditions {
 		out.WriteString(c.String(maskParams))
 	}
 
-	if ce.Alternative != nil {
+	if x.Alternative != nil {
 		out.WriteString(" ELSE ")
-		out.WriteString(ce.Alternative.String(maskParams))
+		out.WriteString(x.Alternative.String(maskParams))
 	}
 	out.WriteString(" END")
 
-	if ce.Cast != nil {
+	if x.Cast != nil {
 		out.WriteString("::")
-		out.WriteString(strings.ToUpper(ce.Cast.String(maskParams)))
+		out.WriteString(strings.ToUpper(x.Cast.String(maskParams)))
 	}
 
 	return out.String()
 }
-func (ce *CaseExpression) SetCast(cast Expression) {
-	ce.Cast = cast
+func (x *CaseExpression) SetCast(cast Expression) {
+	x.Cast = cast
 }
 
 type ConditionExpression struct {
@@ -55,8 +56,9 @@ type ConditionExpression struct {
 	Cast        Expression  `json:"cast,omitempty"`
 }
 
-func (x *ConditionExpression) expressionNode()      {}
-func (x *ConditionExpression) TokenLiteral() string { return x.Token.Lit }
+func (x *ConditionExpression) Command() token.TokenType { return x.Token.Type }
+func (x *ConditionExpression) expressionNode()          {}
+func (x *ConditionExpression) TokenLiteral() string     { return x.Token.Lit }
 func (x *ConditionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
