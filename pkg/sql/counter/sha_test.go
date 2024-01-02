@@ -21,6 +21,7 @@ func TestShaQuery(t *testing.T) {
 	}{
 		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = $1));", "913df750171f1aa8b2a6a40c94efe629545f21d3"},
 		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = $1));", "913df750171f1aa8b2a6a40c94efe629545f21d3"},
+		{"DROP TABLE IF EXISTS listing;", "(DROP TABLE IF EXISTS listing);", "da66725b4ceb14a317abd3ccb5beec320c482f5d"},
 	}
 
 	for _, tt := range tests {

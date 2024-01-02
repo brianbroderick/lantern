@@ -31,8 +31,8 @@ const (
 	COMMENT
 	NIL
 
-	// Statements that are not keywords
-	EXPRESSION_STATEMENT
+	// Used by the parser to indicate the start of the program
+	PROGRAM
 
 	literalBeg   // Literals
 	IDENT        // identity: add, foobar, x, y, my_var, ...
@@ -256,7 +256,7 @@ var Tokens = [...]string{
 	COMMENT: "COMMENT",
 	NIL:     "NIL",
 
-	EXPRESSION_STATEMENT: "EXPRESSION_STATEMENT",
+	PROGRAM: "PROGRAM",
 
 	IDENT:        "IDENT",
 	INT:          "INTEGER",

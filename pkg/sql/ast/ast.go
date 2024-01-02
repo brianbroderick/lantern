@@ -35,6 +35,7 @@ type Program struct {
 	Statements []Statement `json:"statements,omitempty"`
 }
 
+func (p *Program) Command() token.TokenType { return token.PROGRAM }
 func (p *Program) TokenLiteral() string {
 	if len(p.Statements) > 0 {
 		return p.Statements[0].TokenLiteral()

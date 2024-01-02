@@ -1,11 +1,10 @@
 package counter
 
 import (
-	"fmt"
-
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/logit"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 // The counter package parses SQL queries and returns a count of the number of times each query is executed.
@@ -33,14 +32,14 @@ func (q *Queries) ProcessQuery(input string, duration int64) bool {
 	for _, stmt := range program.Statements {
 		output := stmt.String(true) // maskParams = true, i.e. replace all values with $1, $2, etc.
 
-		q.addQuery(input, output, duration)
+		q.addQuery(input, output, duration, stmt.Command())
 	}
 
 	return true
 }
 
 // addQuery adds a query to the Queries struct
-func (q *Queries) addQuery(input, output string, duration int64) {
+func (q *Queries) addQuery(input, output string, duration int64, command token.TokenType) {
 	sha := ShaQuery(output)
 
 	if _, ok := q.Queries[sha]; !ok {
@@ -50,17 +49,10 @@ func (q *Queries) addQuery(input, output string, duration int64) {
 			MaskedQuery:   output,
 			TotalCount:    1,
 			TotalDuration: duration,
+			Command:       command,
 		}
 	} else {
 		q.Queries[sha].TotalCount++
 		q.Queries[sha].TotalDuration += duration
 	}
-}
-
-func (q *Queries) Stats() []string {
-	stats := make([]string, 0)
-
-	stats = append(stats, fmt.Sprintf("Number of unique queries: %d", len(q.Queries)))
-
-	return stats
 }
