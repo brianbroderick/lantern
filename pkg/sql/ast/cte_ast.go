@@ -18,8 +18,9 @@ type CTEStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-func (s *CTEStatement) statementNode()       {}
-func (s *CTEStatement) TokenLiteral() string { return s.Token.Lit }
+func (s *CTEStatement) Command() token.TokenType { return s.Token.Type }
+func (s *CTEStatement) statementNode()           {}
+func (s *CTEStatement) TokenLiteral() string     { return s.Token.Lit }
 func (s *CTEStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(s.Expression.String(maskParams))

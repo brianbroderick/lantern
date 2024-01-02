@@ -31,6 +31,9 @@ const (
 	COMMENT
 	NIL
 
+	// Statements that are not keywords
+	EXPRESSION_STATEMENT
+
 	literalBeg   // Literals
 	IDENT        // identity: add, foobar, x, y, my_var, ...
 	INT          // 12345
@@ -252,6 +255,8 @@ var Tokens = [...]string{
 	WS:      "WS",
 	COMMENT: "COMMENT",
 	NIL:     "NIL",
+
+	EXPRESSION_STATEMENT: "EXPRESSION_STATEMENT",
 
 	IDENT:        "IDENT",
 	INT:          "INTEGER",

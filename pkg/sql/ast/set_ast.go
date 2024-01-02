@@ -16,8 +16,9 @@ type SetStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-func (s *SetStatement) statementNode()       {}
-func (s *SetStatement) TokenLiteral() string { return s.Token.Upper }
+func (s *SetStatement) Command() token.TokenType { return s.Token.Type }
+func (s *SetStatement) statementNode()           {}
+func (s *SetStatement) TokenLiteral() string     { return s.Token.Upper }
 func (s *SetStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 

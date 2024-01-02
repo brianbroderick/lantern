@@ -13,8 +13,9 @@ type UpdateStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-func (s *UpdateStatement) statementNode()       {}
-func (s *UpdateStatement) TokenLiteral() string { return s.Token.Upper }
+func (s *UpdateStatement) Command() token.TokenType { return s.Token.Type }
+func (s *UpdateStatement) statementNode()           {}
+func (s *UpdateStatement) TokenLiteral() string     { return s.Token.Upper }
 func (s *UpdateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(s.Expression.String(maskParams))

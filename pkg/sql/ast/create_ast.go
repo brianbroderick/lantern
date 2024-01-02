@@ -26,8 +26,9 @@ type CreateStatement struct {
 	Expression   Expression  `json:"expression,omitempty"`   // the expression to create the object
 }
 
-func (x *CreateStatement) statementNode()       {}
-func (x *CreateStatement) TokenLiteral() string { return x.Token.Lit }
+func (x *CreateStatement) Command() token.TokenType { return x.Token.Type }
+func (x *CreateStatement) statementNode()           {}
+func (x *CreateStatement) TokenLiteral() string     { return x.Token.Lit }
 func (x *CreateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(CREATE ")

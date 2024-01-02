@@ -14,8 +14,9 @@ type SelectStatement struct {
 	Expressions []Expression `json:"expressions,omitempty"` // a select statement may consist of multiple expressions such as the with clause in a CTE along with the primary select expression
 }
 
-func (s *SelectStatement) statementNode()       {}
-func (s *SelectStatement) TokenLiteral() string { return s.Token.Upper }
+func (s *SelectStatement) Command() token.TokenType { return s.Token.Type }
+func (s *SelectStatement) statementNode()           {}
+func (s *SelectStatement) TokenLiteral() string     { return s.Token.Upper }
 func (s *SelectStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 

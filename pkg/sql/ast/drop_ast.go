@@ -17,8 +17,9 @@ type DropStatement struct {
 	Options string       `json:"options,omitempty"`
 }
 
-func (x *DropStatement) statementNode()       {}
-func (x *DropStatement) TokenLiteral() string { return x.Token.Lit }
+func (x *DropStatement) Command() token.TokenType { return x.Token.Type }
+func (x *DropStatement) statementNode()           {}
+func (x *DropStatement) TokenLiteral() string     { return x.Token.Lit }
 func (x *DropStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 

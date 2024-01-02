@@ -21,6 +21,7 @@ type Statement interface {
 	Node
 	statementNode()
 	Inspect(maskParams bool) string
+	Command() token.TokenType
 }
 
 // All expression nodes implement this
@@ -28,7 +29,6 @@ type Expression interface {
 	Node
 	expressionNode()
 	SetCast(cast Expression)
-	// Resolve(obj Expression) error
 }
 
 type Program struct {
@@ -59,6 +59,7 @@ func (p *Program) Inspect(maskParams bool) string {
 	for i, s := range p.Statements {
 		out.WriteString(fmt.Sprintf("Statement %d:\n", i+1))
 		out.WriteString(s.Inspect(maskParams))
+		out.WriteString("\n")
 	}
 
 	return out.String()
@@ -72,8 +73,11 @@ type ExpressionStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-func (x *ExpressionStatement) statementNode()       {}
-func (x *ExpressionStatement) TokenLiteral() string { return x.Token.Lit }
+// TODO: This is a hack to get around the fact that the parser is not returning a token for the expression.
+// TODO: Add Command() to expressions too.
+func (x *ExpressionStatement) Command() token.TokenType { return token.EXPRESSION_STATEMENT }
+func (x *ExpressionStatement) statementNode()           {}
+func (x *ExpressionStatement) TokenLiteral() string     { return x.Token.Lit }
 func (x *ExpressionStatement) String(maskParams bool) string {
 	if x.Expression != nil {
 		return x.Expression.String(maskParams)
