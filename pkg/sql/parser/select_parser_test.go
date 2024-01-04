@@ -401,6 +401,9 @@ func TestMaskParams(t *testing.T) {
 		{"select id from users where id = 42 and customer_id > 74;", 1, "(SELECT id FROM users WHERE ((id = $1) AND (customer_id > $2)));"},
 		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = '$1'));"},
 		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = '$1'));"},
+		{"select id from users where name != 'brian'", 1, "(SELECT id FROM users WHERE (name != '$1'));"},
+		{"select id from users where name like 'brian%'", 1, "(SELECT id FROM users WHERE (name LIKE '$1'));"},
+		{"select id from users where name not like 'brian%'", 1, "(SELECT id FROM users WHERE (name NOT LIKE '$1'));"},
 
 		// Select: combined clauses
 		{"select id from users where id = 42 group by id, name", 1, "(SELECT id FROM users WHERE (id = $1) GROUP BY id, name);"},
