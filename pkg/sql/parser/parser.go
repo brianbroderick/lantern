@@ -473,6 +473,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
 		program.Statements = append(program.Statements, stmt)
+		p.paramOffset = 0 // reset this to zero so the next query will start at $1
 
 		p.nextToken()
 	}
