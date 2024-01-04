@@ -140,22 +140,33 @@ func (x *Identifier) SetCast(cast Expression) {
 }
 
 type Boolean struct {
-	Token token.Token
-	Value bool
-	Cast  Expression
+	Token       token.Token `json:"token,omitempty"`
+	Value       bool        `json:"value,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
+	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
-func (x *Boolean) Command() token.TokenType      { return x.Token.Type }
-func (x *Boolean) expressionNode()               {}
-func (x *Boolean) TokenLiteral() string          { return x.Token.Lit }
-func (x *Boolean) String(maskParams bool) string { return x.Token.Upper }
+func (x *Boolean) Command() token.TokenType { return x.Token.Type }
+func (x *Boolean) expressionNode()          {}
+func (x *Boolean) TokenLiteral() string     { return x.Token.Lit }
+func (x *Boolean) String(maskParams bool) string {
+	literal := x.Token.Upper
+	if maskParams {
+		literal = fmt.Sprintf("$%d", x.ParamOffset)
+	}
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
+	}
+	return literal
+}
 func (x *Boolean) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
 type Null struct {
-	Token token.Token
-	Cast  Expression
+	Token       token.Token `json:"token,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
+	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
 func (x *Null) Command() token.TokenType { return x.Token.Type }
@@ -163,6 +174,9 @@ func (x *Null) expressionNode()          {}
 func (x *Null) TokenLiteral() string     { return x.Token.Lit }
 func (x *Null) String(maskParams bool) string {
 	literal := x.Token.Upper
+	if maskParams {
+		literal = fmt.Sprintf("$%d", x.ParamOffset)
+	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}
@@ -173,8 +187,9 @@ func (x *Null) SetCast(cast Expression) {
 }
 
 type Unknown struct {
-	Token token.Token
-	Cast  Expression
+	Token       token.Token `json:"token,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
+	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
 func (x *Unknown) Command() token.TokenType { return x.Token.Type }
@@ -182,6 +197,9 @@ func (x *Unknown) expressionNode()          {}
 func (x *Unknown) TokenLiteral() string     { return x.Token.Lit }
 func (x *Unknown) String(maskParams bool) string {
 	literal := x.Token.Upper
+	if maskParams {
+		literal = fmt.Sprintf("$%d", x.ParamOffset)
+	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
 	}

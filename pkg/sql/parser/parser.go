@@ -779,13 +779,16 @@ func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseBoolean() ast.Expression {
 	defer p.untrace(p.trace("parseBoolean"))
 
-	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
+	p.paramOffset++
+
+	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE), ParamOffset: p.paramOffset}
 }
 
 func (p *Parser) parseNull() ast.Expression {
 	defer p.untrace(p.trace("parseNull"))
 
-	x := &ast.Null{Token: p.curToken}
+	p.paramOffset++
+	x := &ast.Null{Token: p.curToken, ParamOffset: p.paramOffset}
 
 	// This is why all expressions must have a SetCast method
 	if p.peekTokenIs(token.DOUBLECOLON) {
@@ -799,7 +802,8 @@ func (p *Parser) parseNull() ast.Expression {
 func (p *Parser) parseUnknown() ast.Expression {
 	defer p.untrace(p.trace("parseUnknown"))
 
-	x := &ast.Unknown{Token: p.curToken}
+	p.paramOffset++
+	x := &ast.Unknown{Token: p.curToken, ParamOffset: p.paramOffset}
 
 	// This is why all expressions must have a SetCast method
 	if p.peekTokenIs(token.DOUBLECOLON) {

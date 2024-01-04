@@ -430,8 +430,23 @@ func TestMaskParams(t *testing.T) {
 		{"select c from users order by c fetch first 10 rows with ties;", 1, "(SELECT c FROM users ORDER BY c FETCH NEXT $1 ROWS WITH TIES);"},
 
 		// Select: IN clause
-		{"select id from users where id IN ('7','8','9','14');", 1, "(SELECT id FROM users WHERE id IN ('$1', '$2', '$3', '$4'));"},
-		{"select id from users where id IN ('17','21','34','48') AND name = 'brian';", 1, "(SELECT id FROM users WHERE (id IN ('$1', '$2', '$3', '$4') AND (name = '$5')));"},
+		{"select id from users where id IN ('7','8','9','14');", 1, "(SELECT id FROM users WHERE id IN ('$1'));"},
+		{"select id from users where id IN ('17','21','34','48') AND name = 'brian';", 1, "(SELECT id FROM users WHERE (id IN ('$1') AND (name = '$5')));"},
+
+		// Select: IS
+		// Note: both the IS expression and the boolean, null, etc. advance the parameter index.
+		// This will cause the parameter index to be off by one for the second parameter.
+		// But this is ok because it squashes both positive and negative values into a single parameter.
+		{"select id from users where id IS NULL;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS NOT NULL;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS TRUE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS NOT TRUE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS FALSE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS NOT FALSE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS UNKNOWN;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS NOT UNKNOWN;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS distinct from xid;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS not distinct from xid;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
 
 		// Select: Cast literals
 		{"select '100'::integer from a;", 1, "(SELECT '$1'::INTEGER FROM a);"},

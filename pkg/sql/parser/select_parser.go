@@ -754,7 +754,8 @@ func (p *Parser) parseTrimExpression() ast.Expression {
 func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
 	defer p.untrace(p.trace("parseIsExpression"))
 
-	x := &ast.IsExpression{Token: p.curToken, Left: left}
+	p.paramOffset++
+	x := &ast.IsExpression{Token: p.curToken, Left: left, ParamOffset: p.paramOffset}
 	precedence := p.curPrecedence()
 	p.nextToken()
 

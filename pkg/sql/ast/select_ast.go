@@ -565,12 +565,17 @@ func (x *InExpression) String(maskParams bool) string {
 
 	out.WriteString("(")
 	oneLess := len(x.Right) - 1
+
 	for i, e := range x.Right {
 		out.WriteString(e.String(maskParams))
+		if maskParams {
+			break
+		}
 		if i < oneLess {
 			out.WriteString(", ")
 		}
 	}
+
 	out.WriteString(")")
 
 	if x.Cast != nil {
@@ -644,12 +649,13 @@ func (x *WhereExpression) SetCast(cast Expression) {
 }
 
 type IsExpression struct {
-	Token    token.Token `json:"token,omitempty"` // the token.CAST token
-	Left     Expression  `json:"left,omitempty"`
-	Not      bool        `json:"not,omitempty"`
-	Distinct bool        `json:"distinct,omitempty"`
-	Right    Expression  `json:"right,omitempty"`
-	Cast     Expression  `json:"cast,omitempty"`
+	Token       token.Token `json:"token,omitempty"` // the token.CAST token
+	Left        Expression  `json:"left,omitempty"`
+	Not         bool        `json:"not,omitempty"`
+	Distinct    bool        `json:"distinct,omitempty"`
+	Right       Expression  `json:"right,omitempty"`
+	Cast        Expression  `json:"cast,omitempty"`
+	ParamOffset int         `json:"param_offset,omitempty"`
 }
 
 func (x *IsExpression) Command() token.TokenType { return x.Token.Type }
@@ -662,14 +668,18 @@ func (x *IsExpression) String(maskParams bool) string {
 
 	out.WriteString(" IS ")
 
-	if x.Not {
-		out.WriteString("NOT ")
-	}
-	if x.Distinct {
-		out.WriteString("DISTINCT FROM ")
-	}
-	if x.Right != nil {
-		out.WriteString(x.Right.String(maskParams))
+	if maskParams {
+		out.WriteString("$" + fmt.Sprintf("%d", x.ParamOffset))
+	} else {
+		if x.Not {
+			out.WriteString("NOT ")
+		}
+		if x.Distinct {
+			out.WriteString("DISTINCT FROM ")
+		}
+		if x.Right != nil {
+			out.WriteString(x.Right.String(maskParams))
+		}
 	}
 	out.WriteString(")")
 
