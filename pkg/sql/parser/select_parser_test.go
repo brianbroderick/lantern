@@ -382,6 +382,15 @@ func TestSubSelects(t *testing.T) {
 	}
 }
 
+// TestMaskParams tests that the maskParams flag works as expected.
+// The purpose of masking parameters is to make it easier to total up the number of the same query.
+// It is not intended to be used to convert into a prepared statement.
+// Lantern returns a ? instead of how Postgres currently returns $1, $2, etc. because I'm squashing lists down to a single parameter.
+// The problem is when query contains a list along with addtional parameters, the additional parameter's number would be different depending on
+// the number of items in the list.
+// For example: select id from users where id in (1,2,3,4) and name = 'brian'; would be (SELECT id FROM users WHERE (id IN ($1)) AND (name = '$5'));
+// The $5 is a problem because it would be different if there is a different count in the IN clause.
+
 func TestMaskParams(t *testing.T) {
 	maskParams := true
 
@@ -392,83 +401,83 @@ func TestMaskParams(t *testing.T) {
 	}{
 		// Some Selects
 		{"select id from users;", 1, "(SELECT id FROM users);"},
-		{"select 1 * (2 + (6 / 4)) - 9 from users;", 1, "(SELECT (($1 * ($2 + ($3 / $4))) - $5) FROM users);"},
-		{"select id from customers join addresses on id = customer_id where id = 46;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = $1));"},
+		{"select 1 * (2 + (6 / 4)) - 9 from users;", 1, "(SELECT ((? * (? + (? / ?))) - ?) FROM users);"},
+		{"select id from customers join addresses on id = customer_id where id = 46;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = ?));"},
 
 		// Select: where clause
-		{"select id from users where id = 42;", 1, "(SELECT id FROM users WHERE (id = $1));"},
-		{"select id from users where id = 42 and customer_id = 74", 1, "(SELECT id FROM users WHERE ((id = $1) AND (customer_id = $2)));"},
-		{"select id from users where id = 42 and customer_id > 74;", 1, "(SELECT id FROM users WHERE ((id = $1) AND (customer_id > $2)));"},
-		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = '$1'));"},
-		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = '$1'));"},
-		{"select id from users where name != 'brian'", 1, "(SELECT id FROM users WHERE (name != '$1'));"},
-		{"select id from users where name like 'brian%'", 1, "(SELECT id FROM users WHERE (name LIKE '$1'));"},
-		{"select id from users where name not like 'brian%'", 1, "(SELECT id FROM users WHERE (name NOT LIKE '$1'));"},
+		{"select id from users where id = 42;", 1, "(SELECT id FROM users WHERE (id = ?));"},
+		{"select id from users where id = 42 and customer_id = 74", 1, "(SELECT id FROM users WHERE ((id = ?) AND (customer_id = ?)));"},
+		{"select id from users where id = 42 and customer_id > 74;", 1, "(SELECT id FROM users WHERE ((id = ?) AND (customer_id > ?)));"},
+		{"select id from users where name = 'brian';", 1, "(SELECT id FROM users WHERE (name = '?'));"},
+		{"select id from users where name = 'brian'", 1, "(SELECT id FROM users WHERE (name = '?'));"},
+		{"select id from users where name != 'brian'", 1, "(SELECT id FROM users WHERE (name != '?'));"},
+		{"select id from users where name like 'brian%'", 1, "(SELECT id FROM users WHERE (name LIKE '?'));"},
+		{"select id from users where name not like 'brian%'", 1, "(SELECT id FROM users WHERE (name NOT LIKE '?'));"},
 
 		// Select: combined clauses
-		{"select id from users where id = 42 group by id, name", 1, "(SELECT id FROM users WHERE (id = $1) GROUP BY id, name);"},
-		{"select id from customers join addresses on id = customer_id where id = 46 group by id;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = $1) GROUP BY id);"},
+		{"select id from users where id = 42 group by id, name", 1, "(SELECT id FROM users WHERE (id = ?) GROUP BY id, name);"},
+		{"select id from customers join addresses on id = customer_id where id = 46 group by id;", 2, "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) WHERE (id = ?) GROUP BY id);"},
 
 		// Select: having clause
-		{"select id from users group by id having id > 2;", 1, "(SELECT id FROM users GROUP BY id HAVING (id > $1));"},
-		{"select id from users group by id having id > 2 and name = 'frodo';", 1, "(SELECT id FROM users GROUP BY id HAVING ((id > $1) AND (name = '$2')));"},
+		{"select id from users group by id having id > 2;", 1, "(SELECT id FROM users GROUP BY id HAVING (id > ?));"},
+		{"select id from users group by id having id > 2 and name = 'frodo';", 1, "(SELECT id FROM users GROUP BY id HAVING ((id > ?) AND (name = '?')));"},
 
 		// Select: limit
-		{"select id from users limit 10;", 1, "(SELECT id FROM users LIMIT $1);"},
+		{"select id from users limit 10;", 1, "(SELECT id FROM users LIMIT ?);"},
 		{"select id from users limit ALL;", 1, "(SELECT id FROM users LIMIT ALL);"},
 
 		// Select: offset
-		{"select id from users limit ALL offset 10;", 1, "(SELECT id FROM users LIMIT ALL OFFSET $1);"},
-		{"select id from users limit 10 offset 10;", 1, "(SELECT id FROM users LIMIT $1 OFFSET $2);"},
-		{"select id from users limit 10 offset 1 ROW", 1, "(SELECT id FROM users LIMIT $1 OFFSET $2);"},
-		{"select id from users limit 10 offset 2 ROWS;", 1, "(SELECT id FROM users LIMIT $1 OFFSET $2);"},
+		{"select id from users limit ALL offset 10;", 1, "(SELECT id FROM users LIMIT ALL OFFSET ?);"},
+		{"select id from users limit 10 offset 10;", 1, "(SELECT id FROM users LIMIT ? OFFSET ?);"},
+		{"select id from users limit 10 offset 1 ROW", 1, "(SELECT id FROM users LIMIT ? OFFSET ?);"},
+		{"select id from users limit 10 offset 2 ROWS;", 1, "(SELECT id FROM users LIMIT ? OFFSET ?);"},
 
 		// Select: combined order by, limit, offset
-		{"select id from users order by id desc limit 10 offset 10;", 1, "(SELECT id FROM users ORDER BY id DESC LIMIT $1 OFFSET $2);"},
-		{"select id from users order by id desc nulls last limit 10 offset 10;", 1, "(SELECT id FROM users ORDER BY id DESC NULLS LAST LIMIT $1 OFFSET $2);"},
+		{"select id from users order by id desc limit 10 offset 10;", 1, "(SELECT id FROM users ORDER BY id DESC LIMIT ? OFFSET ?);"},
+		{"select id from users order by id desc nulls last limit 10 offset 10;", 1, "(SELECT id FROM users ORDER BY id DESC NULLS LAST LIMIT ? OFFSET ?);"},
 
 		// Select: fetch
-		{"select a from users order by a fetch first row only;", 1, "(SELECT a FROM users ORDER BY a FETCH NEXT $1 ROWS ONLY);"},
-		{"select b from users order by b fetch first 3 rows only;", 1, "(SELECT b FROM users ORDER BY b FETCH NEXT $1 ROWS ONLY);"},
-		{"select c from users order by c fetch first 10 rows with ties;", 1, "(SELECT c FROM users ORDER BY c FETCH NEXT $1 ROWS WITH TIES);"},
+		{"select a from users order by a fetch first row only;", 1, "(SELECT a FROM users ORDER BY a FETCH NEXT ? ROWS ONLY);"},
+		{"select b from users order by b fetch first 3 rows only;", 1, "(SELECT b FROM users ORDER BY b FETCH NEXT ? ROWS ONLY);"},
+		{"select c from users order by c fetch first 10 rows with ties;", 1, "(SELECT c FROM users ORDER BY c FETCH NEXT ? ROWS WITH TIES);"},
 
 		// Select: IN clause
-		{"select id from users where id IN ('7','8','9','14');", 1, "(SELECT id FROM users WHERE id IN ('$1'));"},
-		{"select id from users where id IN ('17','21','34','48') AND name = 'brian';", 1, "(SELECT id FROM users WHERE (id IN ('$1') AND (name = '$5')));"},
+		{"select id from users where id IN ('7','8','9','14');", 1, "(SELECT id FROM users WHERE id IN ('?'));"},
+		{"select id from users where id IN ('17','21','34','48') AND name = 'brian';", 1, "(SELECT id FROM users WHERE (id IN ('?') AND (name = '?')));"},
 
 		// Select: IS
 		// Note: both the IS expression and the boolean, null, etc. advance the parameter index.
 		// This will cause the parameter index to be off by one for the second parameter.
 		// But this is ok because it squashes both positive and negative values into a single parameter.
-		{"select id from users where id IS NULL;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS NOT NULL;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS TRUE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS NOT TRUE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS FALSE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS NOT FALSE;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS UNKNOWN;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS NOT UNKNOWN;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS distinct from xid;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
-		{"select id from users where id IS not distinct from xid;", 1, "(SELECT id FROM users WHERE (id IS $1));"},
+		{"select id from users where id IS NULL;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS NOT NULL;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS TRUE;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS NOT TRUE;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS FALSE;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS NOT FALSE;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS UNKNOWN;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS NOT UNKNOWN;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS distinct from xid;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
+		{"select id from users where id IS not distinct from xid;", 1, "(SELECT id FROM users WHERE (id IS ?));"},
 
 		// Select: Cast literals
-		{"select '100'::integer from a;", 1, "(SELECT '$1'::INTEGER FROM a);"},
-		{"select 100::text from a;", 1, "(SELECT $1::TEXT FROM a);"},
+		{"select '100'::integer from a;", 1, "(SELECT '?'::INTEGER FROM a);"},
+		{"select 100::text from a;", 1, "(SELECT ?::TEXT FROM a);"},
 		{"select a::text from b;", 1, "(SELECT a::TEXT FROM b);"},
 
 		// Select: JSONB
-		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> '$1') = '$2'));"},
-		{"select id from users where data->>'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data ->> '$1') = '$2'));"},
-		{"select id from users where data#>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #> '$1') = '$2'));"},
-		{"select id from users where data#>>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '$1') = '$2'));"},
-		{"select id from users where data#>>'{name,first}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '$1') = '$2'));"},
-		{"select id from users where data#>>'{name,first}' = 'brian' and data#>>'{name,last}' = 'broderick';", 1, "(SELECT id FROM users WHERE (((data #>> '$1') = '$2') AND ((data #>> '$3') = '$4')));"},
-		{"select * from users where metadata @> '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata @> '$1'));"},
-		{"select * from users where metadata <@ '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata <@ '$1'));"},
-		{"select * from users where metadata ? '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ? '$1'));"},
-		{"select * from users where metadata ?| '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?| '$1'));"},
-		{"select * from users where metadata ?& '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?& '$1'));"},
-		{"select * from users where metadata || '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata || '$1'));"},
+		{"select id from users where data->'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data -> '?') = '?'));"},
+		{"select id from users where data->>'name' = 'brian';", 1, "(SELECT id FROM users WHERE ((data ->> '?') = '?'));"},
+		{"select id from users where data#>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #> '?') = '?'));"},
+		{"select id from users where data#>>'{name}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '?') = '?'));"},
+		{"select id from users where data#>>'{name,first}' = 'brian';", 1, "(SELECT id FROM users WHERE ((data #>> '?') = '?'));"},
+		{"select id from users where data#>>'{name,first}' = 'brian' and data#>>'{name,last}' = 'broderick';", 1, "(SELECT id FROM users WHERE (((data #>> '?') = '?') AND ((data #>> '?') = '?')));"},
+		{"select * from users where metadata @> '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata @> '?'));"},
+		{"select * from users where metadata <@ '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata <@ '?'));"},
+		{"select * from users where metadata ? '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ? '?'));"},
+		{"select * from users where metadata ?| '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?| '?'));"},
+		{"select * from users where metadata ?& '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata ?& '?'));"},
+		{"select * from users where metadata || '{\"age\": 42}';", 1, "(SELECT * FROM users WHERE (metadata || '?'));"},
 	}
 
 	for _, tt := range tests {

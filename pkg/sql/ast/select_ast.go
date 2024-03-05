@@ -669,7 +669,8 @@ func (x *IsExpression) String(maskParams bool) string {
 	out.WriteString(" IS ")
 
 	if maskParams {
-		out.WriteString("$" + fmt.Sprintf("%d", x.ParamOffset))
+		// out.WriteString("$" + fmt.Sprintf("%d", x.ParamOffset))
+		out.WriteString("?")
 	} else {
 		if x.Not {
 			out.WriteString("NOT ")

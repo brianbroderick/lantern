@@ -152,7 +152,8 @@ func (x *Boolean) TokenLiteral() string     { return x.Token.Lit }
 func (x *Boolean) String(maskParams bool) string {
 	literal := x.Token.Upper
 	if maskParams {
-		literal = fmt.Sprintf("$%d", x.ParamOffset)
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
 	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
@@ -175,7 +176,8 @@ func (x *Null) TokenLiteral() string     { return x.Token.Lit }
 func (x *Null) String(maskParams bool) string {
 	literal := x.Token.Upper
 	if maskParams {
-		literal = fmt.Sprintf("$%d", x.ParamOffset)
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
 	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
@@ -198,7 +200,8 @@ func (x *Unknown) TokenLiteral() string     { return x.Token.Lit }
 func (x *Unknown) String(maskParams bool) string {
 	literal := x.Token.Upper
 	if maskParams {
-		literal = fmt.Sprintf("$%d", x.ParamOffset)
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
 	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
@@ -239,7 +242,8 @@ func (x *IntegerLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *IntegerLiteral) String(maskParams bool) string {
 	literal := x.Token.Lit
 	if maskParams {
-		literal = fmt.Sprintf("$%d", x.ParamOffset)
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
 	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
@@ -263,7 +267,8 @@ func (x *FloatLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *FloatLiteral) String(maskParams bool) string {
 	literal := x.Token.Lit
 	if maskParams {
-		literal = fmt.Sprintf("$%d", x.ParamOffset)
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
 	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
@@ -485,7 +490,8 @@ func (x *StringLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *StringLiteral) String(maskParams bool) string {
 	literal := strings.Replace(x.Token.Lit, "'", "''", -1)
 	if maskParams {
-		literal = fmt.Sprintf("$%d", x.ParamOffset)
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
 	}
 	if x.Cast != nil {
 		return fmt.Sprintf("'%s'::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
@@ -509,7 +515,8 @@ func (x *EscapeStringLiteral) TokenLiteral() string     { return x.Token.Lit }
 func (x *EscapeStringLiteral) String(maskParams bool) string {
 	literal := x.Token.Lit
 	if maskParams {
-		literal = fmt.Sprintf("$%d", x.ParamOffset)
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
 	}
 	if x.Cast != nil {
 		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
