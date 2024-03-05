@@ -19,8 +19,6 @@ func TestMultipleStatements(t *testing.T) {
 		output         string
 	}{
 
-		// {"select from users;", 1, "(SELECT FROM users);"},
-
 		// Multiple Statements
 		// left and right can be function names
 		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
@@ -286,6 +284,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select cast('100' as integer) from users", "(SELECT CAST('100' AS integer) FROM users);"},                            // cast
 		{"select id from account_triggers at", "(SELECT id FROM account_triggers at);"},
 		{"select u.id from users u join account_triggers at on at.user_id = u.id;", "(SELECT u.id FROM users u INNER JOIN account_triggers at ON (at.user_id = u.id));"},
+		{"select v as values from users;", "(SELECT v AS values FROM users);"},
+		{`select e.details->>'values' as values	from events;`, "(SELECT (e.details ->> 'values') AS values FROM events);"},
 
 		// Less common expressions
 		{"select current_date - INTERVAL '7 DAY' from users;", "(SELECT (current_date - INTERVAL '7 DAY') FROM users);"},
@@ -307,6 +307,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select '2020-01-01' at time zone 'MDT' from my_table;", "(SELECT ('2020-01-01' AT TIME ZONE 'MDT') FROM my_table);"},
 		{"select '2020-01-01' + 'MDT' from my_table;", "(SELECT ('2020-01-01' + 'MDT') FROM my_table);"},
 		{"select id from my_table where my_date at time zone my_zone > '2001-01-01';", "(SELECT id FROM my_table WHERE ((my_date AT TIME ZONE my_zone) > '2001-01-01'));"},
+		{`select timestamp '2001-09-23';`, "(SELECT TIMESTAMP '2001-09-23');"},
+		{`select timestamp '2001-09-23' + interval '72 hours';`, "(SELECT (TIMESTAMP '2001-09-23' + INTERVAL '72 hours'));"},
 
 		// // Select with a CTE expression
 		{"select count(1) from (with my_list as (select i from generate_series(1,10) s(i)) select i from my_list where i > 5) as t;",

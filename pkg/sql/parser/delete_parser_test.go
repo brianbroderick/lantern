@@ -22,6 +22,8 @@ func TestDeleteStatements(t *testing.T) {
 		{"delete from films where id = 42 returning *;", "(DELETE FROM films WHERE (id = 42) RETURNING *);"},
 		{"delete from films where id = 42 returning id, title;", "(DELETE FROM films WHERE (id = 42) RETURNING id, title);"},
 		{"delete from films where producer_id IN (select id from producers where name = 'foo');", "(DELETE FROM films WHERE producer_id IN ((SELECT id FROM producers WHERE (name = 'foo'))));"},
+		{"delete from transactions t", "(DELETE FROM transactions AS t);"},
+		{"delete from transactions t using events e, users u", "(DELETE FROM transactions AS t USING events e, users u);"},
 	}
 
 	for _, tt := range tests {

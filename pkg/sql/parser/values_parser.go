@@ -15,6 +15,9 @@ func (p *Parser) parseValuesExpression() ast.Expression {
 			p.nextToken()
 			values := p.parseExpressionList([]token.TokenType{token.RPAREN})
 			x.Tuples = append(x.Tuples, values)
+		} else {
+			// A values expression is only when it's a function call
+			return &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
 		}
 	}
 

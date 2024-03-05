@@ -219,6 +219,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.CURRENT_USER, p.parseIdentifier)
 	p.registerPrefix(token.LEFT, p.parseIdentifier)
 	p.registerPrefix(token.RIGHT, p.parseIdentifier)
+	p.registerPrefix(token.ROW, p.parseIdentifier)
 
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)
@@ -340,7 +341,7 @@ func (p *Parser) nextToken() {
 func (p *Parser) advanceToken() (newToken token.Token, pos lexer.Pos) {
 	newToken, pos = p.l.Scan()
 	// Skip comments
-	if newToken.Type == token.COMMENT {
+	if newToken.Type == token.SQLCOMMENT {
 		newToken, pos = p.l.Scan()
 	}
 	return newToken, pos

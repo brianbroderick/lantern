@@ -54,7 +54,8 @@ func (p *Parser) parseDeleteExpression() ast.Expression {
 	if p.peekTokenIs(token.USING) {
 		p.nextToken()
 		p.nextToken()
-		x.Using = p.parseExpressionList([]token.TokenType{token.WHERE, token.RETURNING, token.SEMICOLON, token.EOF})
+		// x.Using = p.parseExpressionList([]token.TokenType{token.WHERE, token.RETURNING, token.SEMICOLON, token.EOF})
+		x.Using, x.TableAliases = p.parseTables()
 	}
 
 	if p.peekTokenIs(token.WHERE) {

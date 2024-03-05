@@ -31,15 +31,16 @@ func (s *DeleteStatement) Inspect(maskParams bool) string {
 }
 
 type DeleteExpression struct {
-	Token     token.Token  `json:"token,omitempty"` // the token.DELETE token
-	Only      bool         `json:"only,omitempty"`
-	Table     Expression   `json:"table,omitempty"`
-	Alias     Expression   `json:"alias,omitempty"`
-	Using     []Expression `json:"using,omitempty"`
-	Cursor    Expression   `json:"cursor,omitempty"`
-	Where     Expression   `json:"where,omitempty"` // TODO: handle WHERE CURRENT OF cursor_name
-	Returning []Expression `json:"returning,omitempty"`
-	Cast      Expression   `json:"cast,omitempty"`
+	Token        token.Token       `json:"token,omitempty"` // the token.DELETE token
+	Only         bool              `json:"only,omitempty"`
+	Table        Expression        `json:"table,omitempty"`
+	Alias        Expression        `json:"alias,omitempty"`
+	Using        []Expression      `json:"using,omitempty"`
+	Cursor       Expression        `json:"cursor,omitempty"`
+	Where        Expression        `json:"where,omitempty"` // TODO: handle WHERE CURRENT OF cursor_name
+	Returning    []Expression      `json:"returning,omitempty"`
+	Cast         Expression        `json:"cast,omitempty"`
+	TableAliases map[string]string `json:"-"` // map of table aliases
 }
 
 func (x *DeleteExpression) Command() token.TokenType { return x.Token.Type }
@@ -66,10 +67,7 @@ func (x *DeleteExpression) String(maskParams bool) string {
 
 	if len(x.Using) > 0 {
 		out.WriteString(" USING ")
-		for i, u := range x.Using {
-			if i > 0 {
-				out.WriteString(", ")
-			}
+		for _, u := range x.Using {
 			out.WriteString(u.String(maskParams))
 		}
 	}

@@ -431,6 +431,7 @@ func (x *WildcardLiteral) SetCast(cast Expression) {
 
 type TimestampExpression struct {
 	Token        token.Token `json:"token,omitempty"` // the token.TIMESTAMP token
+	Value        string      `json:"value,omitempty"`
 	WithTimeZone bool        `json:"with_time_zone,omitempty"`
 	Cast         Expression  `json:"cast,omitempty"`
 }
@@ -441,6 +442,10 @@ func (x *TimestampExpression) TokenLiteral() string     { return x.Token.Upper }
 func (x *TimestampExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Token.Upper)
+	if x.Value != "" {
+		out.WriteString(" '" + x.Value + "'")
+	}
+
 	if x.WithTimeZone {
 		out.WriteString(" WITH TIME ZONE")
 	}

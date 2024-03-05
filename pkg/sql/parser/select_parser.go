@@ -529,7 +529,9 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 		p.nextToken()
 	}
 
-	if p.peekTokenIs(token.IDENT) {
+	// fmt.Printf("parseColumn3: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x.String(false))
+
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.VALUES}) {
 		p.nextToken()
 
 		alias := &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}

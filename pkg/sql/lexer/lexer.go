@@ -60,7 +60,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 					break
 				}
 			}
-			tok = token.Token{Type: token.COMMENT}
+			tok = token.Token{Type: token.SQLCOMMENT}
 		} else {
 			tok = newToken(token.MINUS, l.ch)
 		}
@@ -174,7 +174,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 					}
 				}
 			}
-			tok = token.Token{Type: token.COMMENT}
+			tok = token.Token{Type: token.SQLCOMMENT}
 		} else {
 			tok = newToken(token.SLASH, l.ch)
 		}
