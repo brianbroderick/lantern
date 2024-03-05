@@ -109,7 +109,6 @@ var precedences = map[token.TokenType]int{
 // NOT logical negation
 // AND logical conjunction
 // OR logical disjunction
-
 type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(ast.Expression) ast.Expression
@@ -189,6 +188,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.SELECT, p.parseSelectExpression)
 	p.registerPrefix(token.INSERT, p.parseInsertExpression)
 	p.registerPrefix(token.UPDATE, p.parseUpdateExpression)
+	p.registerPrefix(token.DELETE, p.parseDeleteExpression)
 	p.registerPrefix(token.DISTINCT, p.parseDistinct)
 	p.registerPrefix(token.ALL, p.parseDistinct)
 	p.registerPrefix(token.CASE, p.parseCaseExpression)
@@ -501,6 +501,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseInsertStatement()
 	case token.UPDATE:
 		return p.parseUpdateStatement()
+	case token.DELETE:
+		return p.parseDeleteStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
