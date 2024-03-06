@@ -597,6 +597,7 @@ func (x *IndexExpression) SetCast(cast Expression) {
 type IntervalExpression struct {
 	Token token.Token `json:"token,omitempty"` // The interval token
 	Value Expression  `json:"value,omitempty"`
+	Unit  Expression  `json:"unit,omitempty"`
 	Cast  Expression  `json:"cast,omitempty"`
 }
 
@@ -608,6 +609,11 @@ func (x *IntervalExpression) String(maskParams bool) string {
 
 	out.WriteString("INTERVAL ")
 	out.WriteString(x.Value.String(maskParams))
+
+	if x.Unit != nil {
+		out.WriteString(" ")
+		out.WriteString(x.Unit.String(maskParams))
+	}
 
 	if x.Cast != nil {
 		out.WriteString("::")

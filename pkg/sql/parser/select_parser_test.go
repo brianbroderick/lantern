@@ -20,9 +20,23 @@ func TestMultipleStatements(t *testing.T) {
 	}{
 
 		// Multiple Statements
-		{`select set.* from server_event_types as set;`, 1, "(SELECT set.* FROM server_event_types set);"},
 
 		// left and right can be function names
+		{"select 1 from users where a = interval '1' year", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' YEAR));"},
+		{"select 1 from users where a = interval '1' month", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MONTH));"},
+		{"select 1 from users where a = interval '1' day", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY));"},
+		{"select 1 from users where a = interval '1' hour", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR));"},
+		{"select 1 from users where a = interval '1' minute", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MINUTE));"},
+		{"select 1 from users where a = interval '1' SECOND", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' SECOND));"},
+		{"select 1 from users where a = interval '1' year to month", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' YEAR TO MONTH));"},
+		{"select 1 from users where a = interval '1' day to hour", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO HOUR));"},
+		{"select 1 from users where a = interval '1' day to minute", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO MINUTE));"},
+		{"select 1 from users where a = interval '1' day to second", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO SECOND));"},
+		{"select 1 from users where a = interval '1' hour to minute", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR TO MINUTE));"},
+		{"select 1 from users where a = interval '1' hour to second", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR TO SECOND));"},
+		{"select 1 from users where a = interval '1' minute to second", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MINUTE TO SECOND));"},
+		// {"select id from users where id = 42 AND f.created_on <= '02/10/2024'::date + interval '1' day", 1, ""},
+		{"SELECT COUNT((f.id)) AS a_count, f.file_id as child_file_id FROM files f", 1, "(SELECT COUNT(f.id) AS a_count, f.file_id AS child_file_id FROM files f);"},
 		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
 	}
@@ -289,6 +303,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select u.id from users u join account_triggers at on at.user_id = u.id;", "(SELECT u.id FROM users u INNER JOIN account_triggers at ON (at.user_id = u.id));"},
 		{"select v as values from users;", "(SELECT v AS values FROM users);"},
 		{`select e.details->>'values' as values	from events;`, "(SELECT (e.details ->> 'values') AS values FROM events);"},
+		{`select set.* from server_event_types as set;`, "(SELECT set.* FROM server_event_types set);"},
 
 		// Less common expressions
 		{"select current_date - INTERVAL '7 DAY' from users;", "(SELECT (current_date - INTERVAL '7 DAY') FROM users);"},

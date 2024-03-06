@@ -975,6 +975,22 @@ func (p *Parser) parseIntervalExpression() ast.Expression {
 	p.nextToken()
 	interval.Value = &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Lit}
 
+	intervalOption := map[string]bool{"YEAR": true, "MONTH": true, "DAY": true, "HOUR": true, "MINUTE": true, "SECOND": true}
+
+	if p.peekTokenIs(token.IDENT) {
+		if _, ok := intervalOption[p.peekToken.Upper]; ok {
+			p.nextToken()
+			opt := p.curToken.Upper
+			if p.peekTokenIs(token.TO) {
+				p.nextToken()
+				p.nextToken()
+				opt += " TO " + p.curToken.Upper
+			}
+
+			interval.Unit = &ast.SimpleIdentifier{Token: p.curToken, Value: opt}
+		}
+	}
+
 	return interval
 }
 
