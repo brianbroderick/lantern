@@ -341,9 +341,17 @@ func (p *Parser) nextToken() {
 func (p *Parser) advanceToken() (newToken token.Token, pos lexer.Pos) {
 	newToken, pos = p.l.Scan()
 	// Skip comments
-	if newToken.Type == token.SQLCOMMENT {
+	iter := 0
+	for newToken.Type == token.SQLCOMMENT {
 		newToken, pos = p.l.Scan()
+		iter++
+		if iter > 50000 {
+			return token.Token{Type: token.ILLEGAL, Lit: "Infinite loop in COMMENT block"}, pos
+		}
 	}
+	// if newToken.Type == token.SQLCOMMENT {
+	// 	newToken, pos = p.l.Scan()
+	// }
 	return newToken, pos
 }
 

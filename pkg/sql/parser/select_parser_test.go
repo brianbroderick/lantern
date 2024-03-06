@@ -20,6 +20,7 @@ func TestMultipleStatements(t *testing.T) {
 	}{
 
 		// Multiple Statements
+
 		// left and right can be function names
 		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
@@ -318,6 +319,14 @@ func TestSingleSelectStatements(t *testing.T) {
 		{`select id as "my.id" from users u`, `(SELECT id AS "my.id" FROM users u);`},
 		{`select id as "my" from users u`, `(SELECT id AS "my" FROM users u);`},
 		{"select u . id from users u", "(SELECT u.id FROM users u);"}, // "no prefix parse function for DOT found at line 0 char 25"
+
+		// Comments
+		{`select *
+			-- id
+			-- name 
+				from users u
+				JOIN addresses a ON (u.id = a.user_id)
+				where id = 42;`, "(SELECT * FROM users u INNER JOIN addresses a ON (u.id = a.user_id) WHERE (id = 42));"}, // multiple single line comments
 	}
 
 	for _, tt := range tests {
