@@ -111,6 +111,8 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		tok = newToken(token.LBRACKET, l.ch)
 	case ']':
 		tok = newToken(token.RBRACKET, l.ch)
+	case '%':
+		tok = newToken(token.MODULO, l.ch)
 	case '.':
 		tok = newToken(token.DOT, l.ch)
 	case '|':

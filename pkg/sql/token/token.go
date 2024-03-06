@@ -50,6 +50,7 @@ const (
 	BANG     // !
 	ASTERISK // *
 	SLASH    // /
+	MODULO   // %
 
 	LT  // <
 	GT  // >
@@ -271,6 +272,7 @@ var Tokens = [...]string{
 	BANG:     "BANG",     // !
 	ASTERISK: "ASTERISK", // *
 	SLASH:    "SLASH",    // /
+	MODULO:   "MODULO",   // %
 
 	LT:  "LT",  // <
 	GT:  "GT",  // >

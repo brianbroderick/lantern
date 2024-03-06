@@ -222,7 +222,7 @@ func (p *Parser) parseFirstTable() (ast.Expression, string, string) {
 
 	// Do we have an alias
 	// if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
-	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.SET}) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.SET, token.LAST}) {
 		p.nextToken()
 		x.Alias = p.parseExpression(LOWEST)
 
@@ -306,7 +306,7 @@ func (p *Parser) parseTable() (ast.Expression, string, string) {
 
 	// Do we have an alias?
 	// if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
-	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.SET}) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.SET, token.LAST}) {
 		p.nextToken()
 		x.Alias = p.parseExpression(LOWEST)
 
@@ -534,7 +534,7 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 
 	// fmt.Printf("parseColumn3: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x.String(false))
 
-	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.VALUES, token.USER}) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.VALUES, token.USER, token.LAST, token.ORDER}) {
 		p.nextToken()
 
 		alias := &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
@@ -702,8 +702,14 @@ func (p *Parser) parseDoubleColonExpression() ast.Expression {
 	switch p.curToken.Type {
 	case token.TIMESTAMP:
 		x.Cast = p.parseTimestampExpression()
-	default: // Catch IDENT and INTERVALS
-		x.Cast = p.parseIdentifier()
+	default: // Catch IDENT, INTERVALS, and FUNCTIONS such as DECIMAL(12,2)
+		if p.curToken.Type == token.IDENT && p.peekToken.Type == token.LPAREN {
+			left := p.parseIdentifier()
+			p.nextToken()
+			x.Cast = p.parseCallExpression(left)
+		} else {
+			x.Cast = p.parseIdentifier()
+		}
 	}
 
 	return x

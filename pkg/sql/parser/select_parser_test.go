@@ -48,10 +48,11 @@ func TestSingleSelectStatements(t *testing.T) {
 		output string
 	}{
 		// Select: simple
-		{"select from users;", "(SELECT FROM users);"},                                                                                                                   // no column (useful for exists functions)
-		{"select id from users;", "(SELECT id FROM users);"},                                                                                                             // super basic select
-		{"select u.* from users u;", "(SELECT u.* FROM users u);"},                                                                                                       // check for a wildcard with a table alias
-		{"select 2*3 from users;", "(SELECT (2 * 3) FROM users);"},                                                                                                       // check that the asterisk is not treated as a wildcard
+		{"select from users;", "(SELECT FROM users);"},             // no column (useful for exists functions)
+		{"select id from users;", "(SELECT id FROM users);"},       // super basic select
+		{"select u.* from users u;", "(SELECT u.* FROM users u);"}, // check for a wildcard with a table alias
+		{"select 2*3 from users;", "(SELECT (2 * 3) FROM users);"},
+		{`select 2 % 4 from users;`, "(SELECT (2 % 4) FROM users);"},                                                                                                     // check that the asterisk is not treated as a wildcard
 		{"select +2 -3 from users;", "(SELECT ((+2) - 3) FROM users);"},                                                                                                  // PG allows + as a prefix operator
 		{"select -2 +3 from users;", "(SELECT ((-2) + 3) FROM users);"},                                                                                                  // Negative numbers
 		{`select "blah".id from blah`, `(SELECT "blah".id FROM blah);`},                                                                                                  // check for double quotes around the table name
@@ -230,6 +231,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select now()::timestamp from users;", "(SELECT now()::TIMESTAMP FROM users);"},
 		{"select ( junk_drawer->>'ids' )::INT[] from dashboards", "(SELECT (junk_drawer ->> 'ids')::INT[] FROM dashboards);"},
 		{"select end_date + '1 day' ::INTERVAL from some_dates;", "(SELECT (end_date + '1 day'::INTERVAL) FROM some_dates);"},
+		{`select CAST(u.depth AS DECIMAL(18, 2)) from users`, "(SELECT CAST(u.depth AS DECIMAL(18, 2)) FROM users);"},
 
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';", "(SELECT id FROM users WHERE ((data -> 'name') = 'brian'));"},
@@ -292,6 +294,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{`select set.* from server_event_types as set;`, "(SELECT set.* FROM server_event_types set);"},
 		{`select e.* from events e join server_event_types as set on (set.id = e.server_event_type_id);`, "(SELECT e.* FROM events e INNER JOIN server_event_types set ON (set.id = e.server_event_type_id));"},
 		{`select fname || lname as user from users;`, "(SELECT (fname || lname) AS user FROM users);"},
+		{`select 1 as order from users;`, "(SELECT 1 AS order FROM users);"},
 
 		// Less common expressions
 		{"select count(*) as unfiltered from generate_series(1,10) as s(i)", "(SELECT count(*) AS unfiltered FROM generate_series(1, 10) s(i));"},
