@@ -219,7 +219,7 @@ func (p *Parser) parseFirstTable() (ast.Expression, string, string) {
 
 	// Do we have an alias
 	// if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.AT}) {
-	if p.peekTokenIsOne([]token.TokenType{token.IDENT}) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.SET}) {
 		p.nextToken()
 		x.Alias = p.parseExpression(LOWEST)
 

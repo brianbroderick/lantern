@@ -220,6 +220,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.LEFT, p.parseIdentifier)
 	p.registerPrefix(token.RIGHT, p.parseIdentifier)
 	p.registerPrefix(token.ROW, p.parseIdentifier)
+	p.registerPrefix(token.SET, p.parseIdentifier)
 
 	// This might be doing the same thing as parseIdentifier. TODO: check this out
 	p.registerPrefix(token.ASTERISK, p.parseWildcardLiteral)

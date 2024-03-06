@@ -20,6 +20,7 @@ func TestMultipleStatements(t *testing.T) {
 	}{
 
 		// Multiple Statements
+		{`select set.* from server_event_types as set;`, 1, "(SELECT set.* FROM server_event_types set);"},
 
 		// left and right can be function names
 		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
@@ -182,6 +183,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select option_id, external_id from modules group by option_id, external_id having (option_id, external_id) IN ((1, 7), (2, 9))", "(SELECT option_id, external_id FROM modules GROUP BY option_id, external_id HAVING (option_id, external_id) IN ((1, 7), (2, 9)));"},
 		{"select position('b' IN 'brian') as foo from cars", "(SELECT position('b' IN ('brian')) AS foo FROM cars);"}, // in inside a function call
 		{"select count(1) from cars c left join models m ON ( position((c.key) in m.formula)<>0 )", "(SELECT count(1) FROM cars c LEFT JOIN models m ON (position(c.key IN (m.formula)) <> 0));"},
+		{"SELECT u.* from users u where u.id IN (42);", "(SELECT u.* FROM users u WHERE u.id IN (42));"},
 
 		// Select: LIKE operator
 		{"select id from users where name like 'brian';", "(SELECT id FROM users WHERE (name LIKE 'brian'));"},                                        // basic like
