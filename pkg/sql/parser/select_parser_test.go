@@ -291,6 +291,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{`select e.details->>'values' as values	from events;`, "(SELECT (e.details ->> 'values') AS values FROM events);"},
 		{`select set.* from server_event_types as set;`, "(SELECT set.* FROM server_event_types set);"},
 		{`select e.* from events e join server_event_types as set on (set.id = e.server_event_type_id);`, "(SELECT e.* FROM events e INNER JOIN server_event_types set ON (set.id = e.server_event_type_id));"},
+		{`select fname || lname as user from users;`, "(SELECT (fname || lname) AS user FROM users);"},
 
 		// Less common expressions
 		{"select count(*) as unfiltered from generate_series(1,10) as s(i)", "(SELECT count(*) AS unfiltered FROM generate_series(1, 10) s(i));"},

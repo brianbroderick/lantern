@@ -11,6 +11,9 @@ import (
 // If it's found, advance the token twice to skip past the clause token (from peek, to current, to next).
 // Otherwise, you'll get off by one errors and have a hard time figuring out why.
 
+// TODO: Convert token slices to maps for faster lookups, or possibly an AC Trie.
+// Handle all of the tokens that can be optionally used as an IDENT in aliases and column names.
+
 var defaultListSeparators = []token.TokenType{token.COMMA, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 
 func (p *Parser) parseSelectStatement() *ast.SelectStatement {
@@ -531,7 +534,7 @@ func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expressi
 
 	// fmt.Printf("parseColumn3: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x.String(false))
 
-	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.VALUES}) {
+	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.VALUES, token.USER}) {
 		p.nextToken()
 
 		alias := &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
