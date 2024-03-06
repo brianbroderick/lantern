@@ -22,20 +22,6 @@ func TestMultipleStatements(t *testing.T) {
 		// Multiple Statements
 
 		// left and right can be function names
-		{"select 1 from users where a = interval '1' year", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' YEAR));"},
-		{"select 1 from users where a = interval '1' month", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MONTH));"},
-		{"select 1 from users where a = interval '1' day", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY));"},
-		{"select 1 from users where a = interval '1' hour", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR));"},
-		{"select 1 from users where a = interval '1' minute", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MINUTE));"},
-		{"select 1 from users where a = interval '1' SECOND", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' SECOND));"},
-		{"select 1 from users where a = interval '1' year to month", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' YEAR TO MONTH));"},
-		{"select 1 from users where a = interval '1' day to hour", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO HOUR));"},
-		{"select 1 from users where a = interval '1' day to minute", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO MINUTE));"},
-		{"select 1 from users where a = interval '1' day to second", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO SECOND));"},
-		{"select 1 from users where a = interval '1' hour to minute", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR TO MINUTE));"},
-		{"select 1 from users where a = interval '1' hour to second", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR TO SECOND));"},
-		{"select 1 from users where a = interval '1' minute to second", 1, "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MINUTE TO SECOND));"},
-		// {"select id from users where id = 42 AND f.created_on <= '02/10/2024'::date + interval '1' day", 1, ""},
 		{"SELECT COUNT((f.id)) AS a_count, f.file_id as child_file_id FROM files f", 1, "(SELECT COUNT(f.id) AS a_count, f.file_id AS child_file_id FROM files f);"},
 		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
@@ -304,9 +290,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select v as values from users;", "(SELECT v AS values FROM users);"},
 		{`select e.details->>'values' as values	from events;`, "(SELECT (e.details ->> 'values') AS values FROM events);"},
 		{`select set.* from server_event_types as set;`, "(SELECT set.* FROM server_event_types set);"},
+		{`select e.* from events e join server_event_types as set on (set.id = e.server_event_type_id);`, "(SELECT e.* FROM events e INNER JOIN server_event_types set ON (set.id = e.server_event_type_id));"},
 
 		// Less common expressions
-		{"select current_date - INTERVAL '7 DAY' from users;", "(SELECT (current_date - INTERVAL '7 DAY') FROM users);"},
 		{"select count(*) as unfiltered from generate_series(1,10) as s(i)", "(SELECT count(*) AS unfiltered FROM generate_series(1, 10) s(i));"},
 		{"select COUNT(*) FILTER (WHERE i < 5) AS filtered from generate_series(1,10) s(i)", "(SELECT (COUNT(*) FILTER WHERE((i < 5))) AS filtered FROM generate_series(1, 10) s(i));"},
 		{"select trim(both 'x' from 'xTomxx') from users;", "(SELECT trim(BOTH 'x' FROM 'xTomxx') FROM users);"},
@@ -317,6 +303,22 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from extra where number ilike e'001';", "(SELECT id FROM extra WHERE (number ILIKE E'001'));"}, // escapestring of the form e'...'
 		{"select id from extra where number ilike E'%6%';", "(SELECT id FROM extra WHERE (number ILIKE E'%6%'));"}, // escapestring of the form E'...'
 		{"SELECT * FROM ( VALUES (41, 1), (42, 2), (43, 3), (44, 4), (45, 5), (46, 6) ) AS t ( id, type_id )", "(SELECT * FROM (VALUES (41, 1), (42, 2), (43, 3), (44, 4), (45, 5), (46, 6)) t(id, type_id));"},
+
+		// Intervals
+		{"select current_date - INTERVAL '7 DAY' from users;", "(SELECT (current_date - INTERVAL '7 DAY') FROM users);"},
+		{"select 1 from users where a = interval '1' year", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' YEAR));"},
+		{"select 1 from users where a = interval '1' month", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MONTH));"},
+		{"select 1 from users where a = interval '1' day", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY));"},
+		{"select 1 from users where a = interval '1' hour", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR));"},
+		{"select 1 from users where a = interval '1' minute", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MINUTE));"},
+		{"select 1 from users where a = interval '1' SECOND", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' SECOND));"},
+		{"select 1 from users where a = interval '1' year to month", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' YEAR TO MONTH));"},
+		{"select 1 from users where a = interval '1' day to hour", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO HOUR));"},
+		{"select 1 from users where a = interval '1' day to minute", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO MINUTE));"},
+		{"select 1 from users where a = interval '1' day to second", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' DAY TO SECOND));"},
+		{"select 1 from users where a = interval '1' hour to minute", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR TO MINUTE));"},
+		{"select 1 from users where a = interval '1' hour to second", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' HOUR TO SECOND));"},
+		{"select 1 from users where a = interval '1' minute to second", "(SELECT 1 FROM users WHERE (a = INTERVAL '1' MINUTE TO SECOND));"},
 
 		// Multi word keywords: AT TIME ZONE, and TIMESTAMP WITH TIME ZONE
 		{"select id from my_table where '2020-01-01' at time zone 'MDT' = '2023-01-01';", "(SELECT id FROM my_table WHERE (('2020-01-01' AT TIME ZONE 'MDT') = '2023-01-01'));"},
