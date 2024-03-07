@@ -23,6 +23,7 @@ func TestCreateStatements(t *testing.T) {
 		{"create INDEX idx_person_id ON temp_my_table( person_id );", "(CREATE INDEX idx_person_id ON temp_my_table(person_id));"},
 		{"CREATE INDEX idx_temp_person on pg_temp.people using btree ( account_id, person_id );", "(CREATE INDEX idx_temp_person ON (pg_temp.people USING btree(account_id, person_id)));"},
 		{"create temp table temp_my_table on commit drop as (select id from users);", "(CREATE TEMP TABLE temp_my_table ON COMMIT DROP AS (SELECT id FROM users));"},
+		{"create temp table temp_my_table( like my_reports );", "(CREATE TEMP TABLE temp_my_table((LIKE my_reports)));"},
 	}
 
 	for _, tt := range tests {
@@ -37,6 +38,36 @@ func TestCreateStatements(t *testing.T) {
 
 		_, ok := stmt.(*ast.CreateStatement)
 		assert.True(t, ok, "input: %s\nstmt is not *ast.CreateStatement. got=%T", tt.input, stmt)
+
+		output := program.String(maskParams)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
+		// fmt.Printf("output: %s\n", output)
+	}
+}
+
+func TestLikeExpressions(t *testing.T) {
+	maskParams := false
+
+	tests := []struct {
+		input  string
+		output string
+	}{
+		// Case Expressions
+		{"like my_reports", "(LIKE my_reports)"},
+	}
+
+	for _, tt := range tests {
+		// fmt.Printf("\ninput:  %s\n", tt.input)
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p, tt.input)
+
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.ExpressionStatement. got=%T", tt.input, stmt)
+
+		_, ok = stmt.Expression.(*ast.LikeExpression)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.LikeExpression. got=%T", tt.input, stmt)
 
 		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)

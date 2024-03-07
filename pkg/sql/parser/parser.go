@@ -129,6 +129,7 @@ const (
 	XLOCK
 	XNOT
 	XIN
+	XCREATE
 )
 
 // We may want to add the caller to the parser, to allow for context in conditions
@@ -193,6 +194,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.DISTINCT, p.parseDistinct)
 	p.registerPrefix(token.ALL, p.parseDistinct)
 	p.registerPrefix(token.CASE, p.parseCaseExpression)
+	p.registerPrefix(token.LIKE, p.parseLikeExpression)
 	p.registerPrefix(token.CAST, p.parseCastExpression)
 	p.registerPrefix(token.INTERVAL, p.parseIntervalExpression)
 	p.registerPrefix(token.WHERE, p.parseWhereExpression)
@@ -561,6 +563,8 @@ func (p *Parser) determineInfix(precedence int, leftExp ast.Expression) ast.Expr
 	switch p.context {
 	case XCALL: // Allow order by to denote an aggregate function
 		end = []token.TokenType{token.COMMA}
+	case XCREATE:
+		end = []token.TokenType{token.INCLUDING, token.EXCLUDING}
 	default:
 		end = []token.TokenType{token.COMMA, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 	}

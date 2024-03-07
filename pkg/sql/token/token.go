@@ -142,6 +142,7 @@ const (
 	END
 	EXCEPT
 	EXCLUDE
+	EXCLUDING
 	EXPONENTIATION
 	FALSE
 	FETCH
@@ -159,6 +160,7 @@ const (
 	HAVING
 	ILIKE
 	IN
+	INCLUDING
 	INITIALLY
 	INNER
 	INSERT
@@ -363,6 +365,7 @@ var Tokens = [...]string{
 	END:            "END",
 	EXCEPT:         "EXCEPT",
 	EXCLUDE:        "EXCLUDE",
+	EXCLUDING:      "EXCLUDING",
 	EXPONENTIATION: "EXPONENTIATION",
 	FALSE:          "FALSE",
 	FETCH:          "FETCH",
@@ -380,6 +383,7 @@ var Tokens = [...]string{
 	HAVING:         "HAVING",
 	ILIKE:          "ILIKE",
 	IN:             "IN",
+	INCLUDING:      "INCLUDING",
 	INITIALLY:      "INITIALLY",
 	INNER:          "INNER",
 	INSERT:         "INSERT",

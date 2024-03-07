@@ -5,6 +5,8 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
+// create temp table temp_my_table( like my_reports );
+
 func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 	// defer p.untrace(p.trace("parseCreateStatement"))
 
@@ -50,6 +52,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 	}
 
 	stmt.Name = p.parseExpression(LOWEST)
+
 	p.nextToken()
 
 	if p.curTokenIs(token.ON) {
@@ -80,11 +83,31 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 		p.nextToken()
 	}
 
-	stmt.Expression = p.parseExpression(LOWEST)
+	if !p.curTokenIs(token.SEMICOLON) {
+		stmt.Expression = p.parseExpression(LOWEST)
+	}
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseLikeExpression() ast.Expression {
+	// defer p.untrace(p.trace("parseLikeExpression"))
+
+	x := &ast.LikeExpression{Token: p.curToken}
+
+	if p.peekTokenIs(token.IDENT) {
+		p.nextToken()
+
+		context := p.context
+		p.setContext(XCREATE)         // sets the context for the parseLikeExpression function
+		defer p.resetContext(context) // reset to prior context
+
+		x.Table = p.parseExpression(LOWEST)
+	}
+
+	return x
 }
