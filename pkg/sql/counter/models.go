@@ -14,10 +14,10 @@ type Queries struct {
 type Query struct {
 	Sha           string          `json:"sha,omitempty"`            // unique sha of the query
 	Command       token.TokenType `json:"command,omitempty"`        // the type of query
-	OriginalQuery string          `json:"original_query,omitempty"` // the original query
-	MaskedQuery   string          `json:"masked_query,omitempty"`   // the query with parameters masked
 	TotalCount    int64           `json:"total_count,omitempty"`    // the number of times the query was executed
 	TotalDuration int64           `json:"total_duration,omitempty"` // the total duration of all executions of the query in microseconds
+	MaskedQuery   string          `json:"masked_query,omitempty"`   // the query with parameters masked
+	OriginalQuery string          `json:"original_query,omitempty"` // the original query
 }
 
 type QueryStats struct {

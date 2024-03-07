@@ -15,3 +15,14 @@ I’m reimagining Lantern as a tool to be more broadly used by DBAs and engineer
 While the original version focused on counting queries and their durations, I will extend it to look for other poor data patterns, such as the overuse of JSONB columns.
 
 If you have ideas for things you’d like to see, post a GitHub issue, and we can discuss it. 
+
+## DB Migrations:
+
+We're using https://github.com/golang-migrate/migrate to manage DB migrations, which are located in `/pkg/repo/migrations`
+
+To create a new migration run: `migrate create -ext sql -dir pkg/repo/migrations -seq <migration_name>`
+To run migrations: `migrate -database ${POSTGRESQL_URL} -path pkg/repo/migrations up`
+To rollback: `migrate -database ${POSTGRESQL_URL} -path pkg/repo/migrations down`
+
+PG tutorial: https://github.com/golang-migrate/migrate/blob/master/database/postgres/TUTORIAL.md
+Installing: https://github.com/golang-migrate/migrate/tree/master/cmd/migrate
