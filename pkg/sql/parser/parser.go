@@ -376,13 +376,12 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 
 // This is essentially an OR on curTokenIs
 func (p *Parser) curTokenIsOne(tokens []token.TokenType) bool {
-	found := false
 	for _, t := range tokens {
 		if p.curTokenIs(t) {
-			found = true
+			return true
 		}
 	}
-	return found
+	return false
 }
 
 // This is essentially !curTokenIsOne, but it can't match any token in the list
