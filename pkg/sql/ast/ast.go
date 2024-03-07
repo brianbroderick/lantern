@@ -123,7 +123,9 @@ func (x *Identifier) String(maskParams bool) string {
 	if len(x.Value) > 0 {
 		val := []string{}
 		for _, r := range x.Value {
-			val = append(val, r.String(maskParams))
+			if r != nil {
+				val = append(val, r.String(maskParams))
+			}
 		}
 		out.WriteString(strings.Join(val, "."))
 	}

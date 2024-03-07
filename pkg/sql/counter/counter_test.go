@@ -18,8 +18,8 @@ func TestProcessQuery(t *testing.T) {
 		duration int64
 		sha      string
 	}{
-		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = $1));", 3, "913df750171f1aa8b2a6a40c94efe629545f21d3"},
-		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = $1));", 5, "913df750171f1aa8b2a6a40c94efe629545f21d3"},
+		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = ?));", 3, "b90be791fd20b7fc4925c087456e73493496364d"},
+		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = ?));", 5, "b90be791fd20b7fc4925c087456e73493496364d"},
 	}
 
 	for _, tt := range tests {
@@ -29,8 +29,13 @@ func TestProcessQuery(t *testing.T) {
 	t2 := time.Now()
 
 	assert.Equal(t, 1, len(queries.Queries))
-	assert.Equal(t, int64(2), queries.Queries["913df750171f1aa8b2a6a40c94efe629545f21d3"].TotalCount)
-	assert.Equal(t, int64(8), queries.Queries["913df750171f1aa8b2a6a40c94efe629545f21d3"].TotalDuration)
+
+	if _, ok := queries.Queries["b90be791fd20b7fc4925c087456e73493496364d"]; !ok {
+		t.Fatalf("Expected to find sha in queries")
+	}
+
+	assert.Equal(t, int64(2), queries.Queries["b90be791fd20b7fc4925c087456e73493496364d"].TotalCount)
+	assert.Equal(t, int64(8), queries.Queries["b90be791fd20b7fc4925c087456e73493496364d"].TotalDuration)
 
 	timeDiff := t2.Sub(t1)
 	avg := timeDiff / time.Duration(len(tests))
