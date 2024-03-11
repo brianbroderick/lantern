@@ -20,7 +20,10 @@ If you have ideas for things you’d like to see, post a GitHub issue, and we ca
 
 We're using https://github.com/golang-migrate/migrate to manage DB migrations, which are located in `/pkg/repo/migrations`
 
-To create a new migration run: `migrate create -ext sql -dir pkg/repo/migrations -seq <migration_name>`
+To create a new migration run: `migrate create -ext sql -dir pkg/repo/migrations -format "20060102150405" <migration_name>`
+
+Note: the format specified in the example will print a timestamp that looks like YYYYMMDDHHMMSS. The numbers used in the format are significant (i.e. magic numbers). See https://pkg.go.dev/time#pkg-constants for examples of each. For example, the year in the format must be 2006, the month is always 01, etc. 
+
 To run migrations: `migrate -database ${POSTGRESQL_URL} -path pkg/repo/migrations up`
 To rollback: `migrate -database ${POSTGRESQL_URL} -path pkg/repo/migrations down`
 

@@ -73,7 +73,7 @@ func Conn() *sql.DB {
 		DBHost, DBPort, DBUser, DBName, DBPassword)
 
 	db, err := sql.Open("postgres", psqlInfo)
-	if hasErr("sql.Open", err) {
+	if HasErr("sql.Open", err) {
 		return nil
 	}
 
@@ -82,7 +82,7 @@ func Conn() *sql.DB {
 
 func Ping(db *sql.DB) {
 	err := db.Ping()
-	if hasErr("db.Ping", err) {
+	if HasErr("db.Ping", err) {
 		return
 	}
 }
@@ -91,7 +91,7 @@ func getCtx() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 86400*time.Second)
 }
 
-func hasErr(msg string, err error) bool {
+func HasErr(msg string, err error) bool {
 	if err != nil {
 		fmt.Printf("Message: %s\nHasErr: %s\n\n", msg, err.Error())
 		return true
