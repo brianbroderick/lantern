@@ -8,13 +8,13 @@ import (
 )
 
 type Resolver struct {
-	ast    *ast.Program
+	Ast    *ast.Program
 	errors []string
 }
 
-func New(program *ast.Program) *Resolver {
+func NewResolver(program *ast.Program) *Resolver {
 	return &Resolver{
-		ast:    program,
+		Ast:    program,
 		errors: []string{},
 	}
 }

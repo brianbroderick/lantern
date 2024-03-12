@@ -46,8 +46,8 @@ func TestResolveAlias(t *testing.T) {
 		p := parser.New(l)
 		program := p.ParseProgram()
 		env := object.NewEnvironment()
-		r := New(program)
-		r.Resolve(r.ast, env)
+		r := NewResolver(program)
+		r.Resolve(r.Ast, env)
 		checkResolveErrors(t, r, tt.input)
 
 		output := program.String(maskParams)
