@@ -63,7 +63,7 @@ func TestUUIDv5(t *testing.T) {
 		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 
-		uid := UuidQuery(output).String()
+		uid := UuidV5(output).String()
 		assert.Equal(t, tt.uid, uid, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.uid, uid)
 	}
 	t2 := time.Now()

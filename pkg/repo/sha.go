@@ -19,6 +19,10 @@ func ShaQuery(query string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func UuidQuery(query string) uuid.UUID {
-	return uuid.NewSHA1(UuidNamespace, []byte(query))
+func UuidV5(str string) uuid.UUID {
+	return uuid.NewSHA1(UuidNamespace, []byte(str))
+}
+
+func UuidString(query string) string {
+	return UuidV5(query).String()
 }

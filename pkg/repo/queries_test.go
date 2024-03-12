@@ -23,7 +23,7 @@ func TestProcessQuery(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assert.True(t, queries.ProcessQuery(tt.input, tt.duration))
+		assert.True(t, queries.ProcessQuery("testDB", tt.input, tt.duration))
 	}
 
 	t2 := time.Now()

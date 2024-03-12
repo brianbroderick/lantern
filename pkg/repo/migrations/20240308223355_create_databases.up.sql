@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS databases (
+   uid UUID PRIMARY KEY NOT NULL,   
+   name TEXT NOT NULL   
+);
