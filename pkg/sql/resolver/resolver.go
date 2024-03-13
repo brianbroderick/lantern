@@ -33,6 +33,8 @@ func (r *Resolver) Resolve(node ast.Node, env *object.Environment) {
 		r.Resolve(node.Expression, env)
 	case *ast.UpdateStatement:
 		r.Resolve(node.Expression, env)
+	case *ast.DeleteStatement:
+		r.Resolve(node.Expression, env)
 
 	// Expressions
 	case *ast.CTEExpression:
@@ -110,7 +112,11 @@ func (r *Resolver) Resolve(node ast.Node, env *object.Environment) {
 			r.Resolve(o, env)
 		}
 	case *ast.TableExpression:
-		// eventually we'll also remove the table alias
+		// remove the table alias from the environment
+		switch node.Table.(type) {
+		case *ast.Identifier, *ast.SimpleIdentifier:
+			node.Alias = nil
+		}
 		r.Resolve(node.JoinCondition, env)
 		r.Resolve(node.Table, env)
 	case *ast.LockExpression:
