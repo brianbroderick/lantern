@@ -1,4 +1,4 @@
-package resolver
+package extractor
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestResolveAlias(t *testing.T) {
+func TestExtractAlias(t *testing.T) {
 	maskParams := false
 	t1 := time.Now()
 
@@ -52,27 +52,27 @@ func TestResolveAlias(t *testing.T) {
 		p := parser.New(l)
 		program := p.ParseProgram()
 		env := object.NewEnvironment()
-		r := NewResolver(program)
-		r.Resolve(r.Ast, env)
-		checkResolveErrors(t, r, tt.input)
+		r := NewExtractor(program)
+		r.Extract(r.Ast, env)
+		checkExtractErrors(t, r, tt.input)
 
 		output := program.String(maskParams)
 		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
 	}
 	t2 := time.Now()
 	timeDiff := t2.Sub(t1)
-	fmt.Printf("TestResolveAlias, Elapsed Time: %s\n", timeDiff)
+	fmt.Printf("TestExtractAlias, Elapsed Time: %s\n", timeDiff)
 }
 
-func checkResolveErrors(t *testing.T, r *Resolver, input string) {
+func checkExtractErrors(t *testing.T, r *Extractor, input string) {
 	errors := r.Errors()
 	if len(errors) == 0 {
 		return
 	}
 
-	t.Errorf("input: %s\nresolver has %d errors", input, len(errors))
+	t.Errorf("input: %s\nExtractor has %d errors", input, len(errors))
 	for _, msg := range errors {
-		t.Errorf("resolver error: %q", msg)
+		t.Errorf("Extractor error: %q", msg)
 	}
 	t.FailNow()
 }
