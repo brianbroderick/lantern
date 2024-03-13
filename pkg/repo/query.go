@@ -10,6 +10,7 @@ import (
 type Query struct {
 	UID           uuid.UUID       `json:"uid,omitempty"`            // unique sha of the query
 	DatabaseUID   uuid.UUID       `json:"database_uid,omitempty"`   // the dataset the query belongs to
+	SourceUID     uuid.UUID       `json:"source_uid,omitempty"`     // the source the query belongs to
 	Command       token.TokenType `json:"command,omitempty"`        // the type of query
 	TotalCount    int64           `json:"total_count,omitempty"`    // the number of times the query was executed
 	TotalDuration int64           `json:"total_duration,omitempty"` // the total duration of all executions of the query in microseconds

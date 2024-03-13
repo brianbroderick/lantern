@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS sources (
+   uid UUID PRIMARY KEY NOT NULL,
+   name TEXT NOT NULL,
+   url TEXT
+);

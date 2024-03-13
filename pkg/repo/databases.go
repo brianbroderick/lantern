@@ -8,7 +8,7 @@ import (
 )
 
 type Databases struct {
-	Databases map[string]uuid.UUID `json:"databases,omitempty"` // the key is the sha of the database
+	Databases map[string]uuid.UUID `json:"databases,omitempty"` // the key is the UUIDv5 sha of the database
 }
 
 func (d *Databases) addDatabase(database string) uuid.UUID {

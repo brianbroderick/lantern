@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS queries (
    uid UUID PRIMARY KEY NOT NULL,  
-   database_uid UUID, -- foreign key to databases table. 
+   database_uid UUID, -- foreign key to databases table. Allow NULLs
+   source_uid UUID, -- foreign key to sources table. Allow NULLs
    command TEXT NOT NULL,
    total_count BIGINT NOT NULL,
    total_duration BIGINT NOT NULL,   
@@ -9,6 +10,7 @@ CREATE TABLE IF NOT EXISTS queries (
 );
 
 CREATE INDEX IF NOT EXISTS idx_queries_database_uid ON queries (database_uid);
+CREATE INDEX IF NOT EXISTS idx_queries_source_uid ON queries (source_uid);
 CREATE INDEX IF NOT EXISTS idx_queries_command ON queries (command);
 CREATE INDEX IF NOT EXISTS idx_queries_total_count ON queries (total_count);
 CREATE INDEX IF NOT EXISTS idx_queries_total_duration ON queries (total_duration);

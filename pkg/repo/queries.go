@@ -22,7 +22,7 @@ func NewQueries() *Queries {
 }
 
 // ProcessQuery processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Queries) ProcessQuery(databases *Databases, database, input string, duration int64) bool {
+func (q *Queries) ProcessQuery(databases *Databases, source *Source, database, input string, duration int64) bool {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -37,14 +37,14 @@ func (q *Queries) ProcessQuery(databases *Databases, database, input string, dur
 	for _, stmt := range program.Statements {
 		output := stmt.String(true) // maskParams = true, i.e. replace all values with ?
 
-		q.addQuery(databases, database, input, output, duration, stmt.Command())
+		q.addQuery(databases, database, source, input, output, duration, stmt.Command())
 	}
 
 	return true
 }
 
 // addQuery adds a query to the Queries struct
-func (q *Queries) addQuery(databases *Databases, database, input, output string, duration int64, command token.TokenType) {
+func (q *Queries) addQuery(databases *Databases, database string, source *Source, input, output string, duration int64, command token.TokenType) {
 	uid := UuidV5(output)
 	uidStr := uid.String()
 
@@ -52,6 +52,7 @@ func (q *Queries) addQuery(databases *Databases, database, input, output string,
 		q.Queries[uidStr] = &Query{
 			UID:           uid,
 			DatabaseUID:   databases.addDatabase(database),
+			SourceUID:     source.UID,
 			OriginalQuery: input,
 			MaskedQuery:   output,
 			TotalCount:    1,
@@ -78,7 +79,7 @@ func (q *Queries) Upsert() {
 }
 
 func (q *Queries) ins() string {
-	return `INSERT INTO queries (uid, database_uid, command, total_count, total_duration, masked_query, original_query) 
+	return `INSERT INTO queries (uid, database_uid, source_uid, command, total_count, total_duration, masked_query, original_query) 
 	VALUES %s 
 	ON CONFLICT (uid) DO NOTHING;`
 }
@@ -91,8 +92,8 @@ func (q *Queries) insValues() []string {
 		original := strings.ReplaceAll(query.OriginalQuery, "'", "''")
 
 		rows = append(rows,
-			fmt.Sprintf("('%s', '%s', '%s', '%d', '%d', '%s', '%s')",
-				uid, query.DatabaseUID, query.Command.String(), query.TotalCount, query.TotalDuration, masked, original))
+			fmt.Sprintf("('%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s')",
+				uid, query.DatabaseUID, query.SourceUID, query.Command.String(), query.TotalCount, query.TotalDuration, masked, original))
 
 	}
 	return rows
