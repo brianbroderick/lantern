@@ -3,6 +3,8 @@ package object
 import (
 	"fmt"
 	"hash/fnv"
+
+	"github.com/google/uuid"
 )
 
 type BuiltinFunction func(args ...Object) Object
@@ -16,6 +18,7 @@ const (
 	BOOLEAN
 	STRING
 	STRING_HASH_OBJ // This is only used internally. It is not a part of the language.
+	UUID
 )
 
 var Objects = [...]string{
@@ -25,6 +28,7 @@ var Objects = [...]string{
 	BOOLEAN:         "BOOLEAN",
 	STRING:          "STRING",
 	STRING_HASH_OBJ: "STRING_HASH",
+	UUID:            "UUID",
 }
 
 type HashKey struct {
@@ -39,6 +43,19 @@ type Hashable interface {
 type Object interface {
 	Type() ObjectType
 	Inspect() string
+}
+
+type UID struct {
+	Value uuid.UUID
+}
+
+func (u *UID) Inspect() string  { return u.Value.String() }
+func (u *UID) Type() ObjectType { return UUID }
+func (u *UID) HashKey() HashKey {
+	h := fnv.New64a()
+	h.Write([]byte(u.Value.String()))
+
+	return HashKey{Type: u.Type(), Value: h.Sum64()}
 }
 
 type Integer struct {

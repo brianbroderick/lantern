@@ -192,6 +192,10 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 		r.Extract(c, env)
 	}
 	for _, t := range x.Tables {
+		switch table := t.(type) {
+		case *ast.TableExpression:
+			r.extractTableExpression(table, env)
+		}
 		r.Extract(t, env)
 	}
 	r.Extract(x.Where, env)
@@ -209,6 +213,24 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 	r.Extract(x.Offset, env)
 	r.Extract(x.Fetch, env)
 	r.Extract(x.Lock, env)
+}
+
+// switch t := t.(type) {
+// case *ast.TableExpression:
+// 	fmt.Printf("Extracting table:\n\t1. %s\n\t2. %s\n\t3. %s\n\t4. %s\n\n", t.JoinType, t.Schema, t.Table.String(false), t.JoinCondition.String(false))
+// }
+
+// AddTable adds a table to the list of tables in the Extractor
+func (r *Extractor) extractTableExpression(t *ast.TableExpression, env *object.Environment) {
+	switch table := t.Table.(type) {
+	case *ast.Identifier, *ast.SimpleIdentifier:
+		r.AddTable(t.Schema, table.String(false))
+	case *ast.GroupedExpression, *ast.SelectExpression:
+		r.Extract(table, env)
+	default:
+		r.newError("unknown table type: %T", table)
+	}
+
 }
 
 func (r *Extractor) extractColumnExpression(c *ast.ColumnExpression, env *object.Environment) {
