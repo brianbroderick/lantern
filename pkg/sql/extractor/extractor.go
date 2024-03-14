@@ -8,14 +8,20 @@ import (
 )
 
 type Extractor struct {
-	Ast    *ast.Program
-	errors []string
+	Ast             *ast.Program
+	Tables          map[string]*Table        `json:"tables,omitempty"`
+	TablesinQueries map[string]*TableInQuery `json:"tables_in_queries,omitempty"`
+	TableJoins      map[string]*TableJoin    `json:"table_joins,omitempty"`
+	errors          []string
 }
 
 func NewExtractor(program *ast.Program) *Extractor {
 	return &Extractor{
-		Ast:    program,
-		errors: []string{},
+		Ast:             program,
+		Tables:          make(map[string]*Table),
+		TablesinQueries: make(map[string]*TableInQuery),
+		TableJoins:      make(map[string]*TableJoin),
+		errors:          []string{},
 	}
 }
 
