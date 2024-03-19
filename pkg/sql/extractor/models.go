@@ -28,24 +28,6 @@ type TableJoin struct {
 	OnCondition   string    `json:"on_condition"`
 }
 
-// func (d *Extractor) AddTable(database_uid uuid.UUID, schema, table string) *Table {
-// 	fqtn := fmt.Sprintf("%s.%s", schema, table)
-
-// 	if _, ok := d.Tables[fqtn]; !ok {
-// 		uid := UuidV5(fqtn)
-
-// 		d.Tables[fqtn] = &Table{
-// 			UID:         uid,
-// 			DatabaseUID: database_uid,
-// 			Schema:      schema,
-// 			Name:        table,
-// 		}
-
-// 	}
-
-// 	return d.Tables[table]
-// }
-
 func (d *Extractor) AddTable(schema, table string) *Table {
 	fqtn := fmt.Sprintf("%s.%s", schema, table)
 

@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/brianbroderick/lantern/pkg/sql/extractor"
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/logit"
+	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
@@ -35,6 +37,10 @@ func (q *Queries) ProcessQuery(databases *Databases, source *Source, database, i
 	}
 
 	for _, stmt := range program.Statements {
+		env := object.NewEnvironment()
+		r := extractor.NewExtractor(&stmt)
+		r.Extract(*r.Ast, env)
+
 		output := stmt.String(true) // maskParams = true, i.e. replace all values with ?
 
 		q.addQuery(databases, database, source, input, output, duration, stmt.Command())
