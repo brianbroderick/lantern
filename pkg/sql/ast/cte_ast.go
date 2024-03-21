@@ -18,6 +18,7 @@ type CTEStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
+func (s *CTEStatement) Clause() token.TokenType  { return s.Token.Type }
 func (s *CTEStatement) Command() token.TokenType { return s.Token.Type }
 func (s *CTEStatement) statementNode()           {}
 func (s *CTEStatement) TokenLiteral() string     { return s.Token.Lit }
@@ -36,13 +37,15 @@ func (s *CTEStatement) Inspect(maskParams bool) string {
 }
 
 type CTEExpression struct {
-	Token     token.Token  `json:"token,omitempty"`
-	Recursive bool         `json:"recursive,omitempty"`
-	Auxiliary []Expression `json:"auxiliary,omitempty"`
-	Primary   Expression   `json:"primary,omitempty"`
-	Cast      Expression   `json:"cast,omitempty"`
+	Token     token.Token     `json:"token,omitempty"`
+	Recursive bool            `json:"recursive,omitempty"`
+	Auxiliary []Expression    `json:"auxiliary,omitempty"`
+	Primary   Expression      `json:"primary,omitempty"`
+	Cast      Expression      `json:"cast,omitempty"`
+	Branch    token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *CTEExpression) Clause() token.TokenType  { return x.Branch }
 func (x *CTEExpression) Command() token.TokenType { return x.Token.Type }
 func (x *CTEExpression) expressionNode()          {}
 func (x *CTEExpression) TokenLiteral() string     { return x.Token.Lit }
@@ -79,13 +82,15 @@ func (x *CTEExpression) SetCast(cast Expression) {
 }
 
 type CTEAuxiliaryExpression struct {
-	Token        token.Token `json:"token,omitempty"`
-	Name         Expression  `json:"name,omitempty"`
-	Materialized string      `json:"materialized,omitempty"`
-	Expression   Expression  `json:"expression,omitempty"`
-	Cast         Expression  `json:"cast,omitempty"`
+	Token        token.Token     `json:"token,omitempty"`
+	Name         Expression      `json:"name,omitempty"`
+	Materialized string          `json:"materialized,omitempty"`
+	Expression   Expression      `json:"expression,omitempty"`
+	Cast         Expression      `json:"cast,omitempty"`
+	Branch       token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *CTEAuxiliaryExpression) Clause() token.TokenType  { return x.Branch }
 func (x *CTEAuxiliaryExpression) Command() token.TokenType { return x.Token.Type }
 func (x *CTEAuxiliaryExpression) expressionNode()          {}
 func (x *CTEAuxiliaryExpression) TokenLiteral() string     { return x.Token.Lit }

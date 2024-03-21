@@ -14,6 +14,7 @@ type SelectStatement struct {
 	Expressions []Expression `json:"expressions,omitempty"` // a select statement may consist of multiple expressions such as the with clause in a CTE along with the primary select expression
 }
 
+func (s *SelectStatement) Clause() token.TokenType  { return s.Token.Type }
 func (s *SelectStatement) Command() token.TokenType { return s.Token.Type }
 func (s *SelectStatement) statementNode()           {}
 func (s *SelectStatement) TokenLiteral() string     { return s.Token.Upper }
@@ -54,8 +55,10 @@ type SelectExpression struct {
 	Lock         Expression        `json:"lock,omitempty"`
 	Cast         Expression        `json:"cast,omitempty"` // probably not needed, but used for the interface
 	TableAliases map[string]string `json:"-"`
+	Branch       token.TokenType   `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *SelectExpression) Clause() token.TokenType  { return x.Branch }
 func (x *SelectExpression) Command() token.TokenType { return x.Token.Type }
 func (x *SelectExpression) expressionNode()          {}
 func (x *SelectExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -174,11 +177,13 @@ func (x *SelectExpression) SetCast(cast Expression) {
 }
 
 type DistinctExpression struct {
-	Token token.Token  `json:"token,omitempty"` // The keyword token, e.g. DISTINCT
-	Right []Expression `json:"right,omitempty"` // The columns to be distinct
-	Cast  Expression   `json:"cast,omitempty"`  // probably not needed, but used for the interface
+	Token  token.Token     `json:"token,omitempty"`  // The keyword token, e.g. DISTINCT
+	Right  []Expression    `json:"right,omitempty"`  // The columns to be distinct
+	Cast   Expression      `json:"cast,omitempty"`   // probably not needed, but used for the interface
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *DistinctExpression) Clause() token.TokenType  { return x.Branch }
 func (x *DistinctExpression) Command() token.TokenType { return x.Token.Type }
 func (x *DistinctExpression) expressionNode()          {}
 func (x *DistinctExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -211,12 +216,14 @@ func (x *DistinctExpression) SetCast(cast Expression) {
 }
 
 type ColumnExpression struct {
-	Token token.Token `json:"token,omitempty"` // the token
-	Name  Expression  `json:"name,omitempty"`  // the name of the column or alias
-	Value Expression  `json:"value,omitempty"` // the complete expression including all of the columns
-	Cast  Expression  `json:"cast,omitempty"`
+	Token  token.Token     `json:"token,omitempty"` // the token
+	Name   Expression      `json:"name,omitempty"`  // the name of the column or alias
+	Value  Expression      `json:"value,omitempty"` // the complete expression including all of the columns
+	Cast   Expression      `json:"cast,omitempty"`
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *ColumnExpression) Clause() token.TokenType  { return x.Branch }
 func (x *ColumnExpression) Command() token.TokenType { return x.Token.Type }
 func (x *ColumnExpression) expressionNode()          {}
 func (x *ColumnExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -245,13 +252,15 @@ func (x *ColumnExpression) SetCast(cast Expression) {
 }
 
 type SortExpression struct {
-	Token     token.Token `json:"token,omitempty"`     // the token.ASC or token.DESC token
-	Value     Expression  `json:"value,omitempty"`     // the column to sort on
-	Direction token.Token `json:"direction,omitempty"` // the direction to sort
-	Nulls     token.Token `json:"nulls,omitempty"`     // first or last
-	Cast      Expression  `json:"cast,omitempty"`
+	Token     token.Token     `json:"token,omitempty"`     // the token.ASC or token.DESC token
+	Value     Expression      `json:"value,omitempty"`     // the column to sort on
+	Direction token.Token     `json:"direction,omitempty"` // the direction to sort
+	Nulls     token.Token     `json:"nulls,omitempty"`     // first or last
+	Cast      Expression      `json:"cast,omitempty"`
+	Branch    token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *SortExpression) Clause() token.TokenType  { return x.Branch }
 func (x *SortExpression) Command() token.TokenType { return x.Token.Type }
 func (x *SortExpression) expressionNode()          {}
 func (x *SortExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -284,10 +293,12 @@ type FetchExpression struct {
 	// Don't need to store "first" or "next" since these are synonyms. We'll convert everything to "next" when printing in .String()
 	Value Expression `json:"value,omitempty"` // the number of rows to fetch
 	// We also don't need to store "row" or "rows" since these are synonyms. We'll convert everything to "rows" when printing in .String()
-	Option token.Token `json:"option,omitempty"` // the token.ONLY or token.TIES token (don't need to store "with ties", just "ties" will do)
-	Cast   Expression  `json:"cast,omitempty"`
+	Option token.Token     `json:"option,omitempty"` // the token.ONLY or token.TIES token (don't need to store "with ties", just "ties" will do)
+	Cast   Expression      `json:"cast,omitempty"`
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *FetchExpression) Clause() token.TokenType  { return x.Branch }
 func (x *FetchExpression) Command() token.TokenType { return x.Token.Type }
 func (x *FetchExpression) expressionNode()          {}
 func (x *FetchExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -314,13 +325,15 @@ func (x *FetchExpression) SetCast(cast Expression) {
 }
 
 type AggregateExpression struct {
-	Token    token.Token  `json:"token,omitempty"`
-	Left     Expression   `json:"expression,omitempty"`
-	Operator string       `json:"operator,omitempty"`
-	Right    []Expression `json:"order_by,omitempty"` // the columns to order by
-	Cast     Expression   `json:"cast,omitempty"`
+	Token    token.Token     `json:"token,omitempty"`
+	Left     Expression      `json:"expression,omitempty"`
+	Operator string          `json:"operator,omitempty"`
+	Right    []Expression    `json:"order_by,omitempty"` // the columns to order by
+	Cast     Expression      `json:"cast,omitempty"`
+	Branch   token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *AggregateExpression) Clause() token.TokenType  { return x.Branch }
 func (x *AggregateExpression) Command() token.TokenType { return x.Token.Type }
 func (x *AggregateExpression) expressionNode()          {}
 func (x *AggregateExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -354,13 +367,15 @@ func (x *AggregateExpression) SetCast(cast Expression) {
 }
 
 type WindowExpression struct {
-	Token       token.Token  `json:"token,omitempty"`        // the token.OVER token
-	Alias       Expression   `json:"alias,omitempty"`        // the alias of the window
-	PartitionBy []Expression `json:"partition_by,omitempty"` // the columns to partition by
-	OrderBy     []Expression `json:"order_by,omitempty"`     // the columns to order by
-	Cast        Expression   `json:"cast,omitempty"`
+	Token       token.Token     `json:"token,omitempty"`        // the token.OVER token
+	Alias       Expression      `json:"alias,omitempty"`        // the alias of the window
+	PartitionBy []Expression    `json:"partition_by,omitempty"` // the columns to partition by
+	OrderBy     []Expression    `json:"order_by,omitempty"`     // the columns to order by
+	Cast        Expression      `json:"cast,omitempty"`
+	Branch      token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *WindowExpression) Clause() token.TokenType  { return x.Branch }
 func (x *WindowExpression) Command() token.TokenType { return x.Token.Type }
 func (x *WindowExpression) expressionNode()          {}
 func (x *WindowExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -406,11 +421,13 @@ func (x *WindowExpression) SetCast(cast Expression) {
 }
 
 type WildcardLiteral struct {
-	Token token.Token `json:"token,omitempty"` // the token.ASTERISK token
-	Value string      `json:"value,omitempty"`
-	Cast  Expression  `json:"cast,omitempty"`
+	Token  token.Token     `json:"token,omitempty"` // the token.ASTERISK token
+	Value  string          `json:"value,omitempty"`
+	Cast   Expression      `json:"cast,omitempty"`
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *WildcardLiteral) Clause() token.TokenType  { return x.Branch }
 func (x *WildcardLiteral) Command() token.TokenType { return x.Token.Type }
 func (x *WildcardLiteral) expressionNode()          {}
 func (x *WildcardLiteral) TokenLiteral() string     { return x.Token.Upper }
@@ -430,12 +447,14 @@ func (x *WildcardLiteral) SetCast(cast Expression) {
 }
 
 type TimestampExpression struct {
-	Token        token.Token `json:"token,omitempty"` // the token.TIMESTAMP token
-	Value        string      `json:"value,omitempty"`
-	WithTimeZone bool        `json:"with_time_zone,omitempty"`
-	Cast         Expression  `json:"cast,omitempty"`
+	Token        token.Token     `json:"token,omitempty"` // the token.TIMESTAMP token
+	Value        string          `json:"value,omitempty"`
+	WithTimeZone bool            `json:"with_time_zone,omitempty"`
+	Cast         Expression      `json:"cast,omitempty"`
+	Branch       token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *TimestampExpression) Clause() token.TokenType  { return x.Branch }
 func (x *TimestampExpression) Command() token.TokenType { return x.Token.Type }
 func (x *TimestampExpression) expressionNode()          {}
 func (x *TimestampExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -466,16 +485,18 @@ func (x *TimestampExpression) SetCast(cast Expression) {
 // inner     addresses a     Expression
 
 type TableExpression struct {
-	Token         token.Token `json:"token,omitempty"`          // the token.JOIN token
-	JoinType      string      `json:"join_type,omitempty"`      // the type of join: source, inner, left, right, full, etc
-	Schema        string      `json:"schema,omitempty"`         // the name of the schema
-	Table         Expression  `json:"table,omitempty"`          // the name of the table
-	Alias         Expression  `json:"alias,omitempty"`          // the alias of the table
-	JoinCondition Expression  `json:"join_condition,omitempty"` // the ON clause
-	Cast          Expression  `json:"cast,omitempty"`           // :: to cast the table
-	Ordinality    bool        `json:"ordinality,omitempty"`     // the WITH ORDINALITY clause
+	Token         token.Token     `json:"token,omitempty"`          // the token.JOIN token
+	JoinType      string          `json:"join_type,omitempty"`      // the type of join: source, inner, left, right, full, etc
+	Schema        string          `json:"schema,omitempty"`         // the name of the schema
+	Table         Expression      `json:"table,omitempty"`          // the name of the table
+	Alias         Expression      `json:"alias,omitempty"`          // the alias of the table
+	JoinCondition Expression      `json:"join_condition,omitempty"` // the ON clause
+	Cast          Expression      `json:"cast,omitempty"`           // :: to cast the table
+	Ordinality    bool            `json:"ordinality,omitempty"`     // the WITH ORDINALITY clause
+	Branch        token.TokenType `json:"clause,omitempty"`         // location in the tree representing a clause
 }
 
+func (x *TableExpression) Clause() token.TokenType  { return x.Branch }
 func (x *TableExpression) Command() token.TokenType { return x.Token.Type }
 func (x *TableExpression) expressionNode()          {}
 func (x *TableExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -511,13 +532,15 @@ func (x *TableExpression) SetCast(cast Expression) {
 }
 
 type LockExpression struct {
-	Token   token.Token  `json:"token,omitempty"`   // the token.FOR token
-	Lock    string       `json:"lock,omitempty"`    // the type of lock: update, share, key share, no key update
-	Tables  []Expression `json:"tables,omitempty"`  // the tables to lock
-	Options string       `json:"options,omitempty"` // the options: NOWAIT, SKIP LOCKED
-	Cast    Expression   `json:"cast,omitempty"`
+	Token   token.Token     `json:"token,omitempty"`   // the token.FOR token
+	Lock    string          `json:"lock,omitempty"`    // the type of lock: update, share, key share, no key update
+	Tables  []Expression    `json:"tables,omitempty"`  // the tables to lock
+	Options string          `json:"options,omitempty"` // the options: NOWAIT, SKIP LOCKED
+	Cast    Expression      `json:"cast,omitempty"`
+	Branch  token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *LockExpression) Clause() token.TokenType  { return x.Branch }
 func (x *LockExpression) Command() token.TokenType { return x.Token.Type }
 func (x *LockExpression) expressionNode()          {}
 func (x *LockExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -548,14 +571,16 @@ func (x *LockExpression) SetCast(cast Expression) {
 }
 
 type InExpression struct {
-	Token    token.Token  `json:"token,omitempty"` // The operator token, e.g. IN, NOT IN
-	Left     Expression   `json:"left,omitempty"`
-	Not      bool         `json:"not,omitempty"`
-	Operator string       `json:"operator,omitempty"`
-	Right    []Expression `json:"right,omitempty"`
-	Cast     Expression   `json:"cast,omitempty"`
+	Token    token.Token     `json:"token,omitempty"` // The operator token, e.g. IN, NOT IN
+	Left     Expression      `json:"left,omitempty"`
+	Not      bool            `json:"not,omitempty"`
+	Operator string          `json:"operator,omitempty"`
+	Right    []Expression    `json:"right,omitempty"`
+	Cast     Expression      `json:"cast,omitempty"`
+	Branch   token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *InExpression) Clause() token.TokenType  { return x.Branch }
 func (x *InExpression) Command() token.TokenType { return x.Token.Type }
 func (x *InExpression) expressionNode()          {}
 func (x *InExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -595,11 +620,13 @@ func (x *InExpression) SetCast(cast Expression) {
 }
 
 type CastExpression struct {
-	Token token.Token `json:"token,omitempty"` // the token.CAST token
-	Left  Expression  `json:"value,omitempty"`
-	Cast  Expression  `json:"cast,omitempty"`
+	Token  token.Token     `json:"token,omitempty"` // the token.CAST token
+	Left   Expression      `json:"value,omitempty"`
+	Cast   Expression      `json:"cast,omitempty"`
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *CastExpression) Clause() token.TokenType  { return x.Branch }
 func (x *CastExpression) Command() token.TokenType { return x.Token.Type }
 func (x *CastExpression) expressionNode()          {}
 func (x *CastExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -623,11 +650,13 @@ func (x *CastExpression) SetCast(cast Expression) {
 }
 
 type WhereExpression struct {
-	Token token.Token `json:"token,omitempty"` // The keyword token, e.g. WHERE
-	Right Expression  `json:"right,omitempty"`
-	Cast  Expression  `json:"cast,omitempty"` // probably not needed, but used for the interface
+	Token  token.Token     `json:"token,omitempty"` // The keyword token, e.g. WHERE
+	Right  Expression      `json:"right,omitempty"`
+	Cast   Expression      `json:"cast,omitempty"`   // probably not needed, but used for the interface
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *WhereExpression) Clause() token.TokenType  { return x.Branch }
 func (x *WhereExpression) Command() token.TokenType { return x.Token.Type }
 func (x *WhereExpression) expressionNode()          {}
 func (x *WhereExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -654,15 +683,17 @@ func (x *WhereExpression) SetCast(cast Expression) {
 }
 
 type IsExpression struct {
-	Token       token.Token `json:"token,omitempty"` // the token.CAST token
-	Left        Expression  `json:"left,omitempty"`
-	Not         bool        `json:"not,omitempty"`
-	Distinct    bool        `json:"distinct,omitempty"`
-	Right       Expression  `json:"right,omitempty"`
-	Cast        Expression  `json:"cast,omitempty"`
-	ParamOffset int         `json:"param_offset,omitempty"`
+	Token       token.Token     `json:"token,omitempty"` // the token.CAST token
+	Left        Expression      `json:"left,omitempty"`
+	Not         bool            `json:"not,omitempty"`
+	Distinct    bool            `json:"distinct,omitempty"`
+	Right       Expression      `json:"right,omitempty"`
+	Cast        Expression      `json:"cast,omitempty"`
+	ParamOffset int             `json:"param_offset,omitempty"`
+	Branch      token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *IsExpression) Clause() token.TokenType  { return x.Branch }
 func (x *IsExpression) Command() token.TokenType { return x.Token.Type }
 func (x *IsExpression) expressionNode()          {}
 func (x *IsExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -702,11 +733,13 @@ func (x *IsExpression) SetCast(cast Expression) {
 
 // trim(both 'x' from 'xTomxx') -> Tom
 type TrimExpression struct {
-	Token      token.Token `json:"token,omitempty"` // the token.BOTH, token.LEADING, or token.TRAILING token
-	Expression Expression  `json:"expression,omitempty"`
-	Cast       Expression  `json:"cast,omitempty"`
+	Token      token.Token     `json:"token,omitempty"` // the token.BOTH, token.LEADING, or token.TRAILING token
+	Expression Expression      `json:"expression,omitempty"`
+	Cast       Expression      `json:"cast,omitempty"`
+	Branch     token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *TrimExpression) Clause() token.TokenType  { return x.Branch }
 func (x *TrimExpression) Command() token.TokenType { return x.Token.Type }
 func (x *TrimExpression) expressionNode()          {}
 func (x *TrimExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -725,13 +758,15 @@ func (x *TrimExpression) String(maskParams bool) string {
 // substring('Thomas' from '...$')
 // substring('Thomas' from 2 for 3))
 type StringFunctionExpression struct {
-	Token token.Token `json:"token,omitempty"` // the token.STRING
-	Left  Expression  `json:"left,omitempty"`
-	From  Expression  `json:"from,omitempty"`
-	For   Expression  `json:"for,omitempty"`
-	Cast  Expression  `json:"cast,omitempty"`
+	Token  token.Token     `json:"token,omitempty"` // the token.STRING
+	Left   Expression      `json:"left,omitempty"`
+	From   Expression      `json:"from,omitempty"`
+	For    Expression      `json:"for,omitempty"`
+	Cast   Expression      `json:"cast,omitempty"`
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *StringFunctionExpression) Clause() token.TokenType  { return x.Branch }
 func (x *StringFunctionExpression) Command() token.TokenType { return x.Token.Type }
 func (x *StringFunctionExpression) expressionNode()          {}
 func (x *StringFunctionExpression) TokenLiteral() string     { return x.Token.Upper }
@@ -757,14 +792,16 @@ func (x *StringFunctionExpression) String(maskParams bool) string {
 }
 
 type UnionExpression struct {
-	Token    token.Token `json:"token,omitempty"` // The operator token, e.g. +
-	Left     Expression  `json:"left,omitempty"`
-	Operator string      `json:"operator,omitempty"` // UNION, INTERSECT, EXCEPT
-	All      bool        `json:"all,omitempty"`
-	Right    Expression  `json:"right,omitempty"`
-	Cast     Expression  `json:"cast,omitempty"`
+	Token    token.Token     `json:"token,omitempty"` // The operator token, e.g. +
+	Left     Expression      `json:"left,omitempty"`
+	Operator string          `json:"operator,omitempty"` // UNION, INTERSECT, EXCEPT
+	All      bool            `json:"all,omitempty"`
+	Right    Expression      `json:"right,omitempty"`
+	Cast     Expression      `json:"cast,omitempty"`
+	Branch   token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *UnionExpression) Clause() token.TokenType  { return x.Branch }
 func (x *UnionExpression) Command() token.TokenType { return x.Token.Type }
 func (x *UnionExpression) expressionNode()          {}
 func (x *UnionExpression) TokenLiteral() string     { return x.Token.Upper }

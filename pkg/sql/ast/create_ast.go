@@ -26,6 +26,7 @@ type CreateStatement struct {
 	Expression   Expression  `json:"expression,omitempty"`   // the expression to create the object
 }
 
+func (x *CreateStatement) Clause() token.TokenType  { return x.Token.Type }
 func (x *CreateStatement) Command() token.TokenType { return x.Token.Type }
 func (x *CreateStatement) statementNode()           {}
 func (x *CreateStatement) TokenLiteral() string     { return x.Token.Lit }
@@ -79,12 +80,14 @@ func (x *CreateStatement) Inspect(maskParams bool) string {
 }
 
 type LikeExpression struct {
-	Token   token.Token `json:"token,omitempty"` // the token.LIKE token
-	Table   Expression  `json:"table,omitempty"`
-	Options []string    `json:"options,omitempty"`
-	Cast    Expression  `json:"cast,omitempty"`
+	Token   token.Token     `json:"token,omitempty"` // the token.LIKE token
+	Table   Expression      `json:"table,omitempty"`
+	Options []string        `json:"options,omitempty"`
+	Cast    Expression      `json:"cast,omitempty"`
+	Branch  token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *LikeExpression) Clause() token.TokenType  { return x.Branch }
 func (x *LikeExpression) Command() token.TokenType { return x.Token.Type }
 func (x *LikeExpression) expressionNode()          {}
 func (x *LikeExpression) TokenLiteral() string     { return x.Token.Lit }

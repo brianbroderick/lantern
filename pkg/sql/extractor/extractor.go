@@ -224,12 +224,28 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 func (r *Extractor) extractTableExpression(t *ast.TableExpression, env *object.Environment) {
 	switch table := t.Table.(type) {
 	case *ast.Identifier, *ast.SimpleIdentifier:
-		r.AddTable(t.Schema, table.String(false))
+		r.Extract(t.JoinCondition, env)
+		tbl := r.AddTable(t.Schema, table.String(false))
+		fmt.Println(tbl.UID)
+
+		switch join := t.JoinCondition.(type) {
+		case *ast.InfixExpression:
+			fmt.Println("Infix: ", join.Left.String(false))
+			fmt.Println("Infix: ", join.String(false))
+		}
 	case *ast.GroupedExpression, *ast.SelectExpression:
 		r.Extract(table, env)
 	default:
 		r.newError("unknown table type: %T", table)
 	}
+
+	// if t.JoinCondition != nil {
+	// 	fmt.Println(t.JoinType)
+	// }
+
+	// if t.JoinCondition != nil {
+	// 	fmt.Println(t.JoinCondition.String(false))
+	// }
 
 }
 

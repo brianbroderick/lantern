@@ -17,6 +17,7 @@ type AnalyzeStatement struct {
 	Name             Expression   `json:"name,omitempty"`               // the name of the object
 }
 
+func (x *AnalyzeStatement) Clause() token.TokenType  { return x.Token.Type }
 func (x *AnalyzeStatement) Command() token.TokenType { return x.Token.Type }
 func (x *AnalyzeStatement) statementNode()           {}
 func (x *AnalyzeStatement) TokenLiteral() string     { return x.Token.Lit }

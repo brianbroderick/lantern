@@ -13,6 +13,7 @@ type DeleteStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
+func (s *DeleteStatement) Clause() token.TokenType  { return s.Token.Type }
 func (s *DeleteStatement) Command() token.TokenType { return s.Token.Type }
 func (s *DeleteStatement) statementNode()           {}
 func (s *DeleteStatement) TokenLiteral() string     { return s.Token.Upper }
@@ -40,9 +41,11 @@ type DeleteExpression struct {
 	Where        Expression        `json:"where,omitempty"` // TODO: handle WHERE CURRENT OF cursor_name
 	Returning    []Expression      `json:"returning,omitempty"`
 	Cast         Expression        `json:"cast,omitempty"`
-	TableAliases map[string]string `json:"-"` // map of table aliases
+	TableAliases map[string]string `json:"-"`                // map of table aliases
+	Branch       token.TokenType   `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *DeleteExpression) Clause() token.TokenType  { return x.Branch }
 func (x *DeleteExpression) Command() token.TokenType { return x.Token.Type }
 func (x *DeleteExpression) expressionNode()          {}
 func (x *DeleteExpression) TokenLiteral() string     { return x.Token.Upper }

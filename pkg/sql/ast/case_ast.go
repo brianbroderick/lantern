@@ -13,8 +13,10 @@ type CaseExpression struct {
 	Conditions  []*ConditionExpression `json:"conditions,omitempty"`
 	Alternative Expression             `json:"alternative,omitempty"`
 	Cast        Expression             `json:"cast,omitempty"`
+	Branch      token.TokenType        `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *CaseExpression) Clause() token.TokenType  { return x.Branch }
 func (x *CaseExpression) Command() token.TokenType { return x.Token.Type }
 func (x *CaseExpression) expressionNode()          {}
 func (x *CaseExpression) TokenLiteral() string     { return x.Token.Lit }
@@ -50,12 +52,14 @@ func (x *CaseExpression) SetCast(cast Expression) {
 }
 
 type ConditionExpression struct {
-	Token       token.Token `json:"token,omitempty"`
-	Condition   Expression  `json:"condition,omitempty"`
-	Consequence Expression  `json:"consequence,omitempty"`
-	Cast        Expression  `json:"cast,omitempty"`
+	Token       token.Token     `json:"token,omitempty"`
+	Condition   Expression      `json:"condition,omitempty"`
+	Consequence Expression      `json:"consequence,omitempty"`
+	Cast        Expression      `json:"cast,omitempty"`
+	Branch      token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *ConditionExpression) Clause() token.TokenType  { return x.Branch }
 func (x *ConditionExpression) Command() token.TokenType { return x.Token.Type }
 func (x *ConditionExpression) expressionNode()          {}
 func (x *ConditionExpression) TokenLiteral() string     { return x.Token.Lit }

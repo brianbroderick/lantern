@@ -42,7 +42,7 @@ func (d *Extractor) AddTable(schema, table string) *Table {
 
 	}
 
-	return d.Tables[table]
+	return d.Tables[fqtn]
 }
 
 func (d *Extractor) AddTableInQuery(table_uid, query_uid uuid.UUID) *TableInQuery {

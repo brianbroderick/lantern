@@ -7,11 +7,13 @@ import (
 )
 
 type ValuesExpression struct {
-	Token  token.Token    `json:"token,omitempty"` // the token.VALUES token
-	Tuples [][]Expression `json:"values,omitempty"`
-	Cast   Expression     `json:"cast,omitempty"`
+	Token  token.Token     `json:"token,omitempty"` // the token.VALUES token
+	Tuples [][]Expression  `json:"values,omitempty"`
+	Cast   Expression      `json:"cast,omitempty"`
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *ValuesExpression) Clause() token.TokenType  { return x.Branch }
 func (x *ValuesExpression) Command() token.TokenType { return x.Token.Type }
 func (x *ValuesExpression) expressionNode()          {}
 func (x *ValuesExpression) TokenLiteral() string     { return x.Token.Lit }

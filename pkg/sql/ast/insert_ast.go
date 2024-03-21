@@ -13,6 +13,7 @@ type InsertStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
+func (s *InsertStatement) Clause() token.TokenType  { return s.Token.Type }
 func (s *InsertStatement) Command() token.TokenType { return s.Token.Type }
 func (s *InsertStatement) statementNode()           {}
 func (s *InsertStatement) TokenLiteral() string     { return s.Token.Upper }
@@ -33,22 +34,24 @@ func (s *InsertStatement) Inspect(maskParams bool) string {
 }
 
 type InsertExpression struct {
-	Token          token.Token    `json:"token,omitempty"` // the token.INSERT token
-	Table          Expression     `json:"table,omitempty"`
-	Alias          Expression     `json:"alias,omitempty"`
-	Columns        []Expression   `json:"columns,omitempty"`
-	Overriding     string         `json:"overriding,omitempty"`
-	Default        bool           `json:"default,omitempty"`
-	Values         [][]Expression `json:"values,omitempty"`
-	Query          Expression     `json:"query,omitempty"`
-	ConflictTarget []Expression   `json:"conflict_target,omitempty"`
-	ConflictAction string         `json:"conflict_action,omitempty"`
-	ConflictUpdate []Expression   `json:"conflict_update,omitempty"`
-	ConflictWhere  Expression     `json:"conflict_where,omitempty"`
-	Returning      []Expression   `json:"returning,omitempty"`
-	Cast           Expression     `json:"cast,omitempty"`
+	Token          token.Token     `json:"token,omitempty"` // the token.INSERT token
+	Table          Expression      `json:"table,omitempty"`
+	Alias          Expression      `json:"alias,omitempty"`
+	Columns        []Expression    `json:"columns,omitempty"`
+	Overriding     string          `json:"overriding,omitempty"`
+	Default        bool            `json:"default,omitempty"`
+	Values         [][]Expression  `json:"values,omitempty"`
+	Query          Expression      `json:"query,omitempty"`
+	ConflictTarget []Expression    `json:"conflict_target,omitempty"`
+	ConflictAction string          `json:"conflict_action,omitempty"`
+	ConflictUpdate []Expression    `json:"conflict_update,omitempty"`
+	ConflictWhere  Expression      `json:"conflict_where,omitempty"`
+	Returning      []Expression    `json:"returning,omitempty"`
+	Cast           Expression      `json:"cast,omitempty"`
+	Branch         token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
+func (x *InsertExpression) Clause() token.TokenType  { return x.Branch }
 func (x *InsertExpression) Command() token.TokenType { return x.Token.Type }
 func (x *InsertExpression) expressionNode()          {}
 func (x *InsertExpression) TokenLiteral() string     { return x.Token.Upper }

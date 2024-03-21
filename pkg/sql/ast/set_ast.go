@@ -16,6 +16,7 @@ type SetStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
+func (s *SetStatement) Clause() token.TokenType  { return s.Token.Type }
 func (s *SetStatement) Command() token.TokenType { return s.Token.Type }
 func (s *SetStatement) statementNode()           {}
 func (s *SetStatement) TokenLiteral() string     { return s.Token.Upper }
