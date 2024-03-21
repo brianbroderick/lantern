@@ -156,8 +156,9 @@ type Parser struct {
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
 
-	context parseContext
-	not     bool // This is used to determine if the NOT keyword is being used in a condition
+	clause  token.TokenType // This is used to determine the clause that the current expression is in
+	context parseContext    // This is more specific than the clause. It's used to determine the context of the current expression
+	not     bool            // This is used to determine if the NOT keyword is being used in a condition
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -497,6 +498,8 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 func (p *Parser) parseStatement() ast.Statement {
 	defer p.untrace(p.trace("parseStatement"))
+
+	p.clause = p.curToken.Type
 
 	switch p.curToken.Type {
 	case token.SELECT:

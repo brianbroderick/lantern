@@ -36,6 +36,8 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	x := &ast.SelectExpression{Token: p.curToken}
 	p.nextToken()
 
+	p.clause = token.COLUMN
+
 	// DISTINCT CLAUSE
 	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
 		x.Distinct = p.parseDistinct()
@@ -52,6 +54,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	if p.curTokenIs(token.FROM) {
 		p.nextToken()
 
+		p.clause = token.FROM
 		// fmt.Printf("parseSelectExpression001: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x)
 
 		// p.nextToken()
@@ -64,6 +67,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		if p.peekTokenIs(token.WINDOW) {
 			p.nextToken()
 			p.nextToken()
+			p.clause = token.WINDOW
 			x.Window = p.parseWindowList(defaultListSeparators)
 		}
 
@@ -71,6 +75,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		if p.peekTokenIs(token.WHERE) {
 			p.nextToken()
 			p.nextToken()
+			p.clause = token.WHERE
 			x.Where = p.parseExpression(LOWEST)
 		}
 
@@ -78,6 +83,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		if p.peekTokenIs(token.GROUP_BY) {
 			p.nextToken()
 			p.nextToken()
+			p.clause = token.GROUP_BY
 			x.GroupBy = p.parseColumnList(defaultListSeparators)
 		}
 
@@ -85,6 +91,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		if p.peekTokenIs(token.HAVING) {
 			p.nextToken()
 			p.nextToken()
+			p.clause = token.HAVING
 			x.Having = p.parseExpression(LOWEST)
 		}
 
@@ -95,6 +102,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 				return nil
 			}
 			p.nextToken()
+			p.clause = token.ORDER
 			x.OrderBy = p.parseSortList(defaultListSeparators)
 		}
 
@@ -105,6 +113,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 				if p.peekTokenIs(token.LIMIT) {
 					p.nextToken()
 					p.nextToken()
+					p.clause = token.LIMIT
 					x.Limit = p.parseExpression(LOWEST)
 				}
 
@@ -112,6 +121,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 				if p.peekTokenIs(token.OFFSET) {
 					p.nextToken()
 					p.nextToken()
+					p.clause = token.OFFSET
 					x.Offset = p.parseExpression(LOWEST)
 
 					if p.peekTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
@@ -126,6 +136,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		if p.peekTokenIs(token.FETCH) {
 			p.nextToken()
 			p.nextToken()
+			p.clause = token.FETCH
 			x.Fetch = p.parseFetch()
 		}
 
@@ -133,6 +144,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 		if p.peekTokenIs(token.FOR) {
 			p.nextToken()
 			p.nextToken()
+			p.clause = token.FOR
 			x.Lock = p.parseLock()
 		}
 	}
@@ -381,18 +393,18 @@ func (p *Parser) parseSortList(end []token.TokenType) []ast.Expression {
 		return x
 	}
 
-	x = append(x, p.parseSort(LOWEST, end))
+	x = append(x, p.parseSort(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		x = append(x, p.parseSort(LOWEST, end))
+		x = append(x, p.parseSort(LOWEST))
 	}
 
 	return x
 }
 
-func (p *Parser) parseSort(precedence int, end []token.TokenType) ast.Expression {
+func (p *Parser) parseSort(precedence int) ast.Expression {
 	defer p.untrace(p.trace("parseSort"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
@@ -439,19 +451,19 @@ func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
 		return list
 	}
 
-	list = append(list, p.parseWindow(end))
+	list = append(list, p.parseWindow())
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		list = append(list, p.parseWindow(end))
+		list = append(list, p.parseWindow())
 	}
 
 	return list
 }
 
 // w as (partition by c1 order by c2)
-func (p *Parser) parseWindow(end []token.TokenType) ast.Expression {
+func (p *Parser) parseWindow() ast.Expression {
 	defer p.untrace(p.trace("parseWindow"))
 
 	x := &ast.WindowExpression{
@@ -491,18 +503,18 @@ func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 		return x
 	}
 
-	x = append(x, p.parseColumn(LOWEST, end))
+	x = append(x, p.parseColumn(LOWEST))
 
 	for p.peekTokenIs(token.COMMA) {
 		p.nextToken()
 		p.nextToken()
-		x = append(x, p.parseColumn(LOWEST, end))
+		x = append(x, p.parseColumn(LOWEST))
 	}
 
 	return x
 }
 
-func (p *Parser) parseColumn(precedence int, end []token.TokenType) ast.Expression {
+func (p *Parser) parseColumn(precedence int) ast.Expression {
 	defer p.untrace(p.trace("parseColumn"))
 
 	prefix := p.prefixParseFns[p.curToken.Type]
