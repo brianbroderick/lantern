@@ -20,7 +20,7 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 func (p *Parser) parseCTEExpression() ast.Expression {
 	// defer p.untrace(p.trace("parseCTEExpression"))
 
-	x := &ast.CTEExpression{Token: p.curToken}
+	x := &ast.CTEExpression{Token: p.curToken, Branch: p.clause}
 	p.nextToken()
 
 	if p.curTokenIs(token.RECURSIVE) {
@@ -53,7 +53,7 @@ func (p *Parser) parseCTEExpression() ast.Expression {
 func (p *Parser) parseCTESubExpression() ast.Expression {
 	// defer p.untrace(p.trace("parseCTESubExpression"))
 
-	x := &ast.CTEAuxiliaryExpression{Token: p.curToken}
+	x := &ast.CTEAuxiliaryExpression{Token: p.curToken, Branch: p.clause}
 	x.Name = p.parseExpression(LOWEST)
 
 	p.expectPeek(token.AS) // expect AS and move to next token

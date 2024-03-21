@@ -33,7 +33,7 @@ func (p *Parser) parseSelectStatement() *ast.SelectStatement {
 func (p *Parser) parseSelectExpression() ast.Expression {
 	defer p.untrace(p.trace("parseSelectExpression"))
 
-	x := &ast.SelectExpression{Token: p.curToken}
+	x := &ast.SelectExpression{Token: p.curToken, Branch: p.clause}
 	p.nextToken()
 
 	p.clause = token.COLUMN
@@ -160,13 +160,13 @@ func (p *Parser) parseDistinct() ast.Expression {
 	defer p.resetContext(context) // reset to prior context
 
 	if p.curTokenIs(token.ALL) {
-		x := &ast.DistinctExpression{Token: p.curToken}
+		x := &ast.DistinctExpression{Token: p.curToken, Branch: p.clause}
 		p.nextToken()
 		return x // &ast.DistinctExpression{Token: p.curToken, On: token.Token{Type: token.NIL, Lit: ""}}
 	}
 
 	if p.curTokenIs(token.DISTINCT) {
-		x := &ast.DistinctExpression{Token: p.curToken}
+		x := &ast.DistinctExpression{Token: p.curToken, Branch: p.clause}
 		p.nextToken()
 
 		if p.curTokenIs(token.ON) {
@@ -351,8 +351,8 @@ func (p *Parser) parseFetch() ast.Expression {
 	}
 
 	x := &ast.FetchExpression{Token: p.curToken,
-		Value:  &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset},
-		Option: token.Token{Type: token.NIL, Lit: ""}}
+		Value:  &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset, Branch: p.clause},
+		Option: token.Token{Type: token.NIL, Lit: ""}, Branch: p.clause}
 
 	if p.curTokenIsOne([]token.TokenType{token.NEXT, token.FIRST}) {
 		p.nextToken()
@@ -364,7 +364,8 @@ func (p *Parser) parseFetch() ast.Expression {
 	} else {
 		// Integer is suppressed, so we need to increment the param offset manually instead of in the IntegerLiteral
 		p.paramOffset++
-		x.Value = &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1, ParamOffset: p.paramOffset}
+		x.Value = &ast.IntegerLiteral{Token: token.Token{Type: token.INT, Lit: "1"}, Value: 1,
+			ParamOffset: p.paramOffset, Branch: p.clause}
 	}
 
 	if p.curTokenIsOne([]token.TokenType{token.ROW, token.ROWS}) {
@@ -424,7 +425,8 @@ func (p *Parser) parseSort(precedence int) ast.Expression {
 		leftExp = infix(leftExp)
 	}
 
-	x := &ast.SortExpression{Token: p.curToken, Value: leftExp, Direction: token.Token{Type: token.ASC, Lit: "ASC"}, Nulls: token.Token{Type: token.NIL, Lit: ""}}
+	x := &ast.SortExpression{Token: p.curToken, Value: leftExp, Direction: token.Token{Type: token.ASC, Lit: "ASC"},
+		Nulls: token.Token{Type: token.NIL, Lit: ""}, Branch: p.clause}
 
 	if p.peekTokenIsOne([]token.TokenType{token.ASC, token.DESC}) {
 		p.nextToken()
@@ -466,12 +468,10 @@ func (p *Parser) parseWindowList(end []token.TokenType) []ast.Expression {
 func (p *Parser) parseWindow() ast.Expression {
 	defer p.untrace(p.trace("parseWindow"))
 
-	x := &ast.WindowExpression{
-		Token: p.curToken,
-	}
+	x := &ast.WindowExpression{Token: p.curToken, Branch: p.clause}
 
 	if p.curTokenIs(token.IDENT) {
-		x.Alias = &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
+		x.Alias = &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit, Branch: p.clause}
 		p.nextToken()
 
 		if p.curTokenIs(token.AS) {
@@ -536,7 +536,7 @@ func (p *Parser) parseColumn(precedence int) ast.Expression {
 		leftExp = infix(leftExp)
 	}
 
-	x := &ast.ColumnExpression{Token: p.curToken, Value: leftExp}
+	x := &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Branch: p.clause}
 	// fmt.Printf("parseColumn2: %s %s :: %s %s == %+v\n", p.curToken.Type, p.curToken.Lit, p.peekToken.Type, p.peekToken.Lit, x.String(false))
 
 	// AS is optional, but opens up additional keywords that can be used as an alias.
@@ -549,8 +549,8 @@ func (p *Parser) parseColumn(precedence int) ast.Expression {
 	if p.peekTokenIsOne([]token.TokenType{token.IDENT, token.VALUES, token.USER, token.LAST, token.ORDER}) {
 		p.nextToken()
 
-		alias := &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit}
-		x = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias}
+		alias := &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit, Branch: p.clause}
+		x = &ast.ColumnExpression{Token: p.curToken, Value: leftExp, Name: alias, Branch: p.clause}
 	}
 
 	return x
@@ -559,9 +559,7 @@ func (p *Parser) parseColumn(precedence int) ast.Expression {
 func (p *Parser) parseWindowExpression() ast.Expression {
 	defer p.untrace(p.trace("parseWindowExpression"))
 
-	x := &ast.WindowExpression{
-		Token: p.curToken,
-	}
+	x := &ast.WindowExpression{Token: p.curToken, Branch: p.clause}
 
 	if p.curTokenIs(token.PARTITION) {
 		if p.expectPeek(token.BY) {
@@ -590,9 +588,7 @@ func (p *Parser) parseLock() ast.Expression {
 	p.setContext(XLOCK)           // sets the context for the parseExpressionListItem function
 	defer p.resetContext(context) // reset to prior context
 
-	x := &ast.LockExpression{
-		Token: p.curToken,
-	}
+	x := &ast.LockExpression{Token: p.curToken, Branch: p.clause}
 
 	switch p.curToken.Type {
 	case token.UPDATE:
@@ -655,7 +651,7 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 	p.setContext(XIN)             // sets the context for the parseExpressionListItem function
 	defer p.resetContext(context) // reset to prior context
 
-	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	x := &ast.InExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left, Branch: p.clause}
 	if p.not {
 		x.Not = true
 		p.not = false
@@ -674,7 +670,7 @@ func (p *Parser) parseInExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
 	defer p.untrace(p.trace("parseAggregateExpression"))
 
-	exp := &ast.AggregateExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left}
+	exp := &ast.AggregateExpression{Token: p.curToken, Operator: p.curToken.Lit, Left: left, Branch: p.clause}
 
 	if p.curTokenIs(token.ORDER) {
 		exp.Operator = "ORDER BY"
@@ -692,7 +688,7 @@ func (p *Parser) parseAggregateExpression(left ast.Expression) ast.Expression {
 func (p *Parser) parseStringFunctionExpression(left ast.Expression) ast.Expression {
 	defer p.untrace(p.trace("parseStringFunctionExpression"))
 
-	x := &ast.StringFunctionExpression{Token: p.curToken, Left: left}
+	x := &ast.StringFunctionExpression{Token: p.curToken, Left: left, Branch: p.clause}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
@@ -709,7 +705,7 @@ func (p *Parser) parseStringFunctionExpression(left ast.Expression) ast.Expressi
 
 func (p *Parser) parseDoubleColonExpression() ast.Expression {
 	defer p.untrace(p.trace("parseDoubleColonExpression"))
-	x := &ast.CastExpression{Token: p.curToken}
+	x := &ast.CastExpression{Token: p.curToken, Branch: p.clause}
 
 	switch p.curToken.Type {
 	case token.TIMESTAMP:
@@ -730,7 +726,7 @@ func (p *Parser) parseDoubleColonExpression() ast.Expression {
 func (p *Parser) parseCastExpression() ast.Expression {
 	defer p.untrace(p.trace("parseCastExpression"))
 
-	x := &ast.CastExpression{Token: p.curToken}
+	x := &ast.CastExpression{Token: p.curToken, Branch: p.clause}
 
 	if p.peekTokenIs(token.LPAREN) {
 		p.nextToken()
@@ -754,7 +750,7 @@ func (p *Parser) parseCastExpression() ast.Expression {
 func (p *Parser) parseWhereExpression() ast.Expression {
 	defer p.untrace(p.trace("parseWhereExpression"))
 
-	x := &ast.WhereExpression{Token: p.curToken}
+	x := &ast.WhereExpression{Token: p.curToken, Branch: p.clause}
 	p.nextToken()
 	x.Right = p.parseExpression(LOWEST)
 
@@ -766,7 +762,7 @@ func (p *Parser) parseWhereExpression() ast.Expression {
 func (p *Parser) parseTrimExpression() ast.Expression {
 	defer p.untrace(p.trace("parseTrimExpression"))
 
-	x := &ast.TrimExpression{Token: p.curToken}
+	x := &ast.TrimExpression{Token: p.curToken, Branch: p.clause}
 	p.nextToken()
 
 	x.Expression = p.parseExpression(LOWEST)
@@ -778,7 +774,7 @@ func (p *Parser) parseIsExpression(left ast.Expression) ast.Expression {
 	defer p.untrace(p.trace("parseIsExpression"))
 
 	p.paramOffset++
-	x := &ast.IsExpression{Token: p.curToken, Left: left, ParamOffset: p.paramOffset}
+	x := &ast.IsExpression{Token: p.curToken, Left: left, ParamOffset: p.paramOffset, Branch: p.clause}
 	precedence := p.curPrecedence()
 	p.nextToken()
 

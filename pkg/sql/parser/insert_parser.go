@@ -24,7 +24,7 @@ func (p *Parser) parseInsertStatement() *ast.InsertStatement {
 func (p *Parser) parseInsertExpression() ast.Expression {
 	defer p.untrace(p.trace("parseInsertExpression"))
 
-	x := &ast.InsertExpression{Token: p.curToken}
+	x := &ast.InsertExpression{Token: p.curToken, Branch: p.clause}
 
 	if !p.expectPeek(token.INTO) {
 		return nil

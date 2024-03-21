@@ -21,7 +21,7 @@ func (p *Parser) parseUpdateStatement() *ast.UpdateStatement {
 func (p *Parser) parseUpdateExpression() ast.Expression {
 	defer p.untrace(p.trace("parseUpdateExpression"))
 
-	x := &ast.UpdateExpression{Token: p.curToken}
+	x := &ast.UpdateExpression{Token: p.curToken, Branch: p.clause}
 	if p.peekTokenIs(token.ONLY) {
 		p.nextToken()
 		p.nextToken()
