@@ -5,10 +5,12 @@ import (
 
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/object"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 type Extractor struct {
 	Ast             *ast.Statement
+	Columns         map[string]*Column       `json:"columns,omitempty"`
 	Tables          map[string]*Table        `json:"tables,omitempty"`
 	TablesinQueries map[string]*TableInQuery `json:"tables_in_queries,omitempty"`
 	TableJoins      map[string]*TableJoin    `json:"table_joins,omitempty"`
@@ -18,6 +20,7 @@ type Extractor struct {
 func NewExtractor(stmt *ast.Statement) *Extractor {
 	return &Extractor{
 		Ast:             stmt,
+		Columns:         make(map[string]*Column),
 		Tables:          make(map[string]*Table),
 		TablesinQueries: make(map[string]*TableInQuery),
 		TableJoins:      make(map[string]*TableJoin),
@@ -63,6 +66,28 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	case *ast.InfixExpression:
 		r.Extract(node.Left, env)
 		r.Extract(node.Right, env)
+		// TODO: This is a hack to get the join condition, but it only works for simple cases
+		// We might be better off compiling to a stack and then popping off the stack to evaluate the expression
+		if node.Clause() == token.ON {
+			var (
+				columnA, columnB *ast.Identifier
+				shouldProcess    int
+			)
+			switch node.Left.(type) {
+			case *ast.Identifier:
+				columnA = node.Left.(*ast.Identifier)
+				shouldProcess++
+			}
+			switch node.Right.(type) {
+			case *ast.Identifier:
+				columnB = node.Right.(*ast.Identifier)
+				shouldProcess++
+			}
+
+			if columnA.Clause() == token.ON && shouldProcess == 2 {
+				r.AddJoin(columnA, columnB, node.String(false))
+			}
+		}
 	case *ast.GroupedExpression:
 		for _, e := range node.Elements {
 			r.Extract(e, env)
@@ -171,7 +196,6 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	default:
 		r.newError("unknown node type: %T", node)
 	}
-
 }
 
 func (r *Extractor) extractProgram(program *ast.Program, env *object.Environment) {
@@ -192,10 +216,10 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 		r.Extract(c, env)
 	}
 	for _, t := range x.Tables {
-		switch table := t.(type) {
-		case *ast.TableExpression:
-			r.extractTableExpression(table, env)
-		}
+		// switch table := t.(type) {
+		// case *ast.TableExpression:
+		// 	r.extractTableExpression(table, env)
+		// }
 		r.Extract(t, env)
 	}
 	r.Extract(x.Where, env)
@@ -220,40 +244,42 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 // 	fmt.Printf("Extracting table:\n\t1. %s\n\t2. %s\n\t3. %s\n\t4. %s\n\n", t.JoinType, t.Schema, t.Table.String(false), t.JoinCondition.String(false))
 // }
 
-// AddTable adds a table to the list of tables in the Extractor
-func (r *Extractor) extractTableExpression(t *ast.TableExpression, env *object.Environment) {
-	switch table := t.Table.(type) {
-	case *ast.Identifier, *ast.SimpleIdentifier:
-		r.Extract(t.JoinCondition, env)
-		tbl := r.AddTable(t.Schema, table.String(false))
-		fmt.Println(tbl.UID)
+// // AddTable adds a table to the list of tables in the Extractor
+// func (r *Extractor) extractTableExpression(t *ast.TableExpression, env *object.Environment) {
+// 	switch table := t.Table.(type) {
+// 	case *ast.Identifier, *ast.SimpleIdentifier:
+// 		r.Extract(t.JoinCondition, env)
+// 		tbl := r.AddTable(t.Schema, table.String(false))
+// 		fmt.Println(tbl.UID)
 
-		switch join := t.JoinCondition.(type) {
-		case *ast.InfixExpression:
-			fmt.Println("Infix: ", join.Left.String(false))
-			fmt.Println("Infix: ", join.String(false))
-		}
-	case *ast.GroupedExpression, *ast.SelectExpression:
-		r.Extract(table, env)
-	default:
-		r.newError("unknown table type: %T", table)
-	}
+// 		switch join := t.JoinCondition.(type) {
+// 		case *ast.InfixExpression:
+// 			fmt.Println("JOIN", join.Clause())
+// 			fmt.Println("Infix: ", join.Left.String(false))
+// 			fmt.Println("Infix: ", join.String(false))
+// 		}
+// 	case *ast.GroupedExpression, *ast.SelectExpression:
+// 		r.Extract(table, env)
+// 	default:
+// 		r.newError("unknown table type: %T", table)
+// 	}
 
-	// if t.JoinCondition != nil {
-	// 	fmt.Println(t.JoinType)
-	// }
+// if t.JoinCondition != nil {
+// 	fmt.Println(t.JoinType)
+// }
 
-	// if t.JoinCondition != nil {
-	// 	fmt.Println(t.JoinCondition.String(false))
-	// }
+// if t.JoinCondition != nil {
+// 	fmt.Println(t.JoinCondition.String(false))
+// }
 
-}
+// }
 
 func (r *Extractor) extractColumnExpression(c *ast.ColumnExpression, env *object.Environment) {
 	r.Extract(c.Value, env)
 }
 
 func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment) {
+	// unalias
 	aliases, ok := env.Get("table_aliases")
 	if !ok {
 		return
@@ -270,6 +296,14 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 		if val, ok := aliases.(*object.StringHash).Value[alias]; ok {
 			i.Value[1].(*ast.SimpleIdentifier).Value = val
 		}
+	}
+
+	// Extract based on the clause we're in
+	switch i.Clause() {
+	case token.COLUMN: // These columns are what are selected (select id...)
+		r.AddColumn(i)
+	case token.FROM: // The FROM clause will have tables
+		r.AddTable(i)
 	}
 }
 

@@ -215,7 +215,7 @@ func (p *Parser) parseFirstTable() (ast.Expression, string, string) {
 	var table string
 	var alias string
 
-	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
+	x := &ast.TableExpression{Token: token.Token{Type: token.FROM}, Branch: p.clause}
 
 	x.Table = p.parseExpression(LOWEST)
 
@@ -251,7 +251,7 @@ func (p *Parser) parseFirstTable() (ast.Expression, string, string) {
 
 	// fmt.Printf("parseFirstTable2: %s :: %s == %+v\n", p.curToken.Lit, p.peekToken.Lit, table)
 
-	return &x, table, alias
+	return x, table, alias
 }
 
 func (p *Parser) parseTable() (ast.Expression, string, string) {
@@ -259,7 +259,8 @@ func (p *Parser) parseTable() (ast.Expression, string, string) {
 	var table string
 	var alias string
 
-	x := ast.TableExpression{Token: token.Token{Type: token.FROM}}
+	p.clause = token.FROM
+	x := &ast.TableExpression{Token: token.Token{Type: token.FROM}, Branch: p.clause}
 
 	// Get the join type
 	if p.peekTokenIsOne([]token.TokenType{token.INNER, token.LEFT, token.RIGHT, token.FULL, token.CROSS, token.LATERAL}) {
@@ -337,10 +338,11 @@ func (p *Parser) parseTable() (ast.Expression, string, string) {
 	if p.peekTokenIs(token.ON) {
 		p.nextToken()
 		p.nextToken()
+		p.clause = token.ON
 		x.JoinCondition = p.parseExpression(LOWEST)
 	}
 
-	return &x, table, alias
+	return x, table, alias
 }
 
 func (p *Parser) parseFetch() ast.Expression {
