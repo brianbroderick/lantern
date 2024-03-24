@@ -34,6 +34,9 @@ const (
 	// Used by the parser to indicate the start of the program
 	PROGRAM
 
+	// Context keywords
+	FUNCTION_CALL
+
 	literalBeg   // Literals
 	IDENT        // identity: add, foobar, x, y, my_var, ...
 	INT          // 12345
@@ -260,6 +263,9 @@ var Tokens = [...]string{
 	NIL:        "NIL",
 
 	PROGRAM: "PROGRAM",
+
+	// Context Keywords
+	FUNCTION_CALL: "FUNCTION_CALL",
 
 	IDENT:        "IDENT",
 	INT:          "INTEGER",

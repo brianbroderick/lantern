@@ -13,10 +13,11 @@ type ValuesExpression struct {
 	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
-func (x *ValuesExpression) Clause() token.TokenType  { return x.Branch }
-func (x *ValuesExpression) Command() token.TokenType { return x.Token.Type }
-func (x *ValuesExpression) expressionNode()          {}
-func (x *ValuesExpression) TokenLiteral() string     { return x.Token.Lit }
+func (x *ValuesExpression) Clause() token.TokenType     { return x.Branch }
+func (x *ValuesExpression) SetClause(c token.TokenType) { x.Branch = c }
+func (x *ValuesExpression) Command() token.TokenType    { return x.Token.Type }
+func (x *ValuesExpression) expressionNode()             {}
+func (x *ValuesExpression) TokenLiteral() string        { return x.Token.Lit }
 func (x *ValuesExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }

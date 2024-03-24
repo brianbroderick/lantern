@@ -862,6 +862,9 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
 	defer p.untrace(p.trace("parseCallExpression"))
 
+	// When it's a function, set the clause to FUNCTION_CALL so on evaluation, we know if an IDENT is a function, column, etc.
+	function.SetClause(token.FUNCTION_CALL)
+
 	x := &ast.CallExpression{Token: p.curToken, Function: function, Branch: p.clause}
 
 	p.nextToken()

@@ -13,10 +13,11 @@ type UpdateStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-func (s *UpdateStatement) Clause() token.TokenType  { return s.Token.Type }
-func (s *UpdateStatement) Command() token.TokenType { return s.Token.Type }
-func (s *UpdateStatement) statementNode()           {}
-func (s *UpdateStatement) TokenLiteral() string     { return s.Token.Upper }
+func (s *UpdateStatement) Clause() token.TokenType     { return s.Token.Type }
+func (x *UpdateStatement) SetClause(c token.TokenType) {}
+func (s *UpdateStatement) Command() token.TokenType    { return s.Token.Type }
+func (s *UpdateStatement) statementNode()              {}
+func (s *UpdateStatement) TokenLiteral() string        { return s.Token.Upper }
 func (s *UpdateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(s.Expression.String(maskParams))
@@ -46,10 +47,11 @@ type UpdateExpression struct {
 	Branch    token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
-func (x *UpdateExpression) Clause() token.TokenType  { return x.Branch }
-func (x *UpdateExpression) Command() token.TokenType { return x.Token.Type }
-func (x *UpdateExpression) expressionNode()          {}
-func (x *UpdateExpression) TokenLiteral() string     { return x.Token.Upper }
+func (x *UpdateExpression) Clause() token.TokenType     { return x.Branch }
+func (x *UpdateExpression) SetClause(c token.TokenType) { x.Branch = c }
+func (x *UpdateExpression) Command() token.TokenType    { return x.Token.Type }
+func (x *UpdateExpression) expressionNode()             {}
+func (x *UpdateExpression) TokenLiteral() string        { return x.Token.Upper }
 func (x *UpdateExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }

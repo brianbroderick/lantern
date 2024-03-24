@@ -84,7 +84,7 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 				shouldProcess++
 			}
 
-			if columnA.Clause() == token.ON && shouldProcess == 2 {
+			if shouldProcess == 2 {
 				r.AddJoin(columnA, columnB, node.String(false))
 			}
 		}
@@ -304,6 +304,9 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 		r.AddColumn(i)
 	case token.FROM: // The FROM clause will have tables
 		r.AddTable(i)
+	case token.FUNCTION_CALL:
+		// TODO: Record function calls here
+		// fmt.Println("FUNCTION_CALL:", i.String(false))
 	}
 }
 

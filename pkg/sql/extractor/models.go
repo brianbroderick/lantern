@@ -59,6 +59,15 @@ func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition strin
 		tableA = fmt.Sprintf("%s.%s", columnA.Value[0].(*ast.SimpleIdentifier).Value, columnA.Value[1].(*ast.SimpleIdentifier).Value)
 	}
 
+	switch len(columnB.Value) {
+	case 1:
+		fmt.Println("AddJoin: columns do not have tables associated with them")
+	case 2:
+		tableB = columnB.Value[0].(*ast.SimpleIdentifier).Value
+	case 3:
+		tableB = fmt.Sprintf("%s.%s", columnB.Value[0].(*ast.SimpleIdentifier).Value, columnB.Value[1].(*ast.SimpleIdentifier).Value)
+	}
+
 	if _, ok := d.TableJoins[uniqStr]; !ok {
 
 		d.TableJoins[uniqStr] = &TableJoin{
@@ -88,7 +97,12 @@ func (d *Extractor) AddColumn(ident *ast.Identifier) *Column {
 		column = ident.Value[0].(*ast.SimpleIdentifier).Value
 	case 2:
 		table = ident.Value[0].(*ast.SimpleIdentifier).Value
-		column = ident.Value[1].(*ast.SimpleIdentifier).Value
+		switch ident.Value[1].(type) {
+		case *ast.SimpleIdentifier:
+			column = ident.Value[1].(*ast.SimpleIdentifier).Value
+		case *ast.WildcardLiteral:
+			column = "*"
+		}
 	case 3:
 		schema = ident.Value[0].(*ast.SimpleIdentifier).Value
 		table = ident.Value[1].(*ast.SimpleIdentifier).Value

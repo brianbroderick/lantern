@@ -16,10 +16,11 @@ type CaseExpression struct {
 	Branch      token.TokenType        `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
-func (x *CaseExpression) Clause() token.TokenType  { return x.Branch }
-func (x *CaseExpression) Command() token.TokenType { return x.Token.Type }
-func (x *CaseExpression) expressionNode()          {}
-func (x *CaseExpression) TokenLiteral() string     { return x.Token.Lit }
+func (x *CaseExpression) Clause() token.TokenType     { return x.Branch }
+func (x *CaseExpression) SetClause(c token.TokenType) { x.Branch = c }
+func (x *CaseExpression) Command() token.TokenType    { return x.Token.Type }
+func (x *CaseExpression) expressionNode()             {}
+func (x *CaseExpression) TokenLiteral() string        { return x.Token.Lit }
 func (x *CaseExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -59,10 +60,11 @@ type ConditionExpression struct {
 	Branch      token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
-func (x *ConditionExpression) Clause() token.TokenType  { return x.Branch }
-func (x *ConditionExpression) Command() token.TokenType { return x.Token.Type }
-func (x *ConditionExpression) expressionNode()          {}
-func (x *ConditionExpression) TokenLiteral() string     { return x.Token.Lit }
+func (x *ConditionExpression) Clause() token.TokenType     { return x.Branch }
+func (x *ConditionExpression) SetClause(c token.TokenType) { x.Branch = c }
+func (x *ConditionExpression) Command() token.TokenType    { return x.Token.Type }
+func (x *ConditionExpression) expressionNode()             {}
+func (x *ConditionExpression) TokenLiteral() string        { return x.Token.Lit }
 func (x *ConditionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 

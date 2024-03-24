@@ -26,10 +26,11 @@ type CreateStatement struct {
 	Expression   Expression  `json:"expression,omitempty"`   // the expression to create the object
 }
 
-func (x *CreateStatement) Clause() token.TokenType  { return x.Token.Type }
-func (x *CreateStatement) Command() token.TokenType { return x.Token.Type }
-func (x *CreateStatement) statementNode()           {}
-func (x *CreateStatement) TokenLiteral() string     { return x.Token.Lit }
+func (x *CreateStatement) Clause() token.TokenType     { return x.Token.Type }
+func (x *CreateStatement) SetClause(c token.TokenType) {}
+func (x *CreateStatement) Command() token.TokenType    { return x.Token.Type }
+func (x *CreateStatement) statementNode()              {}
+func (x *CreateStatement) TokenLiteral() string        { return x.Token.Lit }
 func (x *CreateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(CREATE")
@@ -87,10 +88,11 @@ type LikeExpression struct {
 	Branch  token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 }
 
-func (x *LikeExpression) Clause() token.TokenType  { return x.Branch }
-func (x *LikeExpression) Command() token.TokenType { return x.Token.Type }
-func (x *LikeExpression) expressionNode()          {}
-func (x *LikeExpression) TokenLiteral() string     { return x.Token.Lit }
+func (x *LikeExpression) Clause() token.TokenType     { return x.Branch }
+func (x *LikeExpression) SetClause(c token.TokenType) { x.Branch = c }
+func (x *LikeExpression) Command() token.TokenType    { return x.Token.Type }
+func (x *LikeExpression) expressionNode()             {}
+func (x *LikeExpression) TokenLiteral() string        { return x.Token.Lit }
 func (x *LikeExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(LIKE ")
