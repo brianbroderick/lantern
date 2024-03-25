@@ -15,6 +15,8 @@ func main() {
 	}
 	fmt.Printf("Hello %s! This is Lantern, a SQL parser.\n",
 		user.Username)
-	fmt.Printf("Try typing a select statement or exit to quit.\n")
+	fmt.Println("Try typing a query or exit to quit.")
+	fmt.Println("To allow multi-line queries, end your query with a semicolon.")
+	fmt.Println("")
 	repl.StartParser(os.Stdin, os.Stdout)
 }

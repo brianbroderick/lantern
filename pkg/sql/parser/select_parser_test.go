@@ -175,8 +175,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select id from users for update of users, addresses skip locked;", "(SELECT id FROM users FOR UPDATE OF users, addresses SKIP LOCKED);"},
 
 		// Select: IN operator
-		{"select id from users where id IN ('1','2','3','4');", "(SELECT id FROM users WHERE id IN ('1', '2', '3', '4'));"},
-		{"select id from users where id NOT IN ('1','2','3','4');", "(SELECT id FROM users WHERE id NOT IN ('1', '2', '3', '4'));"},
+		{"select id from users where id in ('1','2','3','4');", "(SELECT id FROM users WHERE id IN ('1', '2', '3', '4'));"},
+		{"select id from users where id not in ('1','2','3','4');", "(SELECT id FROM users WHERE id NOT IN ('1', '2', '3', '4'));"},
 		{"select id from users where id IN ('1','2','3','4') AND name = 'brian';", "(SELECT id FROM users WHERE (id IN ('1', '2', '3', '4') AND (name = 'brian')));"},
 		{"select id from users where id IN (1,2,3,4);", "(SELECT id FROM users WHERE id IN (1, 2, 3, 4));"},
 		{"select id from modules where (option_id, external_id) IN ((1, 7))", "(SELECT id FROM modules WHERE (option_id, external_id) IN ((1, 7)));"},                 // single tuple
