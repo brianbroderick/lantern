@@ -63,7 +63,7 @@ func StartParser(in io.Reader, out io.Writer) {
 
 		inspect = program
 
-		for _, s := range program.Statements {
+		for i, s := range program.Statements {
 			r := extractor.NewExtractor(&s)
 			env := object.NewEnvironment()
 			r.Extract(s, env)
@@ -73,7 +73,7 @@ func StartParser(in io.Reader, out io.Writer) {
 				continue
 			}
 
-			fmt.Println("")
+			fmt.Printf("\nStatement: %d\n\n", i+1)
 
 			// Print out the columns
 			if len(r.Columns) > 0 {
@@ -89,6 +89,15 @@ func StartParser(in io.Reader, out io.Writer) {
 				fmt.Println("Tables:")
 				for _, table := range r.Tables {
 					io.WriteString(out, fmt.Sprintf("  %s\n", table.Name))
+				}
+				fmt.Println("")
+			}
+
+			// Print out the joins
+			if len(r.TableJoins) > 0 {
+				fmt.Println("Joins:")
+				for _, join := range r.TableJoins {
+					io.WriteString(out, fmt.Sprintf("  %s TO %s\n", join.TableA, join.TableB))
 				}
 				fmt.Println("")
 			}

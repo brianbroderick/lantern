@@ -91,6 +91,9 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Select: joins
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;", "(SELECT c.id FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id));"},
 		{"select c.id from customers c join addresses a on (c.id = a.customer_id) join states s on (s.id = a.state_id);", "(SELECT c.id FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id) INNER JOIN states s ON (s.id = a.state_id));"},
+		// This is a complex join with multiple tables
+		{"select c.id, c.name from customers c join addresses a on c.id = a.customer_id join states s on s.id = a.state_id join phone_numbers ph ON ph.customer_id = c.id;",
+			"(SELECT c.id, c.name FROM customers c INNER JOIN addresses a ON (c.id = a.customer_id) INNER JOIN states s ON (s.id = a.state_id) INNER JOIN phone_numbers ph ON (ph.customer_id = c.id));"},
 		{"select id from customers join addresses on id = customer_id;", "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id));"},
 		{"select id from customers join addresses on id = customer_id join phones on id = phone_id;", "(SELECT id FROM customers INNER JOIN addresses ON (id = customer_id) INNER JOIN phones ON (id = phone_id));"},
 		{"select id from customers join addresses on customers.id = addresses.customer_id", "(SELECT id FROM customers INNER JOIN addresses ON (customers.id = addresses.customer_id));"},
