@@ -101,6 +101,15 @@ func StartParser(in io.Reader, out io.Writer) {
 				}
 				fmt.Println("")
 			}
+
+			// Print out the functions
+			if len(r.Functions) > 0 {
+				fmt.Println("Functions:")
+				for _, function := range r.Functions {
+					io.WriteString(out, fmt.Sprintf("  %s\n", function.Name))
+				}
+				fmt.Println("")
+			}
 		}
 
 		io.WriteString(out, program.String(maskParams))

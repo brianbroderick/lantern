@@ -40,11 +40,26 @@ type TableJoin struct {
 	TableB        string    `json:"table_b"`        // This won't be in the DB, but is for debugging purposes to see the table name
 }
 
+type Function struct {
+	UID  uuid.UUID `json:"uid"`
+	Name string    `json:"name"`
+}
+
+type FunctionInQuery struct {
+	UID          uuid.UUID `json:"uid"`
+	FunctionsUID uuid.UUID `json:"functions_uid"`
+	QueriesUID   uuid.UUID `json:"queries_uid"`
+}
+
 // TODO: check backwards in case someone joins the opposite way
 // Maybe alphabetical order of the table names?
 func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition string) *TableJoin {
-	uniq := UuidV5(fmt.Sprintf("%s|%s", columnA.String(false), columnB.String(false)))
-	uniqStr := uniq.String()
+	alphabetical := func(a, b string) (string, string) {
+		if a < b {
+			return a, b
+		}
+		return b, a
+	}
 
 	var (
 		tableA string
@@ -68,15 +83,20 @@ func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition strin
 		tableB = fmt.Sprintf("%s.%s", columnB.Value[0].(*ast.SimpleIdentifier).Value, columnB.Value[1].(*ast.SimpleIdentifier).Value)
 	}
 
+	a, b := alphabetical(tableA, tableB)
+
+	uniq := UuidV5(fmt.Sprintf("%s|%s", a, b))
+	uniqStr := uniq.String()
+
 	if _, ok := d.TableJoins[uniqStr]; !ok {
 
 		d.TableJoins[uniqStr] = &TableJoin{
 			UID:         uniq,
-			TablesUIDa:  UuidV5(columnA.String(false)),
-			TablesUIDb:  UuidV5(columnB.String(false)),
+			TablesUIDa:  UuidV5(a),
+			TablesUIDb:  UuidV5(b),
 			OnCondition: on_condition,
-			TableA:      tableA,
-			TableB:      tableB,
+			TableA:      a,
+			TableB:      b,
 		}
 	}
 
@@ -170,20 +190,17 @@ func (d *Extractor) AddTableInQuery(table_uid, query_uid uuid.UUID) *TableInQuer
 	return d.TablesinQueries[table_uid.String()]
 }
 
-// func (d *Extractor) AddTableJoin(table_uid_a, table_uid_b uuid.UUID, join_condition, on_condition string) *TableJoin {
-// 	uniq := UuidV5(fmt.Sprintf("%s.%s.%s.%s", table_uid_a, table_uid_b, join_condition, on_condition))
-// 	uniqStr := uniq.String()
+func (d *Extractor) AddFunction(ident *ast.Identifier) *Function {
+	fqn := ident.String(false) // fqn is the fully qualified function name
 
-// 	if _, ok := d.TableJoins[uniqStr]; !ok {
+	if _, ok := d.Functions[fqn]; !ok {
+		uid := UuidV5(fqn)
 
-// 		d.TableJoins[uniqStr] = &TableJoin{
-// 			UID:           uniq,
-// 			TablesUIDa:    table_uid_a,
-// 			TablesUIDb:    table_uid_b,
-// 			JoinCondition: join_condition,
-// 			OnCondition:   on_condition,
-// 		}
-// 	}
+		d.Functions[fqn] = &Function{
+			UID:  uid,
+			Name: fqn,
+		}
+	}
 
-// 	return d.TableJoins[uniqStr]
-// }
+	return d.Functions[fqn]
+}

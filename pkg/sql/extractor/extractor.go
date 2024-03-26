@@ -9,22 +9,26 @@ import (
 )
 
 type Extractor struct {
-	Ast             *ast.Statement
-	Columns         map[string]*Column       `json:"columns,omitempty"`
-	Tables          map[string]*Table        `json:"tables,omitempty"`
-	TablesinQueries map[string]*TableInQuery `json:"tables_in_queries,omitempty"`
-	TableJoins      map[string]*TableJoin    `json:"table_joins,omitempty"`
-	errors          []string
+	Ast              *ast.Statement
+	Columns          map[string]*Column          `json:"columns,omitempty"`
+	Tables           map[string]*Table           `json:"tables,omitempty"`
+	TablesinQueries  map[string]*TableInQuery    `json:"tables_in_queries,omitempty"`
+	TableJoins       map[string]*TableJoin       `json:"table_joins,omitempty"`
+	Functions        map[string]*Function        `json:"functions,omitempty"`
+	FunctionsInQuery map[string]*FunctionInQuery `json:"functions_in_queries,omitempty"`
+	errors           []string
 }
 
 func NewExtractor(stmt *ast.Statement) *Extractor {
 	return &Extractor{
-		Ast:             stmt,
-		Columns:         make(map[string]*Column),
-		Tables:          make(map[string]*Table),
-		TablesinQueries: make(map[string]*TableInQuery),
-		TableJoins:      make(map[string]*TableJoin),
-		errors:          []string{},
+		Ast:              stmt,
+		Columns:          make(map[string]*Column),
+		Tables:           make(map[string]*Table),
+		TablesinQueries:  make(map[string]*TableInQuery),
+		TableJoins:       make(map[string]*TableJoin),
+		Functions:        make(map[string]*Function),
+		FunctionsInQuery: make(map[string]*FunctionInQuery),
+		errors:           []string{},
 	}
 }
 
@@ -69,24 +73,7 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		// TODO: This is a hack to get the join condition, but it only works for simple cases
 		// We might be better off compiling to a stack and then popping off the stack to evaluate the expression
 		if node.Clause() == token.ON {
-			var (
-				columnA, columnB *ast.Identifier
-				shouldProcess    int
-			)
-			switch node.Left.(type) {
-			case *ast.Identifier:
-				columnA = node.Left.(*ast.Identifier)
-				shouldProcess++
-			}
-			switch node.Right.(type) {
-			case *ast.Identifier:
-				columnB = node.Right.(*ast.Identifier)
-				shouldProcess++
-			}
-
-			if shouldProcess == 2 {
-				r.AddJoin(columnA, columnB, node.String(false))
-			}
+			r.extractOnExpression(*node)
 		}
 	case *ast.GroupedExpression:
 		for _, e := range node.Elements {
@@ -239,6 +226,28 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 	r.Extract(x.Lock, env)
 }
 
+// TODO: This only handles simple cases. We need to handle more complex cases
+func (r *Extractor) extractOnExpression(node ast.InfixExpression) {
+	var (
+		left, right   *ast.Identifier
+		shouldProcess int
+	)
+	switch node.Left.(type) {
+	case *ast.Identifier:
+		left = node.Left.(*ast.Identifier)
+		shouldProcess++
+	}
+	switch node.Right.(type) {
+	case *ast.Identifier:
+		right = node.Right.(*ast.Identifier)
+		shouldProcess++
+	}
+
+	if shouldProcess == 2 {
+		r.AddJoin(left, right, node.String(false))
+	}
+}
+
 // switch t := t.(type) {
 // case *ast.TableExpression:
 // 	fmt.Printf("Extracting table:\n\t1. %s\n\t2. %s\n\t3. %s\n\t4. %s\n\n", t.JoinType, t.Schema, t.Table.String(false), t.JoinCondition.String(false))
@@ -305,6 +314,7 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 	case token.FROM: // The FROM clause will have tables
 		r.AddTable(i)
 	case token.FUNCTION_CALL:
+		r.AddFunction(i)
 		// TODO: Record function calls here
 		// fmt.Println("FUNCTION_CALL:", i.String(false))
 	}
