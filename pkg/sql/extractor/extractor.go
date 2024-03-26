@@ -248,41 +248,6 @@ func (r *Extractor) extractOnExpression(node ast.InfixExpression) {
 	}
 }
 
-// switch t := t.(type) {
-// case *ast.TableExpression:
-// 	fmt.Printf("Extracting table:\n\t1. %s\n\t2. %s\n\t3. %s\n\t4. %s\n\n", t.JoinType, t.Schema, t.Table.String(false), t.JoinCondition.String(false))
-// }
-
-// // AddTable adds a table to the list of tables in the Extractor
-// func (r *Extractor) extractTableExpression(t *ast.TableExpression, env *object.Environment) {
-// 	switch table := t.Table.(type) {
-// 	case *ast.Identifier, *ast.SimpleIdentifier:
-// 		r.Extract(t.JoinCondition, env)
-// 		tbl := r.AddTable(t.Schema, table.String(false))
-// 		fmt.Println(tbl.UID)
-
-// 		switch join := t.JoinCondition.(type) {
-// 		case *ast.InfixExpression:
-// 			fmt.Println("JOIN", join.Clause())
-// 			fmt.Println("Infix: ", join.Left.String(false))
-// 			fmt.Println("Infix: ", join.String(false))
-// 		}
-// 	case *ast.GroupedExpression, *ast.SelectExpression:
-// 		r.Extract(table, env)
-// 	default:
-// 		r.newError("unknown table type: %T", table)
-// 	}
-
-// if t.JoinCondition != nil {
-// 	fmt.Println(t.JoinType)
-// }
-
-// if t.JoinCondition != nil {
-// 	fmt.Println(t.JoinCondition.String(false))
-// }
-
-// }
-
 func (r *Extractor) extractColumnExpression(c *ast.ColumnExpression, env *object.Environment) {
 	r.Extract(c.Value, env)
 }
@@ -309,14 +274,12 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 
 	// Extract based on the clause we're in
 	switch i.Clause() {
-	case token.COLUMN: // These columns are what are selected (select id...)
-		r.AddColumn(i)
+	case token.COLUMN, token.WHERE, token.HAVING: // These columns are what are selected (select id...)
+		r.AddColumn(i, i.Clause())
 	case token.FROM: // The FROM clause will have tables
 		r.AddTable(i)
 	case token.FUNCTION_CALL:
 		r.AddFunction(i)
-		// TODO: Record function calls here
-		// fmt.Println("FUNCTION_CALL:", i.String(false))
 	}
 }
 

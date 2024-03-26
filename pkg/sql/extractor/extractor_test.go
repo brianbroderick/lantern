@@ -8,6 +8,7 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -102,8 +103,10 @@ func TestExtractAlias(t *testing.T) {
 				assert.Contains(t, tt.tables[i], table.Name, "input: %s\nTable %s not found in %v", tt.input, table.Name, tt.tables[i])
 			}
 
-			for fqcn := range r.Columns {
-				assert.Contains(t, tt.columns[i], fqcn, "input: %s\nColumn %s not found in %v", tt.input, fqcn, tt.columns[i])
+			for fqcn, column := range r.Columns {
+				if column.Clause == token.COLUMN {
+					assert.Contains(t, tt.columns[i], fqcn, "input: %s\nColumn %s not found in %v", tt.input, fqcn, tt.columns[i])
+				}
 			}
 
 			for _, join := range r.TableJoins {

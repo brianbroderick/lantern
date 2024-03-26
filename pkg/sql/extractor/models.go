@@ -4,15 +4,17 @@ import (
 	"fmt"
 
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/google/uuid"
 )
 
 type Column struct {
-	UID      uuid.UUID `json:"uid"`
-	TableUID uuid.UUID `json:"table_uid"`   // This will get populated, if it matches something in the Tables map
-	Schema   string    `json:"schema_name"` // This won't persist to the DB. It's a placeholder before it's compared to physical tables
-	Table    string    `json:"table_name"`  // This won't persist to the DB. It's a placeholder before it's compared to physical tables
-	Name     string    `json:"column_name"`
+	UID      uuid.UUID       `json:"uid"`
+	TableUID uuid.UUID       `json:"table_uid"`   // This will get populated, if it matches something in the Tables map
+	Schema   string          `json:"schema_name"` // This won't persist to the DB. It's a placeholder before it's compared to physical tables
+	Table    string          `json:"table_name"`  // This won't persist to the DB. It's a placeholder before it's compared to physical tables
+	Name     string          `json:"column_name"`
+	Clause   token.TokenType `json:"clause"`
 }
 
 // This represents all of the physical tables in the query.
@@ -106,7 +108,7 @@ func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition strin
 // AddColumn adds a column to the extractor. If the column already exists, it returns the existing column.
 // This will potentially add calculated columns as it doesn't yet map to an existing table, just whatever is in the identifier.
 // In a later step, columns will be mapped to real tables.
-func (d *Extractor) AddColumn(ident *ast.Identifier) *Column {
+func (d *Extractor) AddColumn(ident *ast.Identifier, clause token.TokenType) *Column {
 	var (
 		schema string
 		table  string
@@ -139,6 +141,7 @@ func (d *Extractor) AddColumn(ident *ast.Identifier) *Column {
 			Schema: schema,
 			Table:  table,
 			Name:   column,
+			Clause: clause,
 		}
 	}
 

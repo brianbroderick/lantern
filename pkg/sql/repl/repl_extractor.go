@@ -12,6 +12,7 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 func StartParser(in io.Reader, out io.Writer) {
@@ -78,8 +79,10 @@ func StartParser(in io.Reader, out io.Writer) {
 			// Print out the columns
 			if len(r.Columns) > 0 {
 				fmt.Println("Selected Columns:")
-				for fqcn := range r.Columns {
-					io.WriteString(out, fmt.Sprintf("  %s\n", fqcn))
+				for fqcn, column := range r.Columns {
+					if column.Clause == token.COLUMN {
+						io.WriteString(out, fmt.Sprintf("  %s\n", fqcn))
+					}
 				}
 				fmt.Println("")
 			}
@@ -98,6 +101,17 @@ func StartParser(in io.Reader, out io.Writer) {
 				fmt.Println("Joins:")
 				for _, join := range r.TableJoins {
 					io.WriteString(out, fmt.Sprintf("  %s TO %s\n", join.TableA, join.TableB))
+				}
+				fmt.Println("")
+			}
+
+			// Print out the columns
+			if len(r.Columns) > 0 {
+				fmt.Println("Where Columns:")
+				for fqcn, column := range r.Columns {
+					if column.Clause == token.WHERE {
+						io.WriteString(out, fmt.Sprintf("  %s\n", fqcn))
+					}
 				}
 				fmt.Println("")
 			}
