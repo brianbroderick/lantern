@@ -12,7 +12,7 @@ type Extractor struct {
 	Ast              *ast.Statement
 	Columns          map[string]*Column          `json:"columns,omitempty"`
 	Tables           map[string]*Table           `json:"tables,omitempty"`
-	TablesinQueries  map[string]*TableInQuery    `json:"tables_in_queries,omitempty"`
+	TablesinQueries  map[string]*TablesInQuery   `json:"tables_in_queries,omitempty"`
 	TableJoins       map[string]*TableJoin       `json:"table_joins,omitempty"`
 	Functions        map[string]*Function        `json:"functions,omitempty"`
 	FunctionsInQuery map[string]*FunctionInQuery `json:"functions_in_queries,omitempty"`
@@ -24,7 +24,7 @@ func NewExtractor(stmt *ast.Statement) *Extractor {
 		Ast:              stmt,
 		Columns:          make(map[string]*Column),
 		Tables:           make(map[string]*Table),
-		TablesinQueries:  make(map[string]*TableInQuery),
+		TablesinQueries:  make(map[string]*TablesInQuery),
 		TableJoins:       make(map[string]*TableJoin),
 		Functions:        make(map[string]*Function),
 		FunctionsInQuery: make(map[string]*FunctionInQuery),

@@ -8,6 +8,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type Function struct {
+	UID  uuid.UUID `json:"uid"`
+	Name string    `json:"name"`
+}
+
 type Column struct {
 	UID      uuid.UUID       `json:"uid"`
 	TableUID uuid.UUID       `json:"table_uid"`   // This will get populated, if it matches something in the Tables map
@@ -25,7 +30,14 @@ type Table struct {
 	Name        string    `json:"table_name"`
 }
 
-type TableInQuery struct {
+type ColumnsInQuery struct {
+	UID        uuid.UUID       `json:"uid"`
+	ColumnsUID uuid.UUID       `json:"columns_uid"`
+	QueriesUID uuid.UUID       `json:"queries_uid"`
+	Clause     token.TokenType `json:"clause"`
+}
+
+type TablesInQuery struct {
 	UID        uuid.UUID `json:"uid"`
 	TablesUID  uuid.UUID `json:"tables_uid"`
 	QueriesUID uuid.UUID `json:"queries_uid"`
@@ -40,11 +52,6 @@ type TableJoin struct {
 	OnCondition   string    `json:"on_condition"`   // Right now, this is the String() of the expression
 	TableA        string    `json:"table_a"`        // This won't be in the DB, but is for debugging purposes to see the table name
 	TableB        string    `json:"table_b"`        // This won't be in the DB, but is for debugging purposes to see the table name
-}
-
-type Function struct {
-	UID  uuid.UUID `json:"uid"`
-	Name string    `json:"name"`
 }
 
 type FunctionInQuery struct {
@@ -177,13 +184,13 @@ func (d *Extractor) AddTable(ident *ast.Identifier) *Table {
 	return d.Tables[fqtn]
 }
 
-func (d *Extractor) AddTableInQuery(table_uid, query_uid uuid.UUID) *TableInQuery {
+func (d *Extractor) AddTableInQuery(table_uid, query_uid uuid.UUID) *TablesInQuery {
 	uniq := UuidV5(fmt.Sprintf("%s.%s", table_uid, query_uid))
 	uniqStr := uniq.String()
 
 	if _, ok := d.TablesinQueries[uniqStr]; !ok {
 
-		d.TablesinQueries[uniqStr] = &TableInQuery{
+		d.TablesinQueries[uniqStr] = &TablesInQuery{
 			UID:        uniq,
 			TablesUID:  table_uid,
 			QueriesUID: query_uid,
