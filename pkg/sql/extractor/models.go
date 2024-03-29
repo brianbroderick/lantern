@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// DB Objects
 type Function struct {
 	UID  uuid.UUID `json:"uid"`
 	Name string    `json:"name"`
@@ -28,6 +29,13 @@ type Table struct {
 	DatabaseUID uuid.UUID `json:"database_uid"`
 	Schema      string    `json:"schema_name"`
 	Name        string    `json:"table_name"`
+}
+
+// Relationships between Objects and Queries
+type FunctionInQuery struct {
+	UID          uuid.UUID `json:"uid"`
+	FunctionsUID uuid.UUID `json:"functions_uid"`
+	QueriesUID   uuid.UUID `json:"queries_uid"`
 }
 
 type ColumnsInQuery struct {
@@ -52,12 +60,6 @@ type TableJoin struct {
 	OnCondition   string    `json:"on_condition"`   // Right now, this is the String() of the expression
 	TableA        string    `json:"table_a"`        // This won't be in the DB, but is for debugging purposes to see the table name
 	TableB        string    `json:"table_b"`        // This won't be in the DB, but is for debugging purposes to see the table name
-}
-
-type FunctionInQuery struct {
-	UID          uuid.UUID `json:"uid"`
-	FunctionsUID uuid.UUID `json:"functions_uid"`
-	QueriesUID   uuid.UUID `json:"queries_uid"`
 }
 
 // TODO: check backwards in case someone joins the opposite way

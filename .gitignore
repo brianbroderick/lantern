@@ -42,3 +42,5 @@ _testmain.go
 debug.json
 
 logs/*.log
+
+.DS_Store
