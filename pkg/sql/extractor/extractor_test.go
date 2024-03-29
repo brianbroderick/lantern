@@ -438,7 +438,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 	}
 	t2 := time.Now()
 	timeDiff := t2.Sub(t1)
-	fmt.Printf("TestExtractAlias, Elapsed Time: %s\n", timeDiff)
+	fmt.Printf("TestExtractSelectedColumns, Elapsed Time: %s\n", timeDiff)
 }
 
 func TestExtractSelectedTables(t *testing.T) {
@@ -866,11 +866,25 @@ func TestExtractSelectedTables(t *testing.T) {
 			for _, table := range r.Tables {
 				assert.Contains(t, tt.tables[i], table.Name, "input: %s\nTable %s not found in %v", tt.input, table.Name, tt.tables[i])
 			}
+
+			for _, join := range r.TableJoins {
+				found := 0
+				for _, j := range tt.tables[i] {
+					if join.TableA == j {
+						found++
+					}
+					if join.TableB == j {
+						found++
+					}
+				}
+				assert.Equal(t, 2, found, "input: %s\nDid not find all input tables: %v in join: %s %s\n",
+					tt.input, tt.tables[i], printTableJoins(r))
+			}
 		}
 	}
 	t2 := time.Now()
 	timeDiff := t2.Sub(t1)
-	fmt.Printf("TestExtractAlias, Elapsed Time: %s\n", timeDiff)
+	fmt.Printf("TestExtractSelectedTables, Elapsed Time: %s\n", timeDiff)
 }
 
 // func TestExtractAlias(t *testing.T) {
