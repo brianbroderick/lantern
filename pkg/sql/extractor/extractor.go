@@ -9,26 +9,22 @@ import (
 )
 
 type Extractor struct {
-	Ast              *ast.Statement
-	Columns          map[string]*Column          `json:"columns,omitempty"`
-	Tables           map[string]*Table           `json:"tables,omitempty"`
-	TablesinQueries  map[string]*TablesInQuery   `json:"tables_in_queries,omitempty"`
-	TableJoins       map[string]*TableJoin       `json:"table_joins,omitempty"`
-	Functions        map[string]*Function        `json:"functions,omitempty"`
-	FunctionsInQuery map[string]*FunctionInQuery `json:"functions_in_queries,omitempty"`
-	errors           []string
+	Ast                 *ast.Statement
+	ColumnsInQueries    map[string]*ColumnsInQueries    `json:"columns_in_queries,omitempty"`
+	TablesInQueries     map[string]*TablesInQueries     `json:"tables_in_queries,omitempty"`
+	TableJoinsInQueries map[string]*TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
+	FunctionsInQueries  map[string]*FunctionsInQueries  `json:"functions_in_queries,omitempty"`
+	errors              []string
 }
 
 func NewExtractor(stmt *ast.Statement) *Extractor {
 	return &Extractor{
-		Ast:              stmt,
-		Columns:          make(map[string]*Column),
-		Tables:           make(map[string]*Table),
-		TablesinQueries:  make(map[string]*TablesInQuery),
-		TableJoins:       make(map[string]*TableJoin),
-		Functions:        make(map[string]*Function),
-		FunctionsInQuery: make(map[string]*FunctionInQuery),
-		errors:           []string{},
+		Ast:                 stmt,
+		ColumnsInQueries:    make(map[string]*ColumnsInQueries),
+		TablesInQueries:     make(map[string]*TablesInQueries),
+		TableJoinsInQueries: make(map[string]*TableJoinsInQueries),
+		FunctionsInQueries:  make(map[string]*FunctionsInQueries),
+		errors:              []string{},
 	}
 }
 
@@ -274,7 +270,7 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 
 	// Extract based on the clause we're in
 	switch i.Clause() {
-	case token.COLUMN, token.WHERE, token.HAVING: // These columns are what are selected (select id...)
+	case token.COLUMN, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
 		r.AddColumn(i, i.Clause())
 	case token.FROM: // The FROM clause will have tables
 		r.AddTable(i)

@@ -15,12 +15,12 @@ type Function struct {
 }
 
 type Column struct {
-	UID      uuid.UUID       `json:"uid"`
-	TableUID uuid.UUID       `json:"table_uid"`   // This will get populated, if it matches something in the Tables map
-	Schema   string          `json:"schema_name"` // This won't persist to the DB. It's a placeholder before it's compared to physical tables
-	Table    string          `json:"table_name"`  // This won't persist to the DB. It's a placeholder before it's compared to physical tables
-	Name     string          `json:"column_name"`
-	Clause   token.TokenType `json:"clause"`
+	UID      uuid.UUID `json:"uid"`
+	TableUID uuid.UUID `json:"table_uid"`
+	Schema   string    `json:"schema_name"`
+	Table    string    `json:"table_name"`
+	Name     string    `json:"column_name"`
+	// Clause   token.TokenType `json:"clause"`
 }
 
 // This represents all of the physical tables in the query.
@@ -32,30 +32,37 @@ type Table struct {
 }
 
 // Relationships between Objects and Queries
-type FunctionInQuery struct {
-	UID          uuid.UUID `json:"uid"`
-	FunctionsUID uuid.UUID `json:"functions_uid"`
-	QueriesUID   uuid.UUID `json:"queries_uid"`
+type FunctionsInQueries struct {
+	UID         uuid.UUID `json:"uid"`
+	FunctionUID uuid.UUID `json:"function_uid"`
+	QueryUID    uuid.UUID `json:"query_uid"`
+	Name        string    `json:"name"`
 }
 
-type ColumnsInQuery struct {
-	UID        uuid.UUID       `json:"uid"`
-	ColumnsUID uuid.UUID       `json:"columns_uid"`
-	QueriesUID uuid.UUID       `json:"queries_uid"`
-	Clause     token.TokenType `json:"clause"`
+type ColumnsInQueries struct {
+	UID       uuid.UUID       `json:"uid"`
+	ColumnUID uuid.UUID       `json:"column_uid"`
+	QueryUID  uuid.UUID       `json:"query_uid"`
+	Schema    string          `json:"schema_name"`
+	Table     string          `json:"table_name"`
+	Name      string          `json:"column_name"`
+	Clause    token.TokenType `json:"clause"`
 }
 
-type TablesInQuery struct {
-	UID        uuid.UUID `json:"uid"`
-	TablesUID  uuid.UUID `json:"tables_uid"`
-	QueriesUID uuid.UUID `json:"queries_uid"`
+type TablesInQueries struct {
+	UID      uuid.UUID `json:"uid"`
+	TableUID uuid.UUID `json:"table_uid"`
+	QueryUID uuid.UUID `json:"query_uid"`
+	Schema   string    `json:"schema_name"`
+	Name     string    `json:"table_name"`
 }
 
-type TableJoin struct {
+// May have to store the reverse join as well
+type TableJoinsInQueries struct {
 	UID           uuid.UUID `json:"uid"`
-	QueriesUID    uuid.UUID `json:"queries_uid"`
-	TablesUIDa    uuid.UUID `json:"tables_uid_a"`
-	TablesUIDb    uuid.UUID `json:"tables_uid_b"`
+	QueryUID      uuid.UUID `json:"query_uid"`
+	TableUIDa     uuid.UUID `json:"table_uid_a"`
+	TableUIDb     uuid.UUID `json:"table_uid_b"`
 	JoinCondition string    `json:"join_condition"` // LEFT, RIGHT, INNER, OUTER, etc
 	OnCondition   string    `json:"on_condition"`   // Right now, this is the String() of the expression
 	TableA        string    `json:"table_a"`        // This won't be in the DB, but is for debugging purposes to see the table name
@@ -64,7 +71,7 @@ type TableJoin struct {
 
 // TODO: check backwards in case someone joins the opposite way
 // Maybe alphabetical order of the table names?
-func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition string) *TableJoin {
+func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition string) *TableJoinsInQueries {
 	alphabetical := func(a, b string) (string, string) {
 		if a < b {
 			return a, b
@@ -99,25 +106,25 @@ func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition strin
 	uniq := UuidV5(fmt.Sprintf("%s|%s", a, b))
 	uniqStr := uniq.String()
 
-	if _, ok := d.TableJoins[uniqStr]; !ok {
+	if _, ok := d.TableJoinsInQueries[uniqStr]; !ok {
 
-		d.TableJoins[uniqStr] = &TableJoin{
+		d.TableJoinsInQueries[uniqStr] = &TableJoinsInQueries{
 			UID:         uniq,
-			TablesUIDa:  UuidV5(a),
-			TablesUIDb:  UuidV5(b),
+			TableUIDa:   UuidV5(a),
+			TableUIDb:   UuidV5(b),
 			OnCondition: on_condition,
 			TableA:      a,
 			TableB:      b,
 		}
 	}
 
-	return d.TableJoins[uniqStr]
+	return d.TableJoinsInQueries[uniqStr]
 }
 
 // AddColumn adds a column to the extractor. If the column already exists, it returns the existing column.
 // This will potentially add calculated columns as it doesn't yet map to an existing table, just whatever is in the identifier.
 // In a later step, columns will be mapped to real tables.
-func (d *Extractor) AddColumn(ident *ast.Identifier, clause token.TokenType) *Column {
+func (d *Extractor) AddColumn(ident *ast.Identifier, clause token.TokenType) *ColumnsInQueries {
 	var (
 		schema string
 		table  string
@@ -142,10 +149,10 @@ func (d *Extractor) AddColumn(ident *ast.Identifier, clause token.TokenType) *Co
 
 	fqcn := ident.String(false) // fqcn is the fully qualified column name
 
-	if _, ok := d.Columns[fqcn]; !ok {
+	if _, ok := d.ColumnsInQueries[fqcn]; !ok {
 		uid := UuidV5(fqcn)
 
-		d.Columns[fqcn] = &Column{
+		d.ColumnsInQueries[fqcn] = &ColumnsInQueries{
 			UID:    uid,
 			Schema: schema,
 			Table:  table,
@@ -154,10 +161,10 @@ func (d *Extractor) AddColumn(ident *ast.Identifier, clause token.TokenType) *Co
 		}
 	}
 
-	return d.Columns[fqcn]
+	return d.ColumnsInQueries[fqcn]
 }
 
-func (d *Extractor) AddTable(ident *ast.Identifier) *Table {
+func (d *Extractor) AddTable(ident *ast.Identifier) *TablesInQueries {
 	var (
 		schema string
 		table  string
@@ -173,46 +180,46 @@ func (d *Extractor) AddTable(ident *ast.Identifier) *Table {
 
 	fqtn := ident.String(false) // fqtn is the fully qualified table name
 
-	if _, ok := d.Tables[fqtn]; !ok {
+	if _, ok := d.TablesInQueries[fqtn]; !ok {
 		uid := UuidV5(fqtn)
 
-		d.Tables[fqtn] = &Table{
+		d.TablesInQueries[fqtn] = &TablesInQueries{
 			UID:    uid,
 			Schema: schema,
 			Name:   table,
 		}
 	}
 
-	return d.Tables[fqtn]
+	return d.TablesInQueries[fqtn]
 }
 
-func (d *Extractor) AddTableInQuery(table_uid, query_uid uuid.UUID) *TablesInQuery {
+func (d *Extractor) AddTableInQuery(table_uid, query_uid uuid.UUID) *TablesInQueries {
 	uniq := UuidV5(fmt.Sprintf("%s.%s", table_uid, query_uid))
 	uniqStr := uniq.String()
 
-	if _, ok := d.TablesinQueries[uniqStr]; !ok {
+	if _, ok := d.TablesInQueries[uniqStr]; !ok {
 
-		d.TablesinQueries[uniqStr] = &TablesInQuery{
-			UID:        uniq,
-			TablesUID:  table_uid,
-			QueriesUID: query_uid,
+		d.TablesInQueries[uniqStr] = &TablesInQueries{
+			UID:      uniq,
+			TableUID: table_uid,
+			QueryUID: query_uid,
 		}
 	}
 
-	return d.TablesinQueries[table_uid.String()]
+	return d.TablesInQueries[table_uid.String()]
 }
 
-func (d *Extractor) AddFunction(ident *ast.Identifier) *Function {
+func (d *Extractor) AddFunction(ident *ast.Identifier) *FunctionsInQueries {
 	fqn := ident.String(false) // fqn is the fully qualified function name
 
-	if _, ok := d.Functions[fqn]; !ok {
+	if _, ok := d.FunctionsInQueries[fqn]; !ok {
 		uid := UuidV5(fqn)
 
-		d.Functions[fqn] = &Function{
+		d.FunctionsInQueries[fqn] = &FunctionsInQueries{
 			UID:  uid,
 			Name: fqn,
 		}
 	}
 
-	return d.Functions[fqn]
+	return d.FunctionsInQueries[fqn]
 }
