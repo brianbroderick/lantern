@@ -71,7 +71,7 @@ type TableJoinsInQueries struct {
 
 // TODO: check backwards in case someone joins the opposite way
 // Maybe alphabetical order of the table names?
-func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition string) *TableJoinsInQueries {
+func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_condition string) *TableJoinsInQueries {
 	alphabetical := func(a, b string) (string, string) {
 		if a < b {
 			return a, b
@@ -121,10 +121,10 @@ func (d *Extractor) AddJoin(columnA, columnB *ast.Identifier, on_condition strin
 	return d.TableJoinsInQueries[uniqStr]
 }
 
-// AddColumn adds a column to the extractor. If the column already exists, it returns the existing column.
+// AddColumnInQuery adds a column to the extractor. If the column already exists, it returns the existing column.
 // This will potentially add calculated columns as it doesn't yet map to an existing table, just whatever is in the identifier.
 // In a later step, columns will be mapped to real tables.
-func (d *Extractor) AddColumn(ident *ast.Identifier, clause token.TokenType) *ColumnsInQueries {
+func (d *Extractor) AddColumnInQuery(ident *ast.Identifier, clause token.TokenType) *ColumnsInQueries {
 	var (
 		schema string
 		table  string
@@ -147,7 +147,7 @@ func (d *Extractor) AddColumn(ident *ast.Identifier, clause token.TokenType) *Co
 		column = ident.Value[2].(*ast.SimpleIdentifier).Value
 	}
 
-	fqcn := ident.String(false) // fqcn is the fully qualified column name
+	fqcn := fmt.Sprintf("%s|%s", clause.String(), ident.String(false)) // fqcn is the fully qualified column name with clause
 
 	if _, ok := d.ColumnsInQueries[fqcn]; !ok {
 		uid := UuidV5(fqcn)
@@ -193,21 +193,23 @@ func (d *Extractor) AddTable(ident *ast.Identifier) *TablesInQueries {
 	return d.TablesInQueries[fqtn]
 }
 
-func (d *Extractor) AddTableInQuery(table_uid, query_uid uuid.UUID) *TablesInQueries {
-	uniq := UuidV5(fmt.Sprintf("%s.%s", table_uid, query_uid))
+func (d *Extractor) AddTableInQuery(query_uid, table_uid uuid.UUID) *TablesInQueries {
+	uniq := UuidV5(fmt.Sprintf("%s|%s", query_uid, table_uid))
 	uniqStr := uniq.String()
 
 	if _, ok := d.TablesInQueries[uniqStr]; !ok {
 
 		d.TablesInQueries[uniqStr] = &TablesInQueries{
 			UID:      uniq,
-			TableUID: table_uid,
 			QueryUID: query_uid,
+			TableUID: table_uid,
 		}
 	}
 
 	return d.TablesInQueries[table_uid.String()]
 }
+
+// TODO: add function in query
 
 func (d *Extractor) AddFunction(ident *ast.Identifier) *FunctionsInQueries {
 	fqn := ident.String(false) // fqn is the fully qualified function name

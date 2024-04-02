@@ -240,7 +240,7 @@ func (r *Extractor) extractOnExpression(node ast.InfixExpression) {
 	}
 
 	if shouldProcess == 2 {
-		r.AddJoin(left, right, node.String(false))
+		r.AddJoinInQuery(left, right, node.String(false))
 	}
 }
 
@@ -271,7 +271,7 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 	// Extract based on the clause we're in
 	switch i.Clause() {
 	case token.COLUMN, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
-		r.AddColumn(i, i.Clause())
+		r.AddColumnInQuery(i, i.Clause())
 	case token.FROM: // The FROM clause will have tables
 		r.AddTable(i)
 	case token.FUNCTION_CALL:
