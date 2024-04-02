@@ -11,7 +11,7 @@ import (
 // DB Objects
 type Function struct {
 	UID  uuid.UUID `json:"uid"`
-	Name string    `json:"name"`
+	Name string    `json:"function_name"`
 }
 
 type Column struct {
@@ -36,7 +36,7 @@ type FunctionsInQueries struct {
 	UID         uuid.UUID `json:"uid"`
 	FunctionUID uuid.UUID `json:"function_uid"`
 	QueryUID    uuid.UUID `json:"query_uid"`
-	Name        string    `json:"name"`
+	Name        string    `json:"function_name"`
 }
 
 type ColumnsInQueries struct {
@@ -65,8 +65,8 @@ type TableJoinsInQueries struct {
 	TableUIDb     uuid.UUID `json:"table_uid_b"`
 	JoinCondition string    `json:"join_condition"` // LEFT, RIGHT, INNER, OUTER, etc
 	OnCondition   string    `json:"on_condition"`   // Right now, this is the String() of the expression
-	TableA        string    `json:"table_a"`        // This won't be in the DB, but is for debugging purposes to see the table name
-	TableB        string    `json:"table_b"`        // This won't be in the DB, but is for debugging purposes to see the table name
+	TableA        string    `json:"table_a"`
+	TableB        string    `json:"table_b"`
 }
 
 // TODO: check backwards in case someone joins the opposite way
