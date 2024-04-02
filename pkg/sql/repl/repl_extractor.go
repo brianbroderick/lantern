@@ -12,7 +12,6 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
-	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 func StartParser(in io.Reader, out io.Writer) {
@@ -74,55 +73,46 @@ func StartParser(in io.Reader, out io.Writer) {
 				continue
 			}
 
-			fmt.Printf("\nStatement: %d\n\n", i+1)
+			io.WriteString(out, fmt.Sprintf("\nStatement: %d\n\n", i+1))
 
 			// Print out the columns
-			if len(r.Columns) > 0 {
-				fmt.Println("Selected Columns:")
-				for fqcn, column := range r.Columns {
-					if column.Clause == token.COLUMN {
-						io.WriteString(out, fmt.Sprintf("  %s\n", fqcn))
-					}
+			if len(r.ColumnsInQueries) > 0 {
+				io.WriteString(out, "Columns in Query:\n")
+				io.WriteString(out, fmt.Sprintf("  %-8s %s\n", "Clause", "Name"))
+				io.WriteString(out, fmt.Sprintf("  %-8s %s\n", "--------", "--------"))
+				for _, column := range r.ColumnsInQueries {
+					io.WriteString(out, fmt.Sprintf("  %-8s %s\n", column.Clause, column.Name))
 				}
-				fmt.Println("")
+				io.WriteString(out, "\n")
 			}
 
 			// Print out the tables
-			if len(r.Tables) > 0 {
-				fmt.Println("Tables:")
-				for _, table := range r.Tables {
+			if len(r.TablesInQueries) > 0 {
+				io.WriteString(out, "Tables:\n")
+
+				for _, table := range r.TablesInQueries {
 					io.WriteString(out, fmt.Sprintf("  %s\n", table.Name))
 				}
-				fmt.Println("")
+				io.WriteString(out, "\n")
 			}
 
 			// Print out the joins
-			if len(r.TableJoins) > 0 {
-				fmt.Println("Joins:")
-				for _, join := range r.TableJoins {
+			if len(r.TableJoinsInQueries) > 0 {
+				io.WriteString(out, "Joins:\n")
+				for _, join := range r.TableJoinsInQueries {
 					io.WriteString(out, fmt.Sprintf("  %s TO %s\n", join.TableA, join.TableB))
 				}
-				fmt.Println("")
-			}
-
-			// Print out the columns
-			if len(r.Columns) > 0 {
-				fmt.Println("Where Columns:")
-				for fqcn, column := range r.Columns {
-					if column.Clause == token.WHERE {
-						io.WriteString(out, fmt.Sprintf("  %s\n", fqcn))
-					}
-				}
-				fmt.Println("")
+				io.WriteString(out, "\n")
 			}
 
 			// Print out the functions
-			if len(r.Functions) > 0 {
-				fmt.Println("Functions:")
-				for _, function := range r.Functions {
+			if len(r.FunctionsInQueries) > 0 {
+				io.WriteString(out, "Functions:\n")
+
+				for _, function := range r.FunctionsInQueries {
 					io.WriteString(out, fmt.Sprintf("  %s\n", function.Name))
 				}
-				fmt.Println("")
+				io.WriteString(out, "\n")
 			}
 		}
 

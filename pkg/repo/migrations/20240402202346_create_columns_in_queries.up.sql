@@ -10,3 +10,4 @@ CREATE TABLE IF NOT EXISTS columns_in_queries (
 );
 
 CREATE INDEX IF NOT EXISTS idx_columns_in_queries_column_uid ON columns_in_queries (query_uid, table_uid, column_uid);
+
