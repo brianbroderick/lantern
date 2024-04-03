@@ -24,7 +24,7 @@ func NewQueries() *Queries {
 }
 
 // ProcessQuery processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Queries) ProcessQuery(databases *Databases, source *Source, database, input string, duration int64) bool {
+func (q *Queries) ProcessQuery(databases *Databases, source *Source, database, input string, duration int64, mustExtract bool) bool {
 	l := lexer.New(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -38,7 +38,7 @@ func (q *Queries) ProcessQuery(databases *Databases, source *Source, database, i
 
 	for _, stmt := range program.Statements {
 		env := object.NewEnvironment()
-		r := extractor.NewExtractor(&stmt)
+		r := extractor.NewExtractor(&stmt, mustExtract)
 		r.Extract(*r.Ast, env)
 
 		output := stmt.String(true) // maskParams = true, i.e. replace all values with ?

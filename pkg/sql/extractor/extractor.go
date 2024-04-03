@@ -14,10 +14,11 @@ type Extractor struct {
 	TablesInQueries     map[string]*TablesInQueries     `json:"tables_in_queries,omitempty"`
 	TableJoinsInQueries map[string]*TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
 	FunctionsInQueries  map[string]*FunctionsInQueries  `json:"functions_in_queries,omitempty"`
+	MustExtract         bool
 	errors              []string
 }
 
-func NewExtractor(stmt *ast.Statement) *Extractor {
+func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
 	return &Extractor{
 		Ast:                 stmt,
 		ColumnsInQueries:    make(map[string]*ColumnsInQueries),
@@ -25,6 +26,7 @@ func NewExtractor(stmt *ast.Statement) *Extractor {
 		TableJoinsInQueries: make(map[string]*TableJoinsInQueries),
 		FunctionsInQueries:  make(map[string]*FunctionsInQueries),
 		errors:              []string{},
+		MustExtract:         mustExtract,
 	}
 }
 
@@ -68,7 +70,7 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		r.Extract(node.Right, env)
 		// TODO: This is a hack to get the join condition, but it only works for simple cases
 		// We might be better off compiling to a stack and then popping off the stack to evaluate the expression
-		if node.Clause() == token.ON {
+		if node.Clause() == token.ON && r.MustExtract {
 			r.extractOnExpression(*node)
 		}
 	case *ast.GroupedExpression:
@@ -269,13 +271,15 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 	}
 
 	// Extract based on the clause we're in
-	switch i.Clause() {
-	case token.SELECT, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
-		r.AddColumnInQuery(i, i.Clause())
-	case token.FROM: // The FROM clause will have tables
-		r.AddTable(i)
-	case token.FUNCTION_CALL:
-		r.AddFunction(i)
+	if r.MustExtract {
+		switch i.Clause() {
+		case token.SELECT, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
+			r.AddColumnInQuery(i, i.Clause())
+		case token.FROM: // The FROM clause will have tables
+			r.AddTable(i)
+		case token.FUNCTION_CALL:
+			r.AddFunction(i)
+		}
 	}
 }
 

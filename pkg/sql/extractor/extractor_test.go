@@ -429,7 +429,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 		program := p.ParseProgram()
 
 		for i, s := range program.Statements {
-			r := NewExtractor(&s)
+			r := NewExtractor(&s, true)
 			env := object.NewEnvironment()
 			r.Extract(s, env)
 			checkExtractErrors(t, r, tt.input)
@@ -861,7 +861,7 @@ func TestExtractSelectedTables(t *testing.T) {
 		program := p.ParseProgram()
 
 		for i, s := range program.Statements {
-			r := NewExtractor(&s)
+			r := NewExtractor(&s, true)
 			env := object.NewEnvironment()
 			r.Extract(s, env)
 			checkExtractErrors(t, r, tt.input)
@@ -923,7 +923,7 @@ func TestExtractColumnsInClauses(t *testing.T) {
 		program := p.ParseProgram()
 
 		for _, s := range program.Statements {
-			r := NewExtractor(&s)
+			r := NewExtractor(&s, true)
 			env := object.NewEnvironment()
 			r.Extract(s, env)
 			checkExtractErrors(t, r, tt.input)
