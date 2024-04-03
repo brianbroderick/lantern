@@ -64,7 +64,7 @@ func StartParser(in io.Reader, out io.Writer) {
 		inspect = program
 
 		for i, s := range program.Statements {
-			r := extractor.NewExtractor(&s)
+			r := extractor.NewExtractor(&s, true)
 			env := object.NewEnvironment()
 			r.Extract(s, env)
 			// Check errors with Extractor

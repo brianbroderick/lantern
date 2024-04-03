@@ -16,6 +16,18 @@ type Queries struct {
 	Queries map[string]*Query `json:"queries,omitempty"` // the key is the sha of the query
 }
 
+type ProcessQuery struct {
+	Databases   *Databases
+	Source      *Source
+	Database    string
+	Input       string
+	Duration    int64
+	MustExtract bool
+	Masked      string
+	Unmasked    string
+	Command     token.TokenType
+}
+
 // NewQueries creates a new Queries struct
 func NewQueries() *Queries {
 	return &Queries{
@@ -24,8 +36,8 @@ func NewQueries() *Queries {
 }
 
 // ProcessQuery processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Queries) ProcessQuery(databases *Databases, source *Source, database, input string, duration int64, mustExtract bool) bool {
-	l := lexer.New(input)
+func (q *Queries) ProcessQuery(pq ProcessQuery) bool {
+	l := lexer.New(pq.Input)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
@@ -38,36 +50,39 @@ func (q *Queries) ProcessQuery(databases *Databases, source *Source, database, i
 
 	for _, stmt := range program.Statements {
 		env := object.NewEnvironment()
-		r := extractor.NewExtractor(&stmt, mustExtract)
+		r := extractor.NewExtractor(&stmt, pq.MustExtract)
 		r.Extract(*r.Ast, env)
 
-		output := stmt.String(true) // maskParams = true, i.e. replace all values with ?
+		pq.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
+		pq.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone
+		pq.Command = stmt.Command()
 
-		q.addQuery(databases, database, source, input, output, duration, stmt.Command())
+		q.addQuery(pq)
 	}
 
 	return true
 }
 
 // addQuery adds a query to the Queries struct
-func (q *Queries) addQuery(databases *Databases, database string, source *Source, input, output string, duration int64, command token.TokenType) {
-	uid := UuidV5(output)
+func (q *Queries) addQuery(pq ProcessQuery) {
+	uid := UuidV5(pq.Masked)
 	uidStr := uid.String()
 
 	if _, ok := q.Queries[uidStr]; !ok {
 		q.Queries[uidStr] = &Query{
 			UID:           uid,
-			DatabaseUID:   databases.addDatabase(database),
-			SourceUID:     source.UID,
-			OriginalQuery: input,
-			MaskedQuery:   output,
+			DatabaseUID:   pq.Databases.addDatabase(pq.Database),
+			SourceUID:     pq.Source.UID,
+			SourceQuery:   pq.Input,
+			MaskedQuery:   pq.Masked,
+			UnmaskedQuery: pq.Unmasked,
 			TotalCount:    1,
-			TotalDuration: duration,
-			Command:       command,
+			TotalDuration: pq.Duration,
+			Command:       pq.Command,
 		}
 	} else {
 		q.Queries[uidStr].TotalCount++
-		q.Queries[uidStr].TotalDuration += duration
+		q.Queries[uidStr].TotalDuration += pq.Duration
 	}
 }
 
@@ -85,7 +100,7 @@ func (q *Queries) Upsert() {
 }
 
 func (q *Queries) ins() string {
-	return `INSERT INTO queries (uid, database_uid, source_uid, command, total_count, total_duration, masked_query, original_query) 
+	return `INSERT INTO queries (uid, database_uid, source_uid, command, total_count, total_duration, masked_query, unmasked_query, source_query) 
 	VALUES %s 
 	ON CONFLICT (uid) DO NOTHING;`
 }
@@ -95,11 +110,12 @@ func (q *Queries) insValues() []string {
 
 	for uid, query := range q.Queries {
 		masked := strings.ReplaceAll(query.MaskedQuery, "'", "''")
-		original := strings.ReplaceAll(query.OriginalQuery, "'", "''")
+		unmasked := strings.ReplaceAll(query.UnmaskedQuery, "'", "''")
+		original := strings.ReplaceAll(query.SourceQuery, "'", "''")
 
 		rows = append(rows,
-			fmt.Sprintf("('%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s')",
-				uid, query.DatabaseUID, query.SourceUID, query.Command.String(), query.TotalCount, query.TotalDuration, masked, original))
+			fmt.Sprintf("('%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s')",
+				uid, query.DatabaseUID, query.SourceUID, query.Command.String(), query.TotalCount, query.TotalDuration, masked, unmasked, original))
 
 	}
 	return rows

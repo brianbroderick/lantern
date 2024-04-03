@@ -27,7 +27,16 @@ func TestProcessQuery(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		assert.True(t, queries.ProcessQuery(databases, source, "testDB", tt.input, tt.duration, false))
+		pq := ProcessQuery{
+			Databases:   databases,
+			Source:      source,
+			Database:    "testDB",
+			Input:       tt.input,
+			Duration:    tt.duration,
+			MustExtract: false,
+		}
+
+		assert.True(t, queries.ProcessQuery(pq))
 		assert.Equal(t, tt.output, queries.Queries[tt.uid].MaskedQuery)
 	}
 

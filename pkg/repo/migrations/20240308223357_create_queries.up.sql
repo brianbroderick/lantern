@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS queries (
    total_count BIGINT NOT NULL,
    total_duration BIGINT NOT NULL,   
    masked_query TEXT NOT NULL,
-   original_query TEXT NOT NULL
+   unmasked_query TEXT NOT NULL,
+   source_query TEXT NOT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_queries_database_uid ON queries (database_uid);

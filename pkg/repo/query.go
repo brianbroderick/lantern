@@ -15,7 +15,8 @@ type Query struct {
 	TotalCount    int64           `json:"total_count,omitempty"`    // the number of times the query was executed
 	TotalDuration int64           `json:"total_duration,omitempty"` // the total duration of all executions of the query in microseconds
 	MaskedQuery   string          `json:"masked_query,omitempty"`   // the query with parameters masked
-	OriginalQuery string          `json:"original_query,omitempty"` // the original query
+	UnmaskedQuery string          `json:"unmasked_query,omitempty"` // the query with parameters unmasked
+	SourceQuery   string          `json:"source,omitempty"`         // the original query from the source
 }
 
 func (q *Query) MarshalJSON() ([]byte, error) {
