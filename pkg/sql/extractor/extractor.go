@@ -270,7 +270,7 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 
 	// Extract based on the clause we're in
 	switch i.Clause() {
-	case token.COLUMN, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
+	case token.SELECT, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
 		r.AddColumnInQuery(i, i.Clause())
 	case token.FROM: // The FROM clause will have tables
 		r.AddTable(i)

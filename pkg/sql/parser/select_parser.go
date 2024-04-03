@@ -36,7 +36,7 @@ func (p *Parser) parseSelectExpression() ast.Expression {
 	x := &ast.SelectExpression{Token: p.curToken, Branch: p.clause}
 	p.nextToken()
 
-	p.clause = token.COLUMN
+	p.clause = token.SELECT
 
 	// DISTINCT CLAUSE
 	if p.curTokenIsOne([]token.TokenType{token.ALL, token.DISTINCT}) {
