@@ -298,6 +298,10 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
+func (p *Parser) Input() string {
+	return p.l.Input
+}
+
 // TODO: This is a hack to get around compound infix expressions
 // We need to figure out a better way to do this, perhaps by implementing a real queue
 // Perhaps something like: https://github.com/eapache/queue/blob/main/v2/queue.go

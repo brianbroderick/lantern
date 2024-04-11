@@ -10,6 +10,7 @@ import (
 )
 
 type Lexer struct {
+	Input   string
 	r       io.RuneScanner
 	lastPos Pos
 	pos     Pos
@@ -29,7 +30,7 @@ const eof = rune(0)
 const eol = '\n'
 
 func New(input string) *Lexer {
-	l := &Lexer{r: strings.NewReader(input)}
+	l := &Lexer{Input: input, r: strings.NewReader(input)}
 	return l
 }
 

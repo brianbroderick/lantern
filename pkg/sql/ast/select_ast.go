@@ -351,9 +351,9 @@ func (x *AggregateExpression) String(maskParams bool) string {
 	if x.Operator != "" {
 		out.WriteString(" " + strings.ToUpper(x.Operator) + " ")
 	}
-	if len(x.Right) > 1 {
-		out.WriteString("(")
-	}
+	// if len(x.Right) > 1 {
+	// 	out.WriteString("(")
+	// }
 
 	if len(x.Right) > 0 {
 		right := []string{}
@@ -363,9 +363,9 @@ func (x *AggregateExpression) String(maskParams bool) string {
 		out.WriteString(strings.Join(right, ", "))
 	}
 
-	if len(x.Right) > 1 {
-		out.WriteString(")")
-	}
+	// if len(x.Right) > 1 {
+	// 	out.WriteString(")")
+	// }
 
 	return out.String()
 }

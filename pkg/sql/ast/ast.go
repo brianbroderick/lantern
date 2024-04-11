@@ -463,12 +463,13 @@ func (x *GroupedExpression) String(maskParams bool) string {
 		elements = append(elements, a.String(maskParams))
 	}
 
-	if len(elements) > 1 {
+	// If there is only one element, don't wrap it in parentheses
+	if len(elements) != 1 {
 		out.WriteString("(")
 	}
 	out.WriteString(strings.Join(elements, ", "))
 
-	if len(elements) > 1 {
+	if len(elements) != 1 {
 		out.WriteString(")")
 	}
 

@@ -17,13 +17,13 @@ func TestDropStatements(t *testing.T) {
 		output string
 	}{
 		// Select: simple
-		{"drop table if exists my_table;", "(DROP TABLE IF EXISTS my_table);"},
-		{"drop table IF EXISTS my_table;", "(DROP TABLE IF EXISTS my_table);"},
-		{"DROP table my_table;", "(DROP TABLE my_table);"},
-		{"DROP table my_table, my_other_table;", "(DROP TABLE my_table, my_other_table);"},
-		{"drop table my_table; select 1 from other;", "(DROP TABLE my_table);(SELECT 1 FROM other);"},
-		{"DROP table my_table cascade;", "(DROP TABLE my_table CASCADE);"},
-		{"DROP table my_table restrict;", "(DROP TABLE my_table RESTRICT);"},
+		{"drop table if exists my_table;", "DROP TABLE IF EXISTS my_table;"},
+		{"drop table IF EXISTS my_table;", "DROP TABLE IF EXISTS my_table;"},
+		{"DROP table my_table;", "DROP TABLE my_table;"},
+		{"DROP table my_table, my_other_table;", "DROP TABLE my_table, my_other_table;"},
+		{"drop table my_table; select 1 from other;", "DROP TABLE my_table;(SELECT 1 FROM other);"},
+		{"DROP table my_table cascade;", "DROP TABLE my_table CASCADE;"},
+		{"DROP table my_table restrict;", "DROP TABLE my_table RESTRICT;"},
 	}
 
 	for _, tt := range tests {

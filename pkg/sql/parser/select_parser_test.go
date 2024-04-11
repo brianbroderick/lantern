@@ -22,6 +22,10 @@ func TestMultipleStatements(t *testing.T) {
 		// Multiple Statements
 
 		// left and right can be function names
+
+		// {"SELECT rank() OVER (PARTITION BY id,command ORDER BY total_count desc) AS rank from queries;", 1,
+		// 	"(SELECT (rank() OVER (PARTITION BY id, command ORDER BY total_count)) AS rank FROM queries);"},
+
 		{"SELECT COUNT((f.id)) AS a_count, f.file_id as child_file_id FROM files f", 1, "(SELECT COUNT(f.id) AS a_count, f.file_id AS child_file_id FROM files f);"},
 		{"select left('abc', 2); select right('abc', 2);", 2, "(SELECT left('abc', 2));(SELECT right('abc', 2));"},
 		{"select id from users; select id from customers;", 2, "(SELECT id FROM users);(SELECT id FROM customers);"},
@@ -265,7 +269,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select array_agg(name order by name) as names from users", "(SELECT array_agg(name ORDER BY name) AS names FROM users);"},
 		{"SELECT case when (id = 3) then 1 else 0 end AS names from users", "(SELECT CASE WHEN (id = 3) THEN 1 ELSE 0 END AS names FROM users);"},
 		{"SELECT (case when (id = 3) then 1 else 0 end) AS names from users", "(SELECT CASE WHEN (id = 3) THEN 1 ELSE 0 END AS names FROM users);"},
-		{"SELECT array_agg(case when id = 3 then 1 else 0 end order by name, id) AS names from users", "(SELECT array_agg(CASE WHEN (id = 3) THEN 1 ELSE 0 END ORDER BY (name, id)) AS names FROM users);"},
+		{"SELECT array_agg(case when id = 3 then 1 else 0 end order by name, id) AS names from users",
+			"(SELECT array_agg(CASE WHEN (id = 3) THEN 1 ELSE 0 END ORDER BY name, id) AS names FROM users);"},
 		{"SELECT array_agg(case when (uid = 3) then 1 else 0 end order by name) AS names from users",
 			"(SELECT array_agg(CASE WHEN (uid = 3) THEN 1 ELSE 0 END ORDER BY name) AS names FROM users);"},
 
@@ -284,6 +289,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) ;", "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]));"},
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality;", "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY);"},
 		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality as t(key, index);", "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY t(key, index));"},
+		{"select * from unnest(array [ 4, 2, 1, 3, 7 ]) with ordinality t(key, index);", "(SELECT * FROM unnest(array[4, 2, 1, 3, 7]) WITH ORDINALITY t(key, index));"},
 
 		// Select: reserved words
 		{"select id from users where any(type_ids) = 10;", "(SELECT id FROM users WHERE (any(type_ids) = 10));"},               // any

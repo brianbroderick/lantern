@@ -36,7 +36,7 @@ func (x *AnalyzeStatement) String(maskParams bool) string {
 		count++
 	}
 
-	out.WriteString("(ANALYZE ")
+	out.WriteString("ANALYZE ")
 	if count > 0 {
 		out.WriteString("(")
 		parens = true
@@ -70,7 +70,7 @@ func (x *AnalyzeStatement) String(maskParams bool) string {
 	if x.Name != nil {
 		out.WriteString(x.Name.String(maskParams))
 	}
-	out.WriteString(");")
+	out.WriteString(";")
 
 	return out.String()
 }

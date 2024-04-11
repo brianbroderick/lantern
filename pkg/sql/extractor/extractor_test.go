@@ -23,6 +23,8 @@ func TestExtractSelectedColumns(t *testing.T) {
 		input   string
 		columns [][]string
 	}{
+		{"select * from users;",
+			[][]string{{}}},
 		// no column (useful for exists functions)
 		{"select from users;",
 			[][]string{{}}},

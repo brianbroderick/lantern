@@ -25,7 +25,7 @@ func (x *DropStatement) TokenLiteral() string        { return x.Token.Lit }
 func (x *DropStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 
-	out.WriteString(fmt.Sprintf("(DROP %s ", x.Object.Type.String()))
+	out.WriteString(fmt.Sprintf("DROP %s ", x.Object.Type.String()))
 	if x.Exists {
 		out.WriteString("IF EXISTS ")
 	}
@@ -42,7 +42,7 @@ func (x *DropStatement) String(maskParams bool) string {
 		out.WriteString(" " + strings.ToUpper(x.Options))
 	}
 
-	out.WriteString(");")
+	out.WriteString(";")
 
 	return out.String()
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestProcessQuery(t *testing.T) {
+func TestQueriesProcess(t *testing.T) {
 	databases := NewDatabases()
 	queries := NewQueries()
 	t1 := time.Now()
@@ -27,16 +27,16 @@ func TestProcessQuery(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		pq := ProcessQuery{
+		w := QueryWorker{
 			Databases:   databases,
-			Source:      source,
-			Database:    "testDB",
+			SourceUID:   source.UID,
+			DatabaseUID: UuidFromString("fd68aa5c-a9c0-58db-a05f-13270c8c09dd"),
 			Input:       tt.input,
 			Duration:    tt.duration,
 			MustExtract: false,
 		}
 
-		assert.True(t, queries.ProcessQuery(pq))
+		assert.True(t, queries.Process(w))
 		assert.Equal(t, tt.output, queries.Queries[tt.uid].MaskedQuery)
 	}
 
@@ -53,5 +53,5 @@ func TestProcessQuery(t *testing.T) {
 
 	timeDiff := t2.Sub(t1)
 	avg := timeDiff / time.Duration(len(tests))
-	fmt.Printf("TestProcessQuery, Elapsed Time: %s, Avg per query: %s\n", timeDiff, avg)
+	fmt.Printf("TestQueriesProcess, Elapsed Time: %s, Avg per query: %s\n", timeDiff, avg)
 }

@@ -223,7 +223,6 @@ func (p *Parser) parseFirstTable() (ast.Expression, string, string) {
 		p.nextToken()
 		if p.peekTokenIs(token.ORDINALITY) {
 			p.nextToken()
-			p.nextToken()
 			x.Ordinality = true
 		}
 	}
@@ -307,7 +306,6 @@ func (p *Parser) parseTable() (ast.Expression, string, string) {
 	if p.peekTokenIs(token.WITH) {
 		p.nextToken()
 		if p.peekTokenIs(token.ORDINALITY) {
-			p.nextToken()
 			p.nextToken()
 			x.Ordinality = true
 		}

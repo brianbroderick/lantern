@@ -26,3 +26,11 @@ func UuidV5(str string) uuid.UUID {
 func UuidString(query string) string {
 	return UuidV5(query).String()
 }
+
+func UuidFromString(uid string) uuid.UUID {
+	u, err := uuid.Parse(uid)
+	if HasErr("UuidFromString: failed to parse uuid", err) {
+		return uuid.Nil
+	}
+	return u
+}

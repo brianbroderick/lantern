@@ -33,7 +33,7 @@ func (x *CreateStatement) statementNode()              {}
 func (x *CreateStatement) TokenLiteral() string        { return x.Token.Lit }
 func (x *CreateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
-	out.WriteString("(CREATE")
+	out.WriteString("CREATE")
 	if x.Scope != "" {
 		out.WriteString(" " + x.Scope)
 	}
@@ -67,7 +67,7 @@ func (x *CreateStatement) String(maskParams bool) string {
 	if x.Expression != nil {
 		out.WriteString(" " + x.Expression.String(maskParams))
 	}
-	out.WriteString(");")
+	out.WriteString(";")
 
 	return out.String()
 }

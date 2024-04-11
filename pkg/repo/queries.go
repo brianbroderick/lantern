@@ -9,23 +9,11 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/logit"
 	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
-	"github.com/brianbroderick/lantern/pkg/sql/token"
+	"github.com/google/uuid"
 )
 
 type Queries struct {
 	Queries map[string]*Query `json:"queries,omitempty"` // the key is the sha of the query
-}
-
-type ProcessQuery struct {
-	Databases   *Databases
-	Source      *Source
-	Database    string
-	Input       string
-	Duration    int64
-	MustExtract bool
-	Masked      string
-	Unmasked    string
-	Command     token.TokenType
 }
 
 // NewQueries creates a new Queries struct
@@ -35,54 +23,62 @@ func NewQueries() *Queries {
 	}
 }
 
-// ProcessQuery processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Queries) ProcessQuery(pq ProcessQuery) bool {
-	l := lexer.New(pq.Input)
+// Process processes a query and returns a bool whether or not the query was parsed successfully
+func (q *Queries) Process(w QueryWorker) bool {
+	l := lexer.New(w.Input)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
 	if len(p.Errors()) > 0 {
 		for _, msg := range p.Errors() {
-			logit.Append("counter_error", msg)
+			logit.Append("queries-process-error", fmt.Sprintf("%s | Input: %s", msg, p.Input()))
 		}
 		return false
 	}
 
 	for _, stmt := range program.Statements {
 		env := object.NewEnvironment()
-		r := extractor.NewExtractor(&stmt, pq.MustExtract)
+		r := extractor.NewExtractor(&stmt, w.MustExtract)
 		r.Extract(*r.Ast, env)
 
-		pq.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
-		pq.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone
-		pq.Command = stmt.Command()
+		w.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
+		w.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone
+		w.Command = stmt.Command()
 
-		q.addQuery(pq)
+		q.addQuery(w)
 	}
 
 	return true
 }
 
 // addQuery adds a query to the Queries struct
-func (q *Queries) addQuery(pq ProcessQuery) {
-	uid := UuidV5(pq.Masked)
+func (q *Queries) addQuery(w QueryWorker) {
+	uid := UuidV5(w.Masked)
 	uidStr := uid.String()
+
+	var sourceUID uuid.UUID
+
+	if w.Source != nil {
+		sourceUID = w.Source.UID
+	} else if w.SourceUID != uuid.Nil {
+		sourceUID = w.SourceUID
+	}
 
 	if _, ok := q.Queries[uidStr]; !ok {
 		q.Queries[uidStr] = &Query{
 			UID:           uid,
-			DatabaseUID:   pq.Databases.addDatabase(pq.Database),
-			SourceUID:     pq.Source.UID,
-			SourceQuery:   pq.Input,
-			MaskedQuery:   pq.Masked,
-			UnmaskedQuery: pq.Unmasked,
+			DatabaseUID:   w.Databases.addDatabase(w.Database),
+			SourceUID:     sourceUID,
+			SourceQuery:   w.Input,
+			MaskedQuery:   w.Masked,
+			UnmaskedQuery: w.Unmasked,
 			TotalCount:    1,
-			TotalDuration: pq.Duration,
-			Command:       pq.Command,
+			TotalDuration: w.Duration,
+			Command:       w.Command,
 		}
 	} else {
 		q.Queries[uidStr].TotalCount++
-		q.Queries[uidStr].TotalDuration += pq.Duration
+		q.Queries[uidStr].TotalDuration += w.Duration
 	}
 }
 

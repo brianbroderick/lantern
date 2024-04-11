@@ -132,7 +132,12 @@ func (d *Extractor) AddColumnInQuery(ident *ast.Identifier, clause token.TokenTy
 	)
 	switch len(ident.Value) {
 	case 1:
-		column = ident.Value[0].(*ast.SimpleIdentifier).Value
+		switch ident.Value[0].(type) {
+		case *ast.SimpleIdentifier:
+			column = ident.Value[0].(*ast.SimpleIdentifier).Value
+		case *ast.WildcardLiteral:
+			column = "*"
+		}
 	case 2:
 		table = ident.Value[0].(*ast.SimpleIdentifier).Value
 		switch ident.Value[1].(type) {
@@ -144,7 +149,13 @@ func (d *Extractor) AddColumnInQuery(ident *ast.Identifier, clause token.TokenTy
 	case 3:
 		schema = ident.Value[0].(*ast.SimpleIdentifier).Value
 		table = ident.Value[1].(*ast.SimpleIdentifier).Value
-		column = ident.Value[2].(*ast.SimpleIdentifier).Value
+
+		switch ident.Value[2].(type) {
+		case *ast.SimpleIdentifier:
+			column = ident.Value[2].(*ast.SimpleIdentifier).Value
+		case *ast.WildcardLiteral:
+			column = "*"
+		}
 	}
 
 	fqcn := fmt.Sprintf("%s|%s", clause.String(), ident.String(false)) // fqcn is the fully qualified column name with clause
