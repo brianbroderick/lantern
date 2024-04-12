@@ -36,7 +36,7 @@ func TestQueriesProcess(t *testing.T) {
 			MustExtract: false,
 		}
 
-		assert.True(t, queries.Process(w))
+		assert.True(t, queries.Analyze(w))
 		assert.Equal(t, tt.output, queries.Queries[tt.uid].MaskedQuery)
 	}
 

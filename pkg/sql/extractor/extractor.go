@@ -274,11 +274,11 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 	if r.MustExtract {
 		switch i.Clause() {
 		case token.SELECT, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
-			r.AddColumnInQuery(i, i.Clause())
+			r.AddColumnsInQueries(i, i.Clause())
 		case token.FROM: // The FROM clause will have tables
-			r.AddTable(i)
+			r.AddTablesInQueries(i)
 		case token.FUNCTION_CALL:
-			r.AddFunction(i)
+			r.AddFunctionsInQueries(i)
 		}
 	}
 }

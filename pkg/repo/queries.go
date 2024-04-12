@@ -13,18 +13,44 @@ import (
 )
 
 type Queries struct {
-	Queries map[string]*Query `json:"queries,omitempty"` // the key is the sha of the query
+	Queries             map[string]*Query                         `json:"queries,omitempty"`
+	FunctionsInQueries  map[string]*extractor.FunctionsInQueries  `json:"functions_in_queries,omitempty"`
+	ColumnsInQueries    map[string]*extractor.ColumnsInQueries    `json:"columns_in_queries,omitempty"`
+	TablesInQueries     map[string]*extractor.TablesInQueries     `json:"tables_in_queries,omitempty"`
+	TableJoinsInQueries map[string]*extractor.TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
 }
 
 // NewQueries creates a new Queries struct
 func NewQueries() *Queries {
 	return &Queries{
-		Queries: make(map[string]*Query),
+		Queries:             make(map[string]*Query),
+		FunctionsInQueries:  make(map[string]*extractor.FunctionsInQueries),
+		ColumnsInQueries:    make(map[string]*extractor.ColumnsInQueries),
+		TablesInQueries:     make(map[string]*extractor.TablesInQueries),
+		TableJoinsInQueries: make(map[string]*extractor.TableJoinsInQueries),
 	}
 }
 
-// Process processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Queries) Process(w QueryWorker) bool {
+func (q *Queries) Process() bool {
+	for _, query := range q.Queries {
+		w := QueryWorker{
+			Masked:      query.MaskedQuery,
+			Unmasked:    query.UnmaskedQuery,
+			MustExtract: true,
+		}
+
+		query.Process(w, q)
+	}
+
+	q.ExtractStats()
+	q.UpsertTablesInQueries()
+	q.UpsertColumnsInQueries()
+
+	return true
+}
+
+// Analyze processes a query and returns a bool whether or not the query was parsed successfully
+func (q *Queries) Analyze(w QueryWorker) bool {
 	l := lexer.New(w.Input)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -115,4 +141,9 @@ func (q *Queries) insValues() []string {
 
 	}
 	return rows
+}
+
+func (q *Queries) ExtractStats() {
+	fmt.Printf("Queries Len: %d\n", len(q.Queries))
+	fmt.Printf("TablesInQueries Len: %d\n", len(q.TablesInQueries))
 }

@@ -8,29 +8,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// DB Objects
-type Function struct {
-	UID  uuid.UUID `json:"uid"`
-	Name string    `json:"function_name"`
-}
-
-type Column struct {
-	UID      uuid.UUID `json:"uid"`
-	TableUID uuid.UUID `json:"table_uid"`
-	Schema   string    `json:"schema_name"`
-	Table    string    `json:"table_name"`
-	Name     string    `json:"column_name"`
-	// Clause   token.TokenType `json:"clause"`
-}
-
-// This represents all of the physical tables in the query.
-type Table struct {
-	UID         uuid.UUID `json:"uid"`
-	DatabaseUID uuid.UUID `json:"database_uid"`
-	Schema      string    `json:"schema_name"`
-	Name        string    `json:"table_name"`
-}
-
 // Relationships between Objects and Queries
 type FunctionsInQueries struct {
 	UID         uuid.UUID `json:"uid"`
@@ -42,6 +19,7 @@ type FunctionsInQueries struct {
 type ColumnsInQueries struct {
 	UID       uuid.UUID       `json:"uid"`
 	ColumnUID uuid.UUID       `json:"column_uid"`
+	TableUID  uuid.UUID       `json:"table_uid"`
 	QueryUID  uuid.UUID       `json:"query_uid"`
 	Schema    string          `json:"schema_name"`
 	Table     string          `json:"table_name"`
@@ -121,10 +99,10 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 	return d.TableJoinsInQueries[uniqStr]
 }
 
-// AddColumnInQuery adds a column to the extractor. If the column already exists, it returns the existing column.
+// AddColumnsInQueries adds a column to the extractor. If the column already exists, it returns the existing column.
 // This will potentially add calculated columns as it doesn't yet map to an existing table, just whatever is in the identifier.
 // In a later step, columns will be mapped to real tables.
-func (d *Extractor) AddColumnInQuery(ident *ast.Identifier, clause token.TokenType) *ColumnsInQueries {
+func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.TokenType) *ColumnsInQueries {
 	var (
 		schema string
 		table  string
@@ -175,7 +153,9 @@ func (d *Extractor) AddColumnInQuery(ident *ast.Identifier, clause token.TokenTy
 	return d.ColumnsInQueries[fqcn]
 }
 
-func (d *Extractor) AddTable(ident *ast.Identifier) *TablesInQueries {
+// AddTablesInQueries adds a table to the extractor. If the table already exists, it returns the existing table.
+// It doesn't know the QueryUID yet, so this is a generic table that will be mapped to a query later.
+func (d *Extractor) AddTablesInQueries(ident *ast.Identifier) *TablesInQueries {
 	var (
 		schema string
 		table  string
@@ -192,37 +172,19 @@ func (d *Extractor) AddTable(ident *ast.Identifier) *TablesInQueries {
 	fqtn := ident.String(false) // fqtn is the fully qualified table name
 
 	if _, ok := d.TablesInQueries[fqtn]; !ok {
-		uid := UuidV5(fqtn)
+		tableUid := UuidV5(fqtn)
 
 		d.TablesInQueries[fqtn] = &TablesInQueries{
-			UID:    uid,
-			Schema: schema,
-			Name:   table,
+			TableUID: tableUid,
+			Schema:   schema,
+			Name:     table,
 		}
 	}
 
 	return d.TablesInQueries[fqtn]
 }
 
-func (d *Extractor) AddTableInQuery(query_uid, table_uid uuid.UUID) *TablesInQueries {
-	uniq := UuidV5(fmt.Sprintf("%s|%s", query_uid, table_uid))
-	uniqStr := uniq.String()
-
-	if _, ok := d.TablesInQueries[uniqStr]; !ok {
-
-		d.TablesInQueries[uniqStr] = &TablesInQueries{
-			UID:      uniq,
-			QueryUID: query_uid,
-			TableUID: table_uid,
-		}
-	}
-
-	return d.TablesInQueries[table_uid.String()]
-}
-
-// TODO: add function in query
-
-func (d *Extractor) AddFunction(ident *ast.Identifier) *FunctionsInQueries {
+func (d *Extractor) AddFunctionsInQueries(ident *ast.Identifier) *FunctionsInQueries {
 	fqn := ident.String(false) // fqn is the fully qualified function name
 
 	if _, ok := d.FunctionsInQueries[fqn]; !ok {

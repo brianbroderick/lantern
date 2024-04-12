@@ -43,7 +43,7 @@ type QueryWorker struct {
 }
 
 // Process processes a query and returns a bool whether or not the query was parsed successfully
-func (q *Query) Process(w QueryWorker) bool {
+func (q *Query) Process(w QueryWorker, qs *Queries) bool {
 	l := lexer.New(w.Unmasked)
 	p := parser.New(l)
 	program := p.ParseProgram()
@@ -60,8 +60,11 @@ func (q *Query) Process(w QueryWorker) bool {
 		r := extractor.NewExtractor(&stmt, w.MustExtract)
 		r.Extract(*r.Ast, env)
 
-		w.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
-		w.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone
+		qs.addTablesInQueries(q, r)
+		qs.addColumnsInQueries(q, r)
+
+		// w.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
+		// w.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone
 	}
 
 	return true

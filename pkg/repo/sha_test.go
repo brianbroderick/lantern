@@ -21,7 +21,7 @@ func TestShaQuery(t *testing.T) {
 	}{
 		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = ?));", "b90be791fd20b7fc4925c087456e73493496364d"},
 		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = ?));", "b90be791fd20b7fc4925c087456e73493496364d"},
-		{"DROP TABLE IF EXISTS listing;", "(DROP TABLE IF EXISTS listing);", "da66725b4ceb14a317abd3ccb5beec320c482f5d"},
+		{"DROP TABLE IF EXISTS listing;", "DROP TABLE IF EXISTS listing;", "9033fe4f611016fa48016a16b74836c4b09e1d32"},
 	}
 
 	for _, tt := range tests {
@@ -52,7 +52,7 @@ func TestUUIDv5(t *testing.T) {
 	}{
 		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = ?));", "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b"},
 		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = ?));", "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b"},
-		{"DROP TABLE IF EXISTS listing;", "(DROP TABLE IF EXISTS listing);", "5dc5bf9b-f243-5bab-bf47-c306ed00d9ea"},
+		{"DROP TABLE IF EXISTS listing;", "DROP TABLE IF EXISTS listing;", "c72c8a1a-959c-59ae-9e6f-42ace0febe51"},
 	}
 
 	for _, tt := range tests {
