@@ -15,6 +15,7 @@ func (q *Queries) addColumnsInQueries(qu *Query, ext *extractor.Extractor) {
 		if _, ok := q.ColumnsInQueries[uidStr]; !ok {
 			q.ColumnsInQueries[uidStr] = &extractor.ColumnsInQueries{
 				UID:       uid,
+				TableUID:  column.TableUID,
 				ColumnUID: column.ColumnUID,
 				QueryUID:  qu.UID,
 				Schema:    column.Schema,
@@ -42,7 +43,9 @@ func (q *Queries) UpsertColumnsInQueries() {
 func (q *Queries) insColumnsInQueries() string {
 	return `INSERT INTO columns_in_queries (uid, query_uid, table_uid, column_uid, schema_name, table_name, column_name, clause)
 	VALUES %s 
-	ON CONFLICT (uid) DO NOTHING;`
+	ON CONFLICT (uid) DO UPDATE 
+	SET query_uid = EXCLUDED.query_uid, table_uid = EXCLUDED.table_uid, column_uid = EXCLUDED.column_uid, 
+	    schema_name = EXCLUDED.schema_name, table_name = EXCLUDED.table_name, column_name = EXCLUDED.column_name, clause = EXCLUDED.clause;`
 }
 
 func (q *Queries) insValuesColumnsInQueries() []string {

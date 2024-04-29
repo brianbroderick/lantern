@@ -2,6 +2,25 @@ package object
 
 import "testing"
 
+func TestGetAndSet(t *testing.T) {
+	env := NewEnvironment()
+	env.Set("foo", &String{Value: "bar"})
+
+	obj, ok := env.Get("foo")
+	if !ok {
+		t.Fatalf("env.Get(\"foo\") returned ok = false")
+	}
+
+	str, ok := obj.(*String)
+	if !ok {
+		t.Fatalf("object is not String. got=%T (%+v)", obj, obj)
+	}
+
+	if str.Value != "bar" {
+		t.Errorf("str.Value is not 'bar'. got=%q", str.Value)
+	}
+}
+
 func TestStringHashKey(t *testing.T) {
 	hello1 := &String{Value: "Hello World"}
 	hello2 := &String{Value: "Hello World"}

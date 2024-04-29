@@ -71,7 +71,7 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		// TODO: This is a hack to get the join condition, but it only works for simple cases
 		// We might be better off compiling to a stack and then popping off the stack to evaluate the expression
 		if node.Clause() == token.ON && r.MustExtract {
-			r.extractOnExpression(*node)
+			r.extractOnExpression(*node, env)
 		}
 	case *ast.GroupedExpression:
 		for _, e := range node.Elements {
@@ -133,7 +133,11 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		case *ast.Identifier, *ast.SimpleIdentifier:
 			node.Alias = nil
 		}
-		r.Extract(node.JoinCondition, env)
+
+		envJC := object.NewEnvironment()
+		setJoinType(envJC, node.JoinType)
+		r.Extract(node.JoinCondition, envJC)
+
 		r.Extract(node.Table, env)
 	case *ast.LockExpression:
 		for _, t := range node.Tables {
@@ -225,7 +229,7 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 }
 
 // TODO: This only handles simple cases. We need to handle more complex cases
-func (r *Extractor) extractOnExpression(node ast.InfixExpression) {
+func (r *Extractor) extractOnExpression(node ast.InfixExpression, env *object.Environment) {
 	var (
 		left, right   *ast.Identifier
 		shouldProcess int
@@ -242,7 +246,7 @@ func (r *Extractor) extractOnExpression(node ast.InfixExpression) {
 	}
 
 	if shouldProcess == 2 {
-		r.AddJoinInQuery(left, right, node.String(false))
+		r.AddJoinInQuery(left, right, node.String(false), env)
 	}
 }
 

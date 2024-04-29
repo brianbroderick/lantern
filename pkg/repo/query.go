@@ -62,6 +62,7 @@ func (q *Query) Process(w QueryWorker, qs *Queries) bool {
 
 		qs.addTablesInQueries(q, r)
 		qs.addColumnsInQueries(q, r)
+		qs.addTableJoinsInQueries(q, r)
 
 		// w.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
 		// w.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone

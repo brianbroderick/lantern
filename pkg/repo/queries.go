@@ -45,6 +45,7 @@ func (q *Queries) Process() bool {
 	q.ExtractStats()
 	q.UpsertTablesInQueries()
 	q.UpsertColumnsInQueries()
+	q.UpsertTableJoinsInQueries()
 
 	return true
 }
@@ -146,4 +147,6 @@ func (q *Queries) insValues() []string {
 func (q *Queries) ExtractStats() {
 	fmt.Printf("Queries Len: %d\n", len(q.Queries))
 	fmt.Printf("TablesInQueries Len: %d\n", len(q.TablesInQueries))
+	fmt.Printf("ColumnsInQueries Len: %d\n", len(q.ColumnsInQueries))
+	fmt.Printf("TableJoinsInQueries Len: %d\n", len(q.TableJoinsInQueries))
 }

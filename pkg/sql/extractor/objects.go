@@ -12,3 +12,7 @@ func setTableAliases(env *object.Environment, aliases map[string]string) {
 func setDatabaseUID(env *object.Environment, uid uuid.UUID) {
 	env.Set("database_uid", &object.UID{Value: uid})
 }
+
+func setJoinType(env *object.Environment, joinType string) {
+	env.Set("join_type", &object.String{Value: joinType})
+}

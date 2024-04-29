@@ -4,9 +4,14 @@ import (
 	"fmt"
 
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
+	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/google/uuid"
 )
+
+// Defaults:
+// Schema: public
+// Table: UNKNOWN
 
 // Relationships between Objects and Queries
 type FunctionsInQueries struct {
@@ -49,7 +54,7 @@ type TableJoinsInQueries struct {
 
 // TODO: check backwards in case someone joins the opposite way
 // Maybe alphabetical order of the table names?
-func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_condition string) *TableJoinsInQueries {
+func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_condition string, env *object.Environment) *TableJoinsInQueries {
 	alphabetical := func(a, b string) (string, string) {
 		if a < b {
 			return a, b
@@ -57,24 +62,28 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 		return b, a
 	}
 
-	var (
-		tableA string
-		tableB string
-	)
+	tableA := "UNKNOWN"
+	tableB := "UNKNOWN"
+
 	switch len(columnA.Value) {
 	case 1:
+		// TODO: add support in resolver to add tables when not specified
 		fmt.Println("AddJoin: columns do not have tables associated with them")
 	case 2:
-		tableA = columnA.Value[0].(*ast.SimpleIdentifier).Value
+		// assume the schema is public if it's not specified. This is a safe assumption for now.
+		// TODO: add support for search_path
+		tableA = fmt.Sprintf("%s.%s", "public", columnA.Value[0].(*ast.SimpleIdentifier).Value)
 	case 3:
 		tableA = fmt.Sprintf("%s.%s", columnA.Value[0].(*ast.SimpleIdentifier).Value, columnA.Value[1].(*ast.SimpleIdentifier).Value)
 	}
 
 	switch len(columnB.Value) {
 	case 1:
+		// TODO: add support in resolver to add tables when not specified
 		fmt.Println("AddJoin: columns do not have tables associated with them")
 	case 2:
-		tableB = columnB.Value[0].(*ast.SimpleIdentifier).Value
+		// TODO: add support for search_path
+		tableB = fmt.Sprintf("%s.%s", "public", columnB.Value[0].(*ast.SimpleIdentifier).Value)
 	case 3:
 		tableB = fmt.Sprintf("%s.%s", columnB.Value[0].(*ast.SimpleIdentifier).Value, columnB.Value[1].(*ast.SimpleIdentifier).Value)
 	}
@@ -86,13 +95,26 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 
 	if _, ok := d.TableJoinsInQueries[uniqStr]; !ok {
 
+		var joinType string
+		obj, ok := env.Get("join_type")
+		if !ok {
+			joinType = "UNKNOWN"
+		}
+		str, ok := obj.(*object.String)
+		if !ok {
+			joinType = "UNKNOWN"
+		} else {
+			joinType = str.Value
+		}
+
 		d.TableJoinsInQueries[uniqStr] = &TableJoinsInQueries{
-			UID:         uniq,
-			TableUIDa:   UuidV5(a),
-			TableUIDb:   UuidV5(b),
-			OnCondition: on_condition,
-			TableA:      a,
-			TableB:      b,
+			UID:           uniq,
+			TableUIDa:     UuidV5(a),
+			TableUIDb:     UuidV5(b),
+			OnCondition:   on_condition,
+			JoinCondition: joinType,
+			TableA:        a,
+			TableB:        b,
 		}
 	}
 
@@ -108,6 +130,13 @@ func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.Toke
 		table  string
 		column string
 	)
+	// it's public by default though this can be overridden.
+	// TODO: PG allows you to set the search path, which can change the default schema
+	// though this is rare enough that we don't yet support it.
+	schema = "public"
+	// TODO: add support for adding tables in the resolver when not specified.
+	table = "UNKNOWN"
+
 	switch len(ident.Value) {
 	case 1:
 		switch ident.Value[0].(type) {
@@ -136,17 +165,19 @@ func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.Toke
 		}
 	}
 
-	fqcn := fmt.Sprintf("%s|%s", clause.String(), ident.String(false)) // fqcn is the fully qualified column name with clause
+	fqcn := fmt.Sprintf("%s|%s.%s.%s", clause.String(), schema, table, column) // fqcn is the fully qualified column name with clause
 
 	if _, ok := d.ColumnsInQueries[fqcn]; !ok {
 		uid := UuidV5(fqcn)
 
 		d.ColumnsInQueries[fqcn] = &ColumnsInQueries{
-			UID:    uid,
-			Schema: schema,
-			Table:  table,
-			Name:   column,
-			Clause: clause,
+			UID:       uid,
+			Schema:    schema,
+			Table:     table,
+			TableUID:  UuidV5(fmt.Sprintf("%s.%s", schema, table)),
+			Name:      column,
+			ColumnUID: UuidV5(fmt.Sprintf("%s.%s.%s", schema, table, column)),
+			Clause:    clause,
 		}
 	}
 
@@ -156,10 +187,8 @@ func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.Toke
 // AddTablesInQueries adds a table to the extractor. If the table already exists, it returns the existing table.
 // It doesn't know the QueryUID yet, so this is a generic table that will be mapped to a query later.
 func (d *Extractor) AddTablesInQueries(ident *ast.Identifier) *TablesInQueries {
-	var (
-		schema string
-		table  string
-	)
+	schema := "public"
+	table := "UNKNOWN"
 
 	switch len(ident.Value) {
 	case 1:
@@ -169,7 +198,7 @@ func (d *Extractor) AddTablesInQueries(ident *ast.Identifier) *TablesInQueries {
 		table = ident.Value[1].(*ast.SimpleIdentifier).Value
 	}
 
-	fqtn := ident.String(false) // fqtn is the fully qualified table name
+	fqtn := fmt.Sprintf("%s.%s", schema, table) // fqtn is the fully qualified table name
 
 	if _, ok := d.TablesInQueries[fqtn]; !ok {
 		tableUid := UuidV5(fqtn)

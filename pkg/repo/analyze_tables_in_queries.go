@@ -41,7 +41,8 @@ func (q *Queries) UpsertTablesInQueries() {
 func (q *Queries) insTablesInQueries() string {
 	return `INSERT INTO tables_in_queries (uid, table_uid, query_uid, schema_name, table_name) 
 	VALUES %s 
-	ON CONFLICT (uid) DO NOTHING;`
+	ON CONFLICT (uid) DO UPDATE 
+	SET table_uid = EXCLUDED.table_uid, query_uid = EXCLUDED.query_uid, schema_name = EXCLUDED.schema_name, table_name = EXCLUDED.table_name;`
 }
 
 func (q *Queries) insValuesTablesInQueries() []string {
