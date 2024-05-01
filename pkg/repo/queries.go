@@ -109,6 +109,17 @@ func (q *Queries) addQuery(w QueryWorker) {
 	}
 }
 
+func (q *Queries) CountInDB() int {
+	db := Conn()
+	defer db.Close()
+
+	var count int
+	row := db.QueryRow("SELECT COUNT(1) FROM queries")
+	row.Scan(&count)
+
+	return count
+}
+
 func (q *Queries) Upsert() {
 	if len(q.Queries) == 0 {
 		return

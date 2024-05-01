@@ -10,42 +10,34 @@ import (
 
 func JsonQueries() string {
 	return `{
-		"a2497c7b-dd5d-5be9-99b7-637eb8bacc4b": {
-			"command": "SELECT",
-			"uid": "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b",
-			"database_uid": "fd68aa5c-a9c0-58db-a05f-13270c8c09dd",
-			"source_uid": "2aef85a0-30b5-5299-9635-35a6a553e0ef",
-			"total_count": 2,
-			"total_duration": 8,
-			"masked_query": "(SELECT * FROM users WHERE (id = ?));",
-			"unmasked_query": "(SELECT * FROM users WHERE (id = 42));",
-			"source": "SELECT * FROM users WHERE id = 42;"
-		}
+		"queries": {
+		  "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b": {
+				"command": "SELECT",
+				"uid": "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b",
+				"database_uid": "fd68aa5c-a9c0-58db-a05f-13270c8c09dd",
+				"source_uid": "2aef85a0-30b5-5299-9635-35a6a553e0ef",
+				"total_count": 2,
+				"total_duration": 8,
+				"masked_query": "(SELECT * FROM users WHERE (id = ?));",
+				"unmasked_query": "(SELECT * FROM users WHERE (id = 42));",
+				"source": "SELECT * FROM users WHERE id = 42;"
+		  }
+	  }
 	}`
 }
 
 func TestQueriesProcess(t *testing.T) {
-	queries := NewQueries()
+	DBName = "lantern_test"
+
+	// queries := NewQueries()
 	data := JsonQueries()
 
 	var statements Queries
 	UnmarshalJSON([]byte(data), &statements)
+	assert.Equal(t, 1, len(statements.Queries))
+
 	statements.Upsert()
-}
-	
-
-	// "0002e681-7b8e-5846-b2a4-26d2b5f59d55": {
-	// 	"command": "SELECT",
-	// 	"uid": "0002e681-7b8e-5846-b2a4-26d2b5f59d55",
-	// 	"database_uid": "0d7bdf9f-5e69-53e3-bb57-78d84086133f",
-	// 	"source_uid": "2aef85a0-30b5-5299-9635-35a6a553e0ef",
-	// 	"total_count": 2,
-	// 	"total_duration": 1700,
-	// 	"masked_query": "(SELECT id FROM ar_codes WHERE (cid = ?) ORDER BY name);",
-	// 	"unmasked_query": "(SELECT id FROM ar_codes WHERE (cid = 200123) ORDER BY name);",
-	// 	"source": "SELECT\n            id\n          FROM\n            ar_codes\n          WHERE\n            cid = 200123\n          ORDER BY\n            name;"
-	// },
-
+	assert.Equal(t, 1, statements.CountInDB())
 }
 
 func TestQueriesAnalyze(t *testing.T) {
