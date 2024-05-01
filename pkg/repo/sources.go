@@ -23,6 +23,17 @@ func (d *Sources) Add(name, url string) *Source {
 	return d.Sources[name]
 }
 
+func (d *Sources) CountInDB() int {
+	db := Conn()
+	defer db.Close()
+
+	var count int
+	row := db.QueryRow("SELECT COUNT(1) FROM sources")
+	row.Scan(&count)
+
+	return count
+}
+
 func (d *Sources) Upsert() {
 	if len(d.Sources) == 0 {
 		return

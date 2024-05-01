@@ -25,6 +25,17 @@ func NewDatabases() *Databases {
 	}
 }
 
+func (d *Databases) CountInDB() int {
+	db := Conn()
+	defer db.Close()
+
+	var count int
+	row := db.QueryRow("SELECT COUNT(1) FROM databases")
+	row.Scan(&count)
+
+	return count
+}
+
 func (d *Databases) Upsert() {
 	if len(d.Databases) == 0 {
 		return
