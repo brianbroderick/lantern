@@ -1,0 +1,2 @@
+migrate -database ${POSTGRESQL_URL} -path ../pkg/repo/migrations down -all
+migrate -database ${POSTGRESQL_TEST_URL} -path ../pkg/repo/migrations down -all
