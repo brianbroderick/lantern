@@ -10,7 +10,7 @@ import (
 // addColumnsInQueries adds the columns in a query the Queries struct
 func (q *Queries) addColumnsInQueries(qu *Query, ext *extractor.Extractor) {
 	for _, column := range ext.ColumnsInQueries {
-		uid := UuidV5(fmt.Sprintf("%s|%s", qu.UID, column.ColumnUID))
+		uid := UuidV5(fmt.Sprintf("%s|%s.%s.%s", column.Clause.String(), column.Schema, column.Table, column.Name))
 		uidStr := uid.String()
 		if _, ok := q.ColumnsInQueries[uidStr]; !ok {
 			q.ColumnsInQueries[uidStr] = &extractor.ColumnsInQueries{

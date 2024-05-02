@@ -5,6 +5,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/brianbroderick/lantern/pkg/sql/extractor"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +29,6 @@ func TestQueriesIntegration(t *testing.T) {
 	databases.Upsert()
 	assert.Equal(t, 2, databases.CountInDB())
 
-	// queries := NewQueries()
 	queryData := JsonQueries()
 
 	var statements Queries
@@ -36,6 +37,90 @@ func TestQueriesIntegration(t *testing.T) {
 
 	statements.Upsert()
 	assert.Equal(t, 1, statements.CountInDB())
+
+	queries := NewQueries()
+	queries.Queries = statements.Queries
+
+	queries.Process()
+
+	db := Conn()
+	defer db.Close()
+
+	var count int
+	row := db.QueryRow("SELECT COUNT(1) FROM columns_in_queries where query_uid = $1", "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b")
+	row.Scan(&count)
+
+	assert.Equal(t, 2, count)
+
+	usersTable := UuidV5(fmt.Sprintf("%s.%s", "public", "users"))
+
+	sql := `SELECT uid, table_uid, column_uid, schema_name, table_name, column_name, clause FROM columns_in_queries where query_uid = 'a2497c7b-dd5d-5be9-99b7-637eb8bacc4b'`
+	ctx, _ := getCtx()
+	rows, err := db.QueryContext(ctx, sql)
+	assert.NoError(t, err)
+	for rows.Next() {
+		r := &extractor.ColumnsInQueries{}
+		clause := ""
+		err = rows.Scan(&r.UID, &r.TableUID, &r.ColumnUID, &r.Schema, &r.Table, &r.Name, &clause)
+		r.Clause = token.Lookup(clause)
+		assert.NoError(t, err)
+
+		fqcn := fmt.Sprintf("%s|%s.%s.%s", r.Clause.String(), r.Schema, r.Table, r.Name)
+		assert.Equal(t, UuidV5(fqcn), r.UID)
+
+		if r.Schema == "public" && r.Table == "users" {
+			assert.Equal(t, usersTable, r.TableUID)
+		}
+
+		if r.Schema == "public" && r.Table == "users" && r.Name == "name" {
+			assert.Equal(t, UuidV5("public.users.name"), r.ColumnUID)
+		}
+
+		if r.Schema == "public" && r.Table == "users" && r.Name == "id" {
+			assert.Equal(t, UuidV5("public.users.id"), r.ColumnUID)
+		}
+
+	}
+
+}
+
+func JsonQueries() string {
+	return `{
+		"queries": {
+		  "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b": {
+				"command": "SELECT",
+				"uid": "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b",
+				"database_uid": "fd68aa5c-a9c0-58db-a05f-13270c8c09dd",
+				"source_uid": "2aef85a0-30b5-5299-9635-35a6a553e0ef",
+				"total_count": 2,
+				"total_duration": 8,
+				"masked_query": "(SELECT users.name FROM users WHERE (users.id = ?));",
+				"unmasked_query": "(SELECT u.name FROM users u WHERE (u.id = 42));",
+				"source": "SELECT u.name FROM users u WHERE u.id = 42;"
+		  }
+	  }
+	}`
+}
+
+func JsonDatabases() string {
+	return `{
+			"databases": {
+				"admin": "718d4687-8950-555b-a560-7b2795c4d2f3",
+				"logs": "fd68aa5c-a9c0-58db-a05f-13270c8c09dd"				
+			}
+		}`
+}
+
+func JsonSources() string {
+	return `{
+		"sources": {
+			"homepage": {
+				"uid": "2aef85a0-30b5-5299-9635-35a6a553e0ef",
+				"name": "homepage",				
+				"url": "https://kludged.io"
+			}
+		}
+	}`
 }
 
 func TestQueriesAnalyze(t *testing.T) {
@@ -84,43 +169,4 @@ func TestQueriesAnalyze(t *testing.T) {
 	timeDiff := t2.Sub(t1)
 	avg := timeDiff / time.Duration(len(tests))
 	fmt.Printf("TestQueriesAnalyze, Elapsed Time: %s, Avg per query: %s\n", timeDiff, avg)
-}
-
-func JsonDatabases() string {
-	return `{
-			"databases": {
-				"admin": "718d4687-8950-555b-a560-7b2795c4d2f3",
-				"logs": "fd68aa5c-a9c0-58db-a05f-13270c8c09dd"				
-			}
-		}`
-}
-
-func JsonQueries() string {
-	return `{
-		"queries": {
-		  "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b": {
-				"command": "SELECT",
-				"uid": "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b",
-				"database_uid": "fd68aa5c-a9c0-58db-a05f-13270c8c09dd",
-				"source_uid": "2aef85a0-30b5-5299-9635-35a6a553e0ef",
-				"total_count": 2,
-				"total_duration": 8,
-				"masked_query": "(SELECT * FROM users WHERE (id = ?));",
-				"unmasked_query": "(SELECT * FROM users WHERE (id = 42));",
-				"source": "SELECT * FROM users WHERE id = 42;"
-		  }
-	  }
-	}`
-}
-
-func JsonSources() string {
-	return `{
-		"sources": {
-			"homepage": {
-				"uid": "2aef85a0-30b5-5299-9635-35a6a553e0ef",
-				"name": "homepage",				
-				"url": "https://kludged.io"
-			}
-		}
-	}`
 }
