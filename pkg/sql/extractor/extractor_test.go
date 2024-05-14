@@ -30,9 +30,10 @@ func TestExtractSelectedColumns(t *testing.T) {
 			[][]string{{}}},
 		// super basic select
 		{"select id from users;",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// check for a wildcard with a table alias
-		{"select u.* from users u;", [][]string{{"SELECT|users.*"}}},
+		{"select u.* from users u;",
+			[][]string{{"SELECT|public.users.*"}}},
 		// check that the asterisk is not treated as a wildcard
 		{"select 2*3 from users;",
 			[][]string{{}}},
@@ -42,86 +43,88 @@ func TestExtractSelectedColumns(t *testing.T) {
 		{"select +2 -3 from users;",
 			[][]string{{}}},
 		// Negative numbers
-		{"select -2 +3 from users;", [][]string{{}}},
+		{"select -2 +3 from users;",
+			[][]string{{}}},
 		// check for double quotes around the table name
-		{`select "blah".id from blah`, [][]string{{`SELECT|"blah".id`}}},
+		{`select "blah".id from blah`,
+			[][]string{{`SELECT|public."blah".id`}}},
 		// math expression
 		{"select 1 * (2 + (6 / 4)) - 9 from users;",
 			[][]string{{}}},
 		// multiple columns
 		{"select id, name from users",
-			[][]string{{"SELECT|id", "SELECT|name"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id", "SELECT|public.UNKNOWN.name"}}},
 		// underscore in a column name
 		{"select id, first_name from users;",
-			[][]string{{"SELECT|id", "SELECT|first_name"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id", "SELECT|public.UNKNOWN.first_name"}}},
 		// column alias with as
 		{"select id, first_name as name from users",
-			[][]string{{"SELECT|id", "SELECT|first_name"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id", "SELECT|public.UNKNOWN.first_name"}}},
 		// column alias
 		{"select id, first_name name from users",
-			[][]string{{"SELECT|id", "SELECT|first_name"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id", "SELECT|public.UNKNOWN.first_name"}}},
 		// column alias with table alias
 		{"select u.id, u.first_name as name from users u;",
-			[][]string{{"SELECT|users.id", "SELECT|users.first_name"}}},
+			[][]string{{"SELECT|public.users.id", "SELECT|public.users.first_name"}}},
 		// no semicolon
 		{"select id from no_semi_colons",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// multiple column aliases with expressions
 		{"select 1 + 2 as math, foo + 7 as seven from foo",
-			[][]string{{"SELECT|foo"}}},
+			[][]string{{"SELECT|public.UNKNOWN.foo"}}},
 		// more complex math expression
 		{"select 1 + 2 * 3 / value as math from foo",
-			[][]string{{"SELECT|value"}}},
+			[][]string{{"SELECT|public.UNKNOWN.value"}}},
 		// table alias
 		{"select a.id from addresses a;",
-			[][]string{{"SELECT|addresses.id"}}},
+			[][]string{{"SELECT|public.addresses.id"}}},
 		// function call
 		{"select sum(a,b) from users;",
-			[][]string{{"SELECT|a", "SELECT|b"}}},
+			[][]string{{"SELECT|public.UNKNOWN.a", "SELECT|public.UNKNOWN.b"}}},
 		// removed the token KEY since it's not a PG reserved key word: https://www.postgresql.org/docs/13/sql-keywords-appendix.html
 		{"select key, value from example where id = 20 AND key IN ( 'a', 'b', 'c' );",
-			[][]string{{"SELECT|key", "SELECT|value"}}},
+			[][]string{{"SELECT|public.UNKNOWN.key", "SELECT|public.UNKNOWN.value"}}},
 		// escaped apostrophes
 		{"SELECT translate(name, '''', '' ) as name FROM people WHERE id = 0;",
-			[][]string{{"SELECT|name"}}},
+			[][]string{{"SELECT|public.UNKNOWN.name"}}},
 		// coalesce
 		{"select coalesce ( u.first_name || ' ' || u.last_name, u.first_name, u.last_name ) AS name from users u",
-			[][]string{{"SELECT|users.first_name", "SELECT|users.last_name"}}},
+			[][]string{{"SELECT|public.users.first_name", "SELECT|public.users.last_name"}}},
 
 		// Select: distinct & all tokens
 		{"select distinct id from users;",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		{"select all id from users",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		{"select distinct on (location) reported_at, report from weather_reports;",
-			[][]string{{"SELECT|location", "SELECT|reported_at", "SELECT|report"}}},
+			[][]string{{"SELECT|public.UNKNOWN.location", "SELECT|public.UNKNOWN.reported_at", "SELECT|public.UNKNOWN.report"}}},
 		{"select c.id, string_agg ( distinct c.name, ', ' ) as value FROM companies c",
-			[][]string{{"SELECT|companies.id", "SELECT|companies.name"}}},
+			[][]string{{"SELECT|public.companies.id", "SELECT|public.companies.name"}}},
 		{"select array_agg(distinct sub.id) from sub",
-			[][]string{{"SELECT|sub.id"}}},
+			[][]string{{"SELECT|public.sub.id"}}},
 
 		// Select: window functions
 		{"select avg(salary) over (partition by depname) from empsalary;",
-			[][]string{{"SELECT|salary", "SELECT|depname"}}},
+			[][]string{{"SELECT|public.UNKNOWN.salary", "SELECT|public.UNKNOWN.depname"}}},
 		{"select avg(salary) over (order by depname) from empsalary",
-			[][]string{{"SELECT|salary", "SELECT|depname"}}},
+			[][]string{{"SELECT|public.UNKNOWN.salary", "SELECT|public.UNKNOWN.depname"}}},
 		{"select avg(salary) over (partition by salary order by depname) from empsalary;",
-			[][]string{{"SELECT|salary", "SELECT|depname"}}},
+			[][]string{{"SELECT|public.UNKNOWN.salary", "SELECT|public.UNKNOWN.depname"}}},
 		{"select avg(salary) over (partition by salary order by depname desc) from empsalary",
-			[][]string{{"SELECT|salary", "SELECT|depname"}}},
+			[][]string{{"SELECT|public.UNKNOWN.salary", "SELECT|public.UNKNOWN.depname"}}},
 		{"select wf1() over w from table_name;",
-			[][]string{{"SELECT|w"}}},
+			[][]string{{"SELECT|public.UNKNOWN.w"}}},
 		{"select wf1() over w, wf2() over w from table_name;",
-			[][]string{{"SELECT|w"}}},
+			[][]string{{"SELECT|public.UNKNOWN.w"}}},
 		// TODO: remove window function from the column list, add window partition by and order by to the column list
 		{"select wf1() over w, wf2() over w from table_name window w as (partition by c1 order by c2);",
-			[][]string{{"SELECT|w"}}},
+			[][]string{{"SELECT|public.UNKNOWN.w"}}},
 		{"select wf1() over w, wf2() over w from table_name window w as (partition by c1 order by c2), foo as (partition by c3 order by c4);",
-			[][]string{{"SELECT|w"}}},
+			[][]string{{"SELECT|public.UNKNOWN.w"}}},
 
 		// Select: joins
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;",
-			[][]string{{"SELECT|customers.id"}}},
+			[][]string{{"SELECT|public.customers.id"}}},
 		// {"select c.id from customers c join addresses a on (c.id = a.customer_id) join states s on (s.id = a.state_id);", [][]string{{"id", "name"}}},
 		// // This is a complex join with multiple tables
 		// {"select c.id, c.name from customers c join addresses a on c.id = a.customer_id join states s on s.id = a.state_id join phone_numbers ph ON ph.customer_id = c.id;",
@@ -138,7 +141,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Select: where clause
 		{"select id from users where id = 42;",
-			[][]string{{"SELECT|id"}, {"WHERE|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"WHERE|public.UNKNOWN.id"}}},
 		// {"select id from users where id = 42 and customer_id = 74", [][]string{{"id", "name"}}},
 		// {"select id from users where id = 42 and customer_id > 74;", [][]string{{"id", "name"}}},
 		// {"select id from users where name = 'brian';", [][]string{{"id", "name"}}},
@@ -148,7 +151,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Select: IS comparisons
 		{"select category from users where category is null",
-			[][]string{{"SELECT|category"}}},
+			[][]string{{"SELECT|public.UNKNOWN.category"}, {"WHERE|public.UNKNOWN.category"}}},
 		// {"select category from users where category is not null", [][]string{{"id", "name"}}},
 		// {"select category from users where category is null and type = 1", [][]string{{"id", "name"}}},
 		// {"select category from users where category is true", [][]string{{"id", "name"}}},
@@ -162,28 +165,28 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Select: group by
 		{"select baz from sales group by bar;",
-			[][]string{{"SELECT|baz"}, {"GROUP_BY|bar"}}},
+			[][]string{{"SELECT|public.UNKNOWN.baz"}, {"GROUP_BY|public.UNKNOWN.bar"}}},
 		// {"select id from users group by id, name;", [][]string{{"id", "name"}}},
 
 		// Select: combined clauses
 		{"select id from users where id = 42 group by id, name",
-			[][]string{{"SELECT|id"}, {"WHERE|id"}, {"GROUP|id"}, {"GROUP|name"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"WHERE|public.UNKNOWN.id"}, {"GROUP|public.UNKNOWN.id"}, {"GROUP|public.UNKNOWN.name"}}},
 		// {"select id from customers join addresses on id = customer_id where id = 46 group by id;", [][]string{{"id", "name"}}},
 
 		// Select: having clause
 		{"select id from users group by id having id > 2;",
-			[][]string{{"SELECT|id"}, {"GROUP_BY|id"}, {"HAVING|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"GROUP_BY|public.UNKNOWN.id"}, {"HAVING|public.UNKNOWN.id"}}},
 		// {"select id from users group by id having id > 2 and name = 'frodo';", [][]string{{"id", "name"}}},
 
 		// Select: order by
 		{"select id from users order by id;",
-			[][]string{{"SELECT|id"}, {"ORDER_BY|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"ORDER_BY|public.UNKNOWN.id"}}},
 		// {"select id from users order by id desc, name", [][]string{{"id", "name"}}},
 		// {"select id from users order by id desc nulls first, name nulls last;", [][]string{{"id", "name"}}},
 
 		// Select: limit
 		{"select id from users limit 10;",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users limit ALL;", [][]string{{"id", "name"}}},
 		// {"select id from users limit ALL", [][]string{{"id", "name"}}},
 		// {"select id from users order by id limit 34", [][]string{{"id", "name"}}},
@@ -192,25 +195,25 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Select: offset
 		{"select id from users limit ALL offset 10;",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users limit 10 offset 10;", [][]string{{"id", "name"}}},
 		// {"select id from users limit 10 offset 1 ROW", [][]string{{"id", "name"}}},
 		// {"select id from users limit 10 offset 2 ROWS;", [][]string{{"id", "name"}}},
 
 		// Select: combined order by, limit, offset
 		{"select id from users order by id desc limit 10 offset 10;",
-			[][]string{{"SELECT|id"}, {"ORDER_BY|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"ORDER_BY|public.UNKNOWN.id"}}},
 		// {"select id from users order by id desc nulls last limit 10 offset 10;", [][]string{{"id", "name"}}},
 
 		// Select: fetch
 		{"select id from users order by id fetch first row only;",
-			[][]string{{"SELECT|id"}, {"ORDER_BY|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"ORDER_BY|public.UNKNOWN.id"}}},
 		// {"select id from users order by id fetch first 3 rows only;", [][]string{{"id", "name"}}},
 		// {"select id from users order by id fetch first 10 rows with ties;", [][]string{{"id", "name"}}},
 
 		// Select: for update
 		{"select id from users for update;",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users for no key update;;", [][]string{{"id", "name"}}},
 		// {"select id from users for share;", [][]string{{"id", "name"}}},
 		// {"select id from users for key share", [][]string{{"id", "name"}}},
@@ -221,7 +224,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Select: IN operator
 		{"select id from users where id in ('1','2','3','4');",
-			[][]string{{"SELECT|id"}, {"WHERE|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"WHERE|public.UNKNOWN.id"}}},
 		// {"select id from users where id not in ('1','2','3','4');", [][]string{{"id", "name"}}},
 		// {"select id from users where id IN ('1','2','3','4') AND name = 'brian';", [][]string{{"id", "name"}}},
 		// {"select id from users where id IN (1,2,3,4);", [][]string{{"id", "name"}}},
@@ -235,7 +238,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 		// Select: LIKE operator
 		// basic like
 		{"select id from users where name like 'brian';",
-			[][]string{{"SELECT|id"}, {"WHERE|name"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"WHERE|public.UNKNOWN.name"}}},
 		// {"select id from users where name not like 'brian';", [][]string{{"id", "name"}}},               // basic not like
 		// {"select id from users where rownum between 1 and sample_size", [][]string{{"id", "name"}}},     // BETWEEN
 		// {"select id from users where rownum not between 1 and sample_size", [][]string{{"id", "name"}}}, // BETWEEN
@@ -250,7 +253,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 		// TODO: check for subqueries
 		// Select: EXISTS operator. In this case, NOT is a prefix operator
 		{"select id from users where exists (select id from addresses where user_id = users.id);",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users where not exists (select id from addresses where user_id = users.id);",
 		// 	[][]string{{"id", "name"}}},
 
@@ -264,7 +267,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Single tables
 		{"select id from users union select id from customers;",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users except select id from customers;", [][]string{{"id", "name"}}},
 		// {"select id from users intersect select id from customers;", [][]string{{"id", "name"}}},
 		// {"select id from users union all select id from customers;", [][]string{{"id", "name"}}},
@@ -289,7 +292,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 		// TODO: check for jsonb fields
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users where data->>'name' = 'brian';", [][]string{{"id", "name"}}},
 		// {"select id from users where data#>'{name}' = 'brian';", [][]string{{"id", "name"}}},
 		// {"select id from users where data#>>'{name}' = 'brian';", [][]string{{"id", "name"}}},
@@ -314,7 +317,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Select: CASE
 		{"select case when id = 1 then 'one' when id = 2 then 'two' else 'other' end from users;",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {`SELECT case when (type_id = 3) then 1 else 0 end::text as is_complete FROM users`, [][]string{{"id", "name"}}},
 		// {"select array_agg(name order by name) as names from users", [][]string{{"id", "name"}}},
 		// {"SELECT case when (id = 3) then 1 else 0 end AS names from users", [][]string{{"id", "name"}}},
@@ -332,7 +335,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Subqueries
 		{"select * from (select id from a) b order by id",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from (select id from users union select id from people) u;", [][]string{{"id", "name"}}},
 		// {"SELECT id FROM ( SELECT id FROM users u UNION SELECT id FROM users u ) as SubQ ;", [][]string{{"id", "name"}}}, // with union
 
@@ -345,7 +348,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 		// Select: reserved words
 		// any
 		{"select id from users where any(type_ids) = 10;",
-			[][]string{{"SELECT|id"}, {"WHERE|type_ids"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}, {"WHERE|public.UNKNOWN.type_ids"}}},
 		// {"select null::integer AS id from users;", [][]string{{"id", "name"}}},                // null
 		// {"select id from users where login_date < current_date;", [][]string{{"id", "name"}}}, // CURRENT_DATE
 		// {"select cast('100' as integer) from users", [][]string{{"id", "name"}}},              // cast
@@ -374,7 +377,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 		// Intervals
 		// TODO: current_date is actually a function, not a column
 		{"select current_date - INTERVAL '7 DAY' from users;",
-			[][]string{{"SELECT|current_date"}}},
+			[][]string{{"SELECT|public.UNKNOWN.current_date"}}},
 		// {"select 1 from users where a = interval '1' year", [][]string{{"id", "name"}}},
 		// {"select 1 from users where a = interval '1' month", [][]string{{"id", "name"}}},
 		// {"select 1 from users where a = interval '1' day", [][]string{{"id", "name"}}},
@@ -391,7 +394,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Multi word keywords: AT TIME ZONE, and TIMESTAMP WITH TIME ZONE
 		{"select id from my_table where '2020-01-01' at time zone 'MDT' = '2023-01-01';",
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select * from tasks where date_trunc('day', created_at) = date_trunc('day', now()::timestamp with time zone at time zone 'America/Denver') LIMIT 1;", [][]string{{"id", "name"}}},
 		// {"select now()::timestamp with time zone from users;", [][]string{{"id", "name"}}},
 		// {"select '2020-01-01' at time zone 'MDT' from my_table;", [][]string{{"id", "name"}}},
@@ -407,7 +410,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Dots
 		{`select id as "my.id" from users u`,
-			[][]string{{"SELECT|id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {`select id as "my" from users u`, [][]string{{"id", "name"}}},
 		// {"select u . id from users u", [][]string{{"id", "name"}}}, // "no prefix parse function for DOT found at line 0 char 25"
 
@@ -419,7 +422,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 				from users u
 				JOIN addresses a ON (u.id = a.user_id)
 				where id = 42;`,
-			[][]string{{"WHERE|id"}}},
+			[][]string{{"WHERE|public.UNKNOWN.id"}}},
 	}
 
 	// TODO: add table to non-aliased columns
@@ -458,104 +461,104 @@ func TestExtractSelectedTables(t *testing.T) {
 	}{
 		// no column (useful for exists functions)
 		{"select from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// super basic select
 		{"select id from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// check for a wildcard with a table alias
 		{"select u.* from users u;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// check that the asterisk is not treated as a wildcard
 		{"select 2*3 from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		{`select 2 % 4 from users;`,
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// PG allows + as a prefix operator
 		{"select +2 -3 from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// Negative numbers
 		{"select -2 +3 from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// check for double quotes around the table name
 		{`select "blah".id from blah`,
-			[][]string{{"blah"}}},
+			[][]string{{"public.blah"}}},
 		// math expression
 		{"select 1 * (2 + (6 / 4)) - 9 from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// multiple columns
 		{"select id, name from users",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// underscore in a column name
 		{"select id, first_name from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// column alias with as
 		{"select id, first_name as name from users",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// column alias
 		{"select id, first_name name from users",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// column alias with table alias
 		{"select u.id, u.first_name as name from users u;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// no semicolon
 		{"select id from no_semi_colons",
-			[][]string{{"no_semi_colons"}}},
+			[][]string{{"public.no_semi_colons"}}},
 		// multiple column aliases with expressions
 		{"select 1 + 2 as math, foo + 7 as seven from foo",
-			[][]string{{"foo"}}},
+			[][]string{{"public.foo"}}},
 		// more complex math expression
 		{"select 1 + 2 * 3 / value as math from foo",
-			[][]string{{"foo"}}},
+			[][]string{{"public.foo"}}},
 		// table alias
 		{"select a.id from addresses a;",
-			[][]string{{"addresses"}}},
+			[][]string{{"public.addresses"}}},
 		// function call
 		{"select sum(a,b) from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// removed the token KEY since it's not a PG reserved key word: https://www.postgresql.org/docs/13/sql-keywords-appendix.html
 		{"select key, value from example where id = 20 AND key IN ( 'a', 'b', 'c' );",
-			[][]string{{"example"}}},
+			[][]string{{"public.example"}}},
 		// escaped apostrophes
 		{"SELECT translate(name, '''', '' ) as name FROM people WHERE id = 0;",
-			[][]string{{"people"}}},
+			[][]string{{"public.people"}}},
 		// coalesce
 		{"select coalesce ( u.first_name || ' ' || u.last_name, u.first_name, u.last_name ) AS name from users u",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 
 		// Select: distinct & all tokens
 		{"select distinct id from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		{"select all id from users",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		{"select distinct on (location) reported_at, report from weather_reports;",
-			[][]string{{"weather_reports"}}},
+			[][]string{{"public.weather_reports"}}},
 		{"select c.id, string_agg ( distinct c.name, ', ' ) as value FROM companies c",
-			[][]string{{"companies"}}},
+			[][]string{{"public.companies"}}},
 		{"select array_agg(distinct sub.id) from sub",
-			[][]string{{"sub"}}},
+			[][]string{{"public.sub"}}},
 
 		// Select: window functions
 		{"select avg(salary) over (partition by depname) from empsalary;",
-			[][]string{{"empsalary"}}},
+			[][]string{{"public.empsalary"}}},
 		{"select avg(salary) over (order by depname) from empsalary",
-			[][]string{{"empsalary"}}},
+			[][]string{{"public.empsalary"}}},
 		{"select avg(salary) over (partition by salary order by depname) from empsalary;",
-			[][]string{{"empsalary"}}},
+			[][]string{{"public.empsalary"}}},
 		{"select avg(salary) over (partition by salary order by depname desc) from empsalary",
-			[][]string{{"empsalary"}}},
+			[][]string{{"public.empsalary"}}},
 		{"select wf1() over w from table_name;",
-			[][]string{{"table_name"}}},
+			[][]string{{"public.table_name"}}},
 		{"select wf1() over w, wf2() over w from table_name;",
-			[][]string{{"table_name"}}},
+			[][]string{{"public.table_name"}}},
 		// TODO: remove window function from the column list, add window partition by and order by to the column list
 		{"select wf1() over w, wf2() over w from table_name window w as (partition by c1 order by c2);",
-			[][]string{{"table_name"}}},
+			[][]string{{"public.table_name"}}},
 		{"select wf1() over w, wf2() over w from table_name window w as (partition by c1 order by c2), foo as (partition by c3 order by c4);",
-			[][]string{{"table_name"}}},
+			[][]string{{"public.table_name"}}},
 
 		// Select: joins
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;",
-			[][]string{{"customers", "addresses"}}},
+			[][]string{{"public.addresses", "public.customers"}}},
 		// {"select c.id from customers c join addresses a on (c.id = a.customer_id) join states s on (s.id = a.state_id);", [][]string{{"id", "name"}}},
 		// // This is a complex join with multiple tables
 		// {"select c.id, c.name from customers c join addresses a on c.id = a.customer_id join states s on s.id = a.state_id join phone_numbers ph ON ph.customer_id = c.id;",
@@ -572,7 +575,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: where clause
 		{"select id from users where id = 42;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users where id = 42 and customer_id = 74", [][]string{{"id", "name"}}},
 		// {"select id from users where id = 42 and customer_id > 74;", [][]string{{"id", "name"}}},
 		// {"select id from users where name = 'brian';", [][]string{{"id", "name"}}},
@@ -582,7 +585,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: IS comparisons
 		{"select category from users where category is null",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select category from users where category is not null", [][]string{{"id", "name"}}},
 		// {"select category from users where category is null and type = 1", [][]string{{"id", "name"}}},
 		// {"select category from users where category is true", [][]string{{"id", "name"}}},
@@ -596,28 +599,28 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: group by
 		{"select baz from sales group by bar;",
-			[][]string{{"sales"}}},
+			[][]string{{"public.sales"}}},
 		// {"select id from users group by id, name;", [][]string{{"id", "name"}}},
 
 		// Select: combined clauses
 		{"select id from users where id = 42 group by id, name",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from customers join addresses on id = customer_id where id = 46 group by id;", [][]string{{"id", "name"}}},
 
 		// Select: having clause
 		{"select id from users group by id having id > 2;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users group by id having id > 2 and name = 'frodo';", [][]string{{"id", "name"}}},
 
 		// Select: order by
 		{"select id from users order by id;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users order by id desc, name", [][]string{{"id", "name"}}},
 		// {"select id from users order by id desc nulls first, name nulls last;", [][]string{{"id", "name"}}},
 
 		// Select: limit
 		{"select id from users limit 10;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users limit ALL;", [][]string{{"id", "name"}}},
 		// {"select id from users limit ALL", [][]string{{"id", "name"}}},
 		// {"select id from users order by id limit 34", [][]string{{"id", "name"}}},
@@ -626,25 +629,25 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: offset
 		{"select id from users limit ALL offset 10;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users limit 10 offset 10;", [][]string{{"id", "name"}}},
 		// {"select id from users limit 10 offset 1 ROW", [][]string{{"id", "name"}}},
 		// {"select id from users limit 10 offset 2 ROWS;", [][]string{{"id", "name"}}},
 
 		// Select: combined order by, limit, offset
 		{"select id from users order by id desc limit 10 offset 10;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users order by id desc nulls last limit 10 offset 10;", [][]string{{"id", "name"}}},
 
 		// Select: fetch
 		{"select id from users order by id fetch first row only;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users order by id fetch first 3 rows only;", [][]string{{"id", "name"}}},
 		// {"select id from users order by id fetch first 10 rows with ties;", [][]string{{"id", "name"}}},
 
 		// Select: for update
 		{"select id from users for update;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users for no key update;;", [][]string{{"id", "name"}}},
 		// {"select id from users for share;", [][]string{{"id", "name"}}},
 		// {"select id from users for key share", [][]string{{"id", "name"}}},
@@ -655,7 +658,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: IN operator
 		{"select id from users where id in ('1','2','3','4');",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users where id not in ('1','2','3','4');", [][]string{{"id", "name"}}},
 		// {"select id from users where id IN ('1','2','3','4') AND name = 'brian';", [][]string{{"id", "name"}}},
 		// {"select id from users where id IN (1,2,3,4);", [][]string{{"id", "name"}}},
@@ -669,7 +672,7 @@ func TestExtractSelectedTables(t *testing.T) {
 		// Select: LIKE operator
 		// basic like
 		{"select id from users where name like 'brian';",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users where name not like 'brian';", [][]string{{"id", "name"}}},               // basic not like
 		// {"select id from users where rownum between 1 and sample_size", [][]string{{"id", "name"}}},     // BETWEEN
 		// {"select id from users where rownum not between 1 and sample_size", [][]string{{"id", "name"}}}, // BETWEEN
@@ -683,7 +686,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: EXISTS operator. In this case, NOT is a prefix operator
 		{"select id from users where exists (select id from addresses where user_id = users.id);",
-			[][]string{{"users", "addresses"}}},
+			[][]string{{"public.addresses", "public.users"}}},
 		// {"select id from users where not exists (select id from addresses where user_id = users.id);",
 		// 	[][]string{{"id", "name"}}},
 
@@ -697,7 +700,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Single tables
 		{"select id from users union select id from customers;",
-			[][]string{{"users", "customers"}}},
+			[][]string{{"public.users", "public.customers"}}},
 		// {"select id from users except select id from customers;", [][]string{{"id", "name"}}},
 		// {"select id from users intersect select id from customers;", [][]string{{"id", "name"}}},
 		// {"select id from users union all select id from customers;", [][]string{{"id", "name"}}},
@@ -707,7 +710,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: Cast literals
 		{"select '100'::integer from a;",
-			[][]string{{"a"}}},
+			[][]string{{"public.a"}}},
 		// {"select 100::text from a;", [][]string{{"id", "name"}}},
 		// {"select a::text from b;", [][]string{{"id", "name"}}},
 		// {"select load( array[ 1 ], array[ 2] ) from a", [][]string{{"id", "name"}}},
@@ -721,7 +724,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: JSONB
 		{"select id from users where data->'name' = 'brian';",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select id from users where data->>'name' = 'brian';", [][]string{{"id", "name"}}},
 		// {"select id from users where data#>'{name}' = 'brian';", [][]string{{"id", "name"}}},
 		// {"select id from users where data#>>'{name}' = 'brian';", [][]string{{"id", "name"}}},
@@ -736,7 +739,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: ARRAYs
 		{"select array['John'] from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select array['John', 'Joseph'] from users;", [][]string{{"id", "name"}}},
 		// {"select array['John', 'Joseph', 'Anna', 'Henry'] && array['Henry', 'John'] from users;", [][]string{{"id", "name"}}},
 		// {"select pay[3] FROM emp;", [][]string{{"id", "name"}}},
@@ -746,7 +749,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: CASE
 		{"select case when id = 1 then 'one' when id = 2 then 'two' else 'other' end from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {`SELECT case when (type_id = 3) then 1 else 0 end::text as is_complete FROM users`, [][]string{{"id", "name"}}},
 		// {"select array_agg(name order by name) as names from users", [][]string{{"id", "name"}}},
 		// {"SELECT case when (id = 3) then 1 else 0 end AS names from users", [][]string{{"id", "name"}}},
@@ -757,14 +760,14 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Select: Functions
 		{"select w() from a",
-			[][]string{{"a"}}},
+			[][]string{{"public.a"}}},
 		// {"select id from load(1,2)", [][]string{{"id", "name"}}},
 		// {"select json_object_agg(foo order by id) from bar", [][]string{{"id", "name"}}},                                       // aggregate function with order by
 		// {"select array_agg( distinct sub.name_first order by sub.name_first ) from customers sub", [][]string{{"id", "name"}}}, // aggregate with distinct
 
 		// Subqueries
 		{"select * from (select id from a) b order by id",
-			[][]string{{"a"}}},
+			[][]string{{"public.a"}}},
 		// {"select id from (select id from users union select id from people) u;", [][]string{{"id", "name"}}},
 		// {"SELECT id FROM ( SELECT id FROM users u UNION SELECT id FROM users u ) as SubQ ;", [][]string{{"id", "name"}}}, // with union
 
@@ -777,7 +780,7 @@ func TestExtractSelectedTables(t *testing.T) {
 		// Select: reserved words
 		// any
 		{"select id from users where any(type_ids) = 10;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select null::integer AS id from users;", [][]string{{"id", "name"}}},                // null
 		// {"select id from users where login_date < current_date;", [][]string{{"id", "name"}}}, // CURRENT_DATE
 		// {"select cast('100' as integer) from users", [][]string{{"id", "name"}}},              // cast
@@ -806,7 +809,7 @@ func TestExtractSelectedTables(t *testing.T) {
 		// Intervals
 		// TODO: current_date is actually a function, not a column
 		{"select current_date - INTERVAL '7 DAY' from users;",
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {"select 1 from users where a = interval '1' year", [][]string{{"id", "name"}}},
 		// {"select 1 from users where a = interval '1' month", [][]string{{"id", "name"}}},
 		// {"select 1 from users where a = interval '1' day", [][]string{{"id", "name"}}},
@@ -823,7 +826,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Multi word keywords: AT TIME ZONE, and TIMESTAMP WITH TIME ZONE
 		{"select id from my_table where '2020-01-01' at time zone 'MDT' = '2023-01-01';",
-			[][]string{{"my_table"}}},
+			[][]string{{"public.my_table"}}},
 		// {"select * from tasks where date_trunc('day', created_at) = date_trunc('day', now()::timestamp with time zone at time zone 'America/Denver') LIMIT 1;", [][]string{{"id", "name"}}},
 		// {"select now()::timestamp with time zone from users;", [][]string{{"id", "name"}}},
 		// {"select '2020-01-01' at time zone 'MDT' from my_table;", [][]string{{"id", "name"}}},
@@ -839,7 +842,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		// Dots
 		{`select id as "my.id" from users u`,
-			[][]string{{"users"}}},
+			[][]string{{"public.users"}}},
 		// {`select id as "my" from users u`, [][]string{{"id", "name"}}},
 		// {"select u . id from users u", [][]string{{"id", "name"}}}, // "no prefix parse function for DOT found at line 0 char 25"
 
@@ -851,7 +854,7 @@ func TestExtractSelectedTables(t *testing.T) {
 				from users u
 				JOIN addresses a ON (u.id = a.user_id)
 				where id = 42;`,
-			[][]string{{"users", "addresses"}}},
+			[][]string{{"public.addresses", "public.users"}}},
 	}
 
 	// TODO: add table to non-aliased columns
@@ -871,7 +874,7 @@ func TestExtractSelectedTables(t *testing.T) {
 			assert.Equal(t, len(tt.tables[i]), len(r.TablesInQueries), "input: %s\nNumber of tables not equal", tt.input)
 
 			for _, table := range r.TablesInQueries {
-				assert.Contains(t, tt.tables[i], table.Name, "input: %s\nTable %s not found in %v", tt.input, table.Name, tt.tables[i])
+				assert.Contains(t, tt.tables[i], fmt.Sprintf("%s.%s", table.Schema, table.Name), "input: %s\nTable %s not found in %v", tt.input, table.Name, tt.tables[i])
 			}
 
 			for _, join := range r.TableJoinsInQueries {
@@ -903,17 +906,17 @@ func TestExtractColumnsInClauses(t *testing.T) {
 		columns [][]ColumnsInQueries
 	}{
 		{"select id from users where name = 'Brian';",
-			[][]ColumnsInQueries{{{Name: "id", Clause: token.SELECT}, {Name: "name", Clause: token.WHERE}}}},
+			[][]ColumnsInQueries{{{Schema: "public", Table: "UNKNOWN", Name: "id", Clause: token.SELECT}, {Schema: "public", Table: "UNKNOWN", Name: "name", Clause: token.WHERE}}}},
 		{"select c.id from customers c join addresses a on c.id = a.customer_id;",
-			[][]ColumnsInQueries{{{Table: "customers", Name: "id", Clause: token.SELECT}}}},
+			[][]ColumnsInQueries{{{Schema: "public", Table: "customers", Name: "id", Clause: token.SELECT}}}},
 		{"select baz from sales group by bar;",
-			[][]ColumnsInQueries{{{Name: "baz", Clause: token.SELECT}, {Name: "bar", Clause: token.GROUP_BY}}}},
+			[][]ColumnsInQueries{{{Schema: "public", Table: "UNKNOWN", Name: "baz", Clause: token.SELECT}, {Schema: "public", Table: "UNKNOWN", Name: "bar", Clause: token.GROUP_BY}}}},
 		{"select id from users group by id having id > 2;",
-			[][]ColumnsInQueries{{{Name: "id", Clause: token.SELECT}, {Name: "id", Clause: token.GROUP_BY}, {Name: "id", Clause: token.HAVING}}}},
+			[][]ColumnsInQueries{{{Schema: "public", Table: "UNKNOWN", Name: "id", Clause: token.SELECT}, {Schema: "public", Table: "UNKNOWN", Name: "id", Clause: token.GROUP_BY}, {Schema: "public", Table: "UNKNOWN", Name: "id", Clause: token.HAVING}}}},
 		{"select id from users order by name;",
-			[][]ColumnsInQueries{{{Name: "id", Clause: token.SELECT}, {Name: "name", Clause: token.ORDER}}}},
+			[][]ColumnsInQueries{{{Schema: "public", Table: "UNKNOWN", Name: "id", Clause: token.SELECT}, {Schema: "public", Table: "UNKNOWN", Name: "name", Clause: token.ORDER}}}},
 		{"select id from users order by id;",
-			[][]ColumnsInQueries{{{Name: "id", Clause: token.SELECT}, {Name: "id", Clause: token.ORDER}}}},
+			[][]ColumnsInQueries{{{Schema: "public", Table: "UNKNOWN", Name: "id", Clause: token.SELECT}, {Schema: "public", Table: "UNKNOWN", Name: "id", Clause: token.ORDER}}}},
 	}
 
 	// TODO: add table to non-aliased columns

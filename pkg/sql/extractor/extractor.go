@@ -133,10 +133,9 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		case *ast.Identifier, *ast.SimpleIdentifier:
 			node.Alias = nil
 		}
-
-		envJC := object.NewEnvironment()
-		setJoinType(envJC, node.JoinType)
-		r.Extract(node.JoinCondition, envJC)
+		// set jointype as a variable in the env
+		setJoinType(env, node.JoinType)
+		r.Extract(node.JoinCondition, env)
 
 		r.Extract(node.Table, env)
 	case *ast.LockExpression:
