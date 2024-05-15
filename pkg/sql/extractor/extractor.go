@@ -14,6 +14,7 @@ type Extractor struct {
 	TablesInQueries     map[string]*TablesInQueries     `json:"tables_in_queries,omitempty"`
 	TableJoinsInQueries map[string]*TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
 	FunctionsInQueries  map[string]*FunctionsInQueries  `json:"functions_in_queries,omitempty"`
+	Tables              map[string]*Tables              `json:"tables,omitempty"`
 	MustExtract         bool
 	errors              []string
 }
@@ -25,6 +26,7 @@ func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
 		TablesInQueries:     make(map[string]*TablesInQueries),
 		TableJoinsInQueries: make(map[string]*TableJoinsInQueries),
 		FunctionsInQueries:  make(map[string]*FunctionsInQueries),
+		Tables:              make(map[string]*Tables),
 		errors:              []string{},
 		MustExtract:         mustExtract,
 	}

@@ -57,9 +57,7 @@ func ExecuteQuery(db *sql.DB, sql string) {
 		return
 	}
 
-	// sql = fmt.Sprintf("BEGIN; SET session_replication_role = replica; %s COMMIT;", sql)
-	ctx, _ := getCtx()
-	_, err := db.ExecContext(ctx, sql)
+	_, err := db.Exec(sql)
 	if err != nil {
 		fmt.Printf("\nErr in executeQuery:\n\t%s\nSQL:\n\t%s\n\n", err.Error(), sql)
 		return

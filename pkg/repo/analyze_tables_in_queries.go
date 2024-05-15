@@ -22,6 +22,15 @@ func (q *Queries) addTablesInQueries(qu *Query, ext *extractor.Extractor) {
 				Name:     table.Name,
 			}
 		}
+
+		tableUIDStr := table.TableUID.String()
+		if _, ok := q.Tables[tableUIDStr]; !ok {
+			q.Tables[tableUIDStr] = &extractor.Tables{
+				UID:    table.TableUID,
+				Schema: table.Schema,
+				Name:   table.Name,
+			}
+		}
 	}
 }
 

@@ -40,6 +40,12 @@ type TablesInQueries struct {
 	Name     string    `json:"table_name"`
 }
 
+type Tables struct {
+	UID    uuid.UUID `json:"uid"`
+	Schema string    `json:"schema_name"`
+	Name   string    `json:"table_name"`
+}
+
 // May have to store the reverse join as well
 type TableJoinsInQueries struct {
 	UID           uuid.UUID `json:"uid"`
@@ -215,6 +221,14 @@ func (d *Extractor) AddTablesInQueries(ident *ast.Identifier) *TablesInQueries {
 			TableUID: tableUid,
 			Schema:   schema,
 			Name:     table,
+		}
+	}
+
+	if _, ok := d.Tables[fqtn]; !ok {
+		d.Tables[fqtn] = &Tables{
+			UID:    UuidV5(fqtn),
+			Schema: schema,
+			Name:   table,
 		}
 	}
 

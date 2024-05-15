@@ -18,6 +18,7 @@ type Queries struct {
 	ColumnsInQueries    map[string]*extractor.ColumnsInQueries    `json:"columns_in_queries,omitempty"`
 	TablesInQueries     map[string]*extractor.TablesInQueries     `json:"tables_in_queries,omitempty"`
 	TableJoinsInQueries map[string]*extractor.TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
+	Tables              map[string]*extractor.Tables              `json:"tables,omitempty"`
 }
 
 // NewQueries creates a new Queries struct
@@ -28,6 +29,7 @@ func NewQueries() *Queries {
 		ColumnsInQueries:    make(map[string]*extractor.ColumnsInQueries),
 		TablesInQueries:     make(map[string]*extractor.TablesInQueries),
 		TableJoinsInQueries: make(map[string]*extractor.TableJoinsInQueries),
+		Tables:              make(map[string]*extractor.Tables),
 	}
 }
 
@@ -46,6 +48,7 @@ func (q *Queries) Process() bool {
 	q.UpsertTablesInQueries()
 	q.UpsertColumnsInQueries()
 	q.UpsertTableJoinsInQueries()
+	q.UpsertTables() // must run after UpsertTablesInQueries to populate the tables map
 
 	return true
 }
