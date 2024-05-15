@@ -48,22 +48,23 @@ type TableJoinsInQueries struct {
 	TableUIDb     uuid.UUID `json:"table_uid_b"`
 	JoinCondition string    `json:"join_condition"` // LEFT, RIGHT, INNER, OUTER, etc
 	OnCondition   string    `json:"on_condition"`   // Right now, this is the String() of the expression
+	SchemaA       string    `json:"schema_a"`
 	TableA        string    `json:"table_a"`
+	SchemaB       string    `json:"schema_b"`
 	TableB        string    `json:"table_b"`
 }
 
-// TODO: check backwards in case someone joins the opposite way
-// Maybe alphabetical order of the table names?
+// This passes around a 3 element slice. []string{schema, table, fully_qualified_table_name}
 func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_condition string, env *object.Environment) *TableJoinsInQueries {
-	alphabetical := func(a, b string) (string, string) {
-		if a < b {
+	alphabetical := func(a, b []string) ([]string, []string) {
+		if a[2] < b[2] {
 			return a, b
 		}
 		return b, a
 	}
 
-	tableA := "UNKNOWN"
-	tableB := "UNKNOWN"
+	tableA := []string{"public", "UNKNOWN", "public.UNKNOWN"}
+	tableB := []string{"public", "UNKNOWN", "public.UNKNOWN"}
 
 	switch len(columnA.Value) {
 	case 1:
@@ -72,10 +73,12 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 	case 2:
 		// assume the schema is public if it's not specified. This is a safe assumption for now.
 		// TODO: add support for search_path
-		tableA = fmt.Sprintf("%s.%s", "public", columnA.Value[0].(*ast.SimpleIdentifier).Value)
+		tableA[1] = columnA.Value[0].(*ast.SimpleIdentifier).Value
 	case 3:
-		tableA = fmt.Sprintf("%s.%s", columnA.Value[0].(*ast.SimpleIdentifier).Value, columnA.Value[1].(*ast.SimpleIdentifier).Value)
+		tableA[0] = columnA.Value[0].(*ast.SimpleIdentifier).Value
+		tableA[1] = columnA.Value[1].(*ast.SimpleIdentifier).Value
 	}
+	tableA[2] = fmt.Sprintf("%s.%s", tableA[0], tableA[1])
 
 	switch len(columnB.Value) {
 	case 1:
@@ -83,14 +86,16 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 		fmt.Println("AddJoin: columns do not have tables associated with them")
 	case 2:
 		// TODO: add support for search_path
-		tableB = fmt.Sprintf("%s.%s", "public", columnB.Value[0].(*ast.SimpleIdentifier).Value)
+		tableB[1] = columnB.Value[0].(*ast.SimpleIdentifier).Value
 	case 3:
-		tableB = fmt.Sprintf("%s.%s", columnB.Value[0].(*ast.SimpleIdentifier).Value, columnB.Value[1].(*ast.SimpleIdentifier).Value)
+		tableB[0] = columnB.Value[0].(*ast.SimpleIdentifier).Value
+		tableB[1] = columnB.Value[1].(*ast.SimpleIdentifier).Value
 	}
+	tableB[2] = fmt.Sprintf("%s.%s", tableB[0], tableB[1])
 
 	a, b := alphabetical(tableA, tableB)
 
-	uniq := UuidV5(fmt.Sprintf("%s|%s", a, b))
+	uniq := UuidV5(fmt.Sprintf("%s|%s", a[2], b[2]))
 	uniqStr := uniq.String()
 
 	if _, ok := d.TableJoinsInQueries[uniqStr]; !ok {
@@ -99,22 +104,25 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 		obj, ok := env.Get("join_type")
 		if !ok {
 			joinType = "UNKNOWN"
-		}
-		str, ok := obj.(*object.String)
-		if !ok {
-			joinType = "UNKNOWN"
 		} else {
-			joinType = str.Value
+			str, ok := obj.(*object.String)
+			if !ok {
+				joinType = "UNKNOWN"
+			} else {
+				joinType = str.Value
+			}
 		}
 
 		d.TableJoinsInQueries[uniqStr] = &TableJoinsInQueries{
 			UID:           uniq,
-			TableUIDa:     UuidV5(a),
-			TableUIDb:     UuidV5(b),
+			TableUIDa:     UuidV5(a[2]),
+			TableUIDb:     UuidV5(b[2]),
 			OnCondition:   on_condition,
 			JoinCondition: joinType,
-			TableA:        a,
-			TableB:        b,
+			SchemaA:       a[0],
+			TableA:        a[1],
+			SchemaB:       b[0],
+			TableB:        b[1],
 		}
 	}
 

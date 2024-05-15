@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS table_joins_in_queries (
    table_uid_b UUID NOT NULL, -- foreign key to queries table. 
    join_condition TEXT NOT NULL, -- INNER, LEFT, RIGHT, OUTER, etc.
    on_condition TEXT NOT NULL, -- for now, we'll just store the entire ON condition as a string.
+   schema_a TEXT NOT NULL, -- the schema for table_a
    table_a TEXT NOT NULL, -- the name for table_a
+   schema_b TEXT NOT NULL, -- the schema for table_b   
    table_b TEXT NOT NULL -- the name for table_b
 );
 

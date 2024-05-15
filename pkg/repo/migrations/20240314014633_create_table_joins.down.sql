@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS table_joins;
+DROP TABLE IF EXISTS table_joins_in_queries;

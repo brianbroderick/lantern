@@ -21,7 +21,9 @@ func (q *Queries) addTableJoinsInQueries(qu *Query, ext *extractor.Extractor) {
 				TableUIDb:     table.TableUIDb,
 				JoinCondition: table.JoinCondition,
 				OnCondition:   table.OnCondition,
+				SchemaA:       table.SchemaA,
 				TableA:        table.TableA,
+				SchemaB:       table.SchemaB,
 				TableB:        table.TableB,
 			}
 		}
@@ -42,11 +44,11 @@ func (q *Queries) UpsertTableJoinsInQueries() {
 }
 
 func (q *Queries) insTableJoinsInQueries() string {
-	return `INSERT INTO table_joins_in_queries (uid, query_uid, table_uid_a, table_uid_b, join_condition, on_condition, table_a, table_b)
+	return `INSERT INTO table_joins_in_queries (uid, query_uid, table_uid_a, table_uid_b, join_condition, on_condition, schema_a, table_a, schema_b, table_b)
 	VALUES %s 
 	ON CONFLICT (uid) DO UPDATE 
 	SET query_uid = EXCLUDED.query_uid, table_uid_a = EXCLUDED.table_uid_a, table_uid_b = EXCLUDED.table_uid_b, 
-	  join_condition = EXCLUDED.join_condition, table_a = EXCLUDED.table_a, table_b = EXCLUDED.table_b;`
+	  join_condition = EXCLUDED.join_condition, schema_a = EXCLUDED.schema_a, table_a = EXCLUDED.table_a, schema_b = EXCLUDED.schema_b, table_b = EXCLUDED.table_b;`
 }
 
 func (q *Queries) insValuesTableJoinsInQueries() []string {
@@ -54,8 +56,8 @@ func (q *Queries) insValuesTableJoinsInQueries() []string {
 
 	for uid, query := range q.TableJoinsInQueries {
 		rows = append(rows,
-			fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-				uid, query.QueryUID, query.TableUIDa, query.TableUIDb, query.JoinCondition, query.OnCondition, query.TableA, query.TableB))
+			fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
+				uid, query.QueryUID, query.TableUIDa, query.TableUIDb, query.JoinCondition, query.OnCondition, query.SchemaA, query.TableA, query.SchemaB, query.TableB))
 	}
 	return rows
 }
