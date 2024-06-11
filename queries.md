@@ -73,3 +73,58 @@ select q.masked_query, q.total_count, t.table_name from tables_in_queries tq
          join queries q on tq.query_uid = q.uid
 where t.uid = '?'
 ```
+
+
+```
+Sequence showing temp table usage:
+
+select count(1) from tables where table_name like 'temp%'
+
+select * from tables where table_name like 'temp_property_prefs_%'
+
+select regexp_replace(table_name, '[0-9]', '', 'g') as name, count(1) as counter
+from tables
+where table_name like 'temp%'
+group by regexp_replace(table_name, '[0-9]', '', 'g')
+order by counter desc
+
+select q.uid,count(1) as counter from tables_in_queries tq  join queries q on q.uid = tq.query_uid
+                                     where table_name like 'temp_property_prefs_%' group by q.uid order by counter desc
+
+select max(q.masked_query), q.uid,count(1) as counter from tables_in_queries tq  join queries q on q.uid = tq.query_uid
+                                     where table_name like 'temp_property_prefs_%' group by q.uid order by counter desc
+
+select * from queries where uid = '47b64ca7-dc46-5829-b6ed-0bbc4fc465bc'
+
+select max(name), max(url), s.uid, count(1) as counter
+from tables_in_queries tq
+         join queries q on q.uid = tq.query_uid
+         join sources s on s.uid = q.source_uid
+where table_name like 'temp_property_prefs_%'
+group by s.uid
+order by counter desc;
+
+select * from sources
+
+
+
+
+select * from sources where uid = '46178a2f-823f-5200-aa03-8913e725cc1b'
+```
+
+Sequence Showing JSONB usage:
+```
+select cq.clause, count(1) as counter from columns_in_queries cq where cq.column_name = 'details' group by cq.clause order by cq.clause;
+
+
+select * from queries
+
+select q.masked_query, cq.clause from columns_in_queries cq
+            join queries q on q.uid = cq.query_uid
+            where cq.column_name = 'details'
+group by cq.clause order by cq.clause;
+
+select count(1) from table_joins_in_queries where on_condition ilike '%details%'
+
+select * from table_joins_in_queries where on_condition ilike '%details%'
+````
