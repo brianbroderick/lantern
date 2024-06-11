@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -19,6 +20,7 @@ type Queries struct {
 	TablesInQueries     map[string]*extractor.TablesInQueries     `json:"tables_in_queries,omitempty"`
 	TableJoinsInQueries map[string]*extractor.TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
 	Tables              map[string]*extractor.Tables              `json:"tables,omitempty"`
+	DB                  *sql.DB                                   `json:"-"`
 }
 
 // NewQueries creates a new Queries struct
@@ -30,6 +32,7 @@ func NewQueries() *Queries {
 		TablesInQueries:     make(map[string]*extractor.TablesInQueries),
 		TableJoinsInQueries: make(map[string]*extractor.TableJoinsInQueries),
 		Tables:              make(map[string]*extractor.Tables),
+		DB:                  Conn(),
 	}
 }
 
@@ -68,7 +71,7 @@ func (q *Queries) Analyze(w QueryWorker) bool {
 
 	for _, stmt := range program.Statements {
 		env := object.NewEnvironment()
-		r := extractor.NewExtractor(&stmt, w.MustExtract)
+		r := extractor.NewExtractor(&stmt, w.MustExtract, w.DatabaseUID)
 		r.Extract(*r.Ast, env)
 
 		w.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
@@ -113,11 +116,8 @@ func (q *Queries) addQuery(w QueryWorker) {
 }
 
 func (q *Queries) CountInDB() int {
-	db := Conn()
-	defer db.Close()
-
 	var count int
-	row := db.QueryRow("SELECT COUNT(1) FROM queries")
+	row := q.DB.QueryRow("SELECT COUNT(1) FROM queries")
 	row.Scan(&count)
 
 	return count
@@ -131,9 +131,10 @@ func (q *Queries) Upsert() {
 	rows := q.insValues()
 	query := fmt.Sprintf(q.ins(), strings.Join(rows, ",\n"))
 
-	db := Conn()
-	defer db.Close()
-	ExecuteQuery(db, query)
+	if q.DB == nil {
+		q.DB = Conn()
+	}
+	ExecuteQuery(q.DB, query)
 }
 
 func (q *Queries) ins() string {

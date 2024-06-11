@@ -57,7 +57,7 @@ func (q *Query) Process(w QueryWorker, qs *Queries) bool {
 
 	for _, stmt := range program.Statements {
 		env := object.NewEnvironment()
-		r := extractor.NewExtractor(&stmt, w.MustExtract)
+		r := extractor.NewExtractor(&stmt, w.MustExtract, q.DatabaseUID)
 		r.Extract(*r.Ast, env)
 
 		qs.addTablesInQueries(q, r)

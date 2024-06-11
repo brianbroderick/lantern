@@ -17,39 +17,44 @@ import (
 type FunctionsInQueries struct {
 	UID         uuid.UUID `json:"uid"`
 	FunctionUID uuid.UUID `json:"function_uid"`
+	DatabaseUID uuid.UUID `json:"database_uid"`
 	QueryUID    uuid.UUID `json:"query_uid"`
 	Name        string    `json:"function_name"`
 }
 
 type ColumnsInQueries struct {
-	UID       uuid.UUID       `json:"uid"`
-	ColumnUID uuid.UUID       `json:"column_uid"`
-	TableUID  uuid.UUID       `json:"table_uid"`
-	QueryUID  uuid.UUID       `json:"query_uid"`
-	Schema    string          `json:"schema_name"`
-	Table     string          `json:"table_name"`
-	Name      string          `json:"column_name"`
-	Clause    token.TokenType `json:"clause"`
+	UID         uuid.UUID       `json:"uid"`
+	ColumnUID   uuid.UUID       `json:"column_uid"`
+	TableUID    uuid.UUID       `json:"table_uid"`
+	DatabaseUID uuid.UUID       `json:"database_uid"`
+	QueryUID    uuid.UUID       `json:"query_uid"`
+	Schema      string          `json:"schema_name"`
+	Table       string          `json:"table_name"`
+	Name        string          `json:"column_name"`
+	Clause      token.TokenType `json:"clause"`
 }
 
 type TablesInQueries struct {
-	UID      uuid.UUID `json:"uid"`
-	TableUID uuid.UUID `json:"table_uid"`
-	QueryUID uuid.UUID `json:"query_uid"`
-	Schema   string    `json:"schema_name"`
-	Name     string    `json:"table_name"`
+	UID         uuid.UUID `json:"uid"`
+	TableUID    uuid.UUID `json:"table_uid"`
+	DatabaseUID uuid.UUID `json:"database_uid"`
+	QueryUID    uuid.UUID `json:"query_uid"`
+	Schema      string    `json:"schema_name"`
+	Name        string    `json:"table_name"`
 }
 
 type Tables struct {
-	UID    uuid.UUID `json:"uid"`
-	Schema string    `json:"schema_name"`
-	Name   string    `json:"table_name"`
+	UID         uuid.UUID `json:"uid"`
+	DatabaseUID uuid.UUID `json:"database_uid"`
+	Schema      string    `json:"schema_name"`
+	Name        string    `json:"table_name"`
 }
 
 // May have to store the reverse join as well
 type TableJoinsInQueries struct {
 	UID           uuid.UUID `json:"uid"`
 	QueryUID      uuid.UUID `json:"query_uid"`
+	DatabaseUID   uuid.UUID `json:"database_uid"`
 	TableUIDa     uuid.UUID `json:"table_uid_a"`
 	TableUIDb     uuid.UUID `json:"table_uid_b"`
 	JoinCondition string    `json:"join_condition"` // LEFT, RIGHT, INNER, OUTER, etc
@@ -101,7 +106,7 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 
 	a, b := alphabetical(tableA, tableB)
 
-	uniq := UuidV5(fmt.Sprintf("%s|%s", a[2], b[2]))
+	uniq := UuidV5(fmt.Sprintf("%s|%s|%s", d.DatabaseUID, a[2], b[2]))
 	uniqStr := uniq.String()
 
 	if _, ok := d.TableJoinsInQueries[uniqStr]; !ok {
@@ -121,6 +126,7 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 
 		d.TableJoinsInQueries[uniqStr] = &TableJoinsInQueries{
 			UID:           uniq,
+			DatabaseUID:   d.DatabaseUID,
 			TableUIDa:     UuidV5(a[2]),
 			TableUIDb:     UuidV5(b[2]),
 			OnCondition:   on_condition,

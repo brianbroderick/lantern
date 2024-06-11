@@ -42,9 +42,7 @@ func (q *Queries) UpsertTablesInQueries() {
 	rows := q.insValuesTablesInQueries()
 	query := fmt.Sprintf(q.insTablesInQueries(), strings.Join(rows, ",\n"))
 
-	db := Conn()
-	defer db.Close()
-	ExecuteQuery(db, query)
+	ExecuteQuery(q.DB, query)
 }
 
 func (q *Queries) insTablesInQueries() string {

@@ -6,6 +6,7 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/ast"
 	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
+	"github.com/google/uuid"
 )
 
 type Extractor struct {
@@ -17,9 +18,10 @@ type Extractor struct {
 	Tables              map[string]*Tables              `json:"tables,omitempty"`
 	MustExtract         bool
 	errors              []string
+	DatabaseUID         uuid.UUID
 }
 
-func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
+func NewExtractor(stmt *ast.Statement, mustExtract bool, databaseUID uuid.UUID) *Extractor {
 	return &Extractor{
 		Ast:                 stmt,
 		ColumnsInQueries:    make(map[string]*ColumnsInQueries),
@@ -29,6 +31,7 @@ func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
 		Tables:              make(map[string]*Tables),
 		errors:              []string{},
 		MustExtract:         mustExtract,
+		DatabaseUID:         databaseUID,
 	}
 }
 
