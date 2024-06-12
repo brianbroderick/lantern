@@ -3,8 +3,6 @@ package repo
 import (
 	"fmt"
 	"strings"
-
-	"github.com/google/uuid"
 )
 
 type Tables struct {
@@ -17,12 +15,14 @@ func NewTables() *Tables {
 	}
 }
 
-func (t *Tables) Add(databaseUID uuid.UUID, schema, name string, isPhyscial bool) *Table {
-	if _, ok := t.Tables[fmt.Sprintf("%s.%s", schema, name)]; !ok {
-		t.Tables[name] = NewTable(databaseUID, schema, name, isPhyscial)
+func (t *Tables) Add(tab *Table) *Table {
+	fqtn := fmt.Sprintf("%s.%s", tab.Schema, tab.Name)
+
+	if _, ok := t.Tables[fqtn]; !ok {
+		t.Tables[fqtn] = tab
 	}
 
-	return t.Tables[name]
+	return t.Tables[fqtn]
 }
 
 func (t *Tables) CountInDB() int {
@@ -50,7 +50,7 @@ func (t *Tables) Upsert() {
 }
 
 func (t *Tables) ins() string {
-	return `INSERT INTO tables (uid, schema_name, table_name, is_physical) 
+	return `INSERT INTO tables (uid, schema_name, table_name, table_type) 
 	VALUES %s 
 	ON CONFLICT (uid) DO NOTHING;`
 }
@@ -60,8 +60,8 @@ func (t *Tables) insValues() []string {
 
 	for uid, table := range t.Tables {
 		rows = append(rows,
-			fmt.Sprintf("('%s', '%s', '%s', %t)",
-				uid, table.Schema, table.Name, table.IsPhysicalTable))
+			fmt.Sprintf("('%s', '%s', '%s', %s)",
+				uid, table.Schema, table.Name, table.TableType))
 	}
 	return rows
 }
