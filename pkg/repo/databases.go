@@ -13,7 +13,7 @@ type Databases struct {
 
 func (d *Databases) addDatabase(database string) uuid.UUID {
 	if _, ok := d.Databases[database]; !ok {
-		d.Databases[database] = UuidV5(database)
+		d.Databases[database] = SetDatabaseUID(database)
 	}
 
 	return d.Databases[database]
@@ -64,4 +64,8 @@ func (d *Databases) insValues() []string {
 				uid, name))
 	}
 	return rows
+}
+
+func SetDatabaseUID(name string) uuid.UUID {
+	return UuidV5(name)
 }
