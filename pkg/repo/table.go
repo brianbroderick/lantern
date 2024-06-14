@@ -53,7 +53,7 @@ func (t *Table) MarshalJSON() ([]byte, error) {
 		CreatedAt: cre,
 	}
 
-	b, err := json.MarshalIndent(s, "", "  ")
+	b, err := json.Marshal(s)
 	if HasErr("marshallJSON", err) {
 		return []byte{}, err
 	}
