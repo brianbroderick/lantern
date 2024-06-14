@@ -95,9 +95,10 @@ func (q *Queries) addQuery(w QueryWorker) {
 	}
 
 	if _, ok := q.Queries[uidStr]; !ok {
+		database := w.Databases.AddDatabase(w.Database, "")
 		q.Queries[uidStr] = &Query{
 			UID:           uid,
-			DatabaseUID:   w.Databases.addDatabase(w.Database),
+			DatabaseUID:   database.UID,
 			SourceUID:     sourceUID,
 			SourceQuery:   w.Input,
 			MaskedQuery:   w.Masked,

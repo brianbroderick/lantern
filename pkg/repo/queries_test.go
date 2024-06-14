@@ -12,6 +12,8 @@ import (
 
 func TestQueriesIntegration(t *testing.T) {
 	DBName = "lantern_test"
+	db := Conn()
+	defer db.Close()
 
 	sourceData := JsonSources()
 	var sources Sources
@@ -26,7 +28,7 @@ func TestQueriesIntegration(t *testing.T) {
 	UnmarshalJSON([]byte(databaseData), &databases)
 	assert.Equal(t, 2, len(databases.Databases))
 
-	databases.Upsert()
+	databases.Upsert(db)
 	assert.Equal(t, 2, databases.CountInDB())
 
 	queryData := JsonQueries()
@@ -42,9 +44,6 @@ func TestQueriesIntegration(t *testing.T) {
 	queries.Queries = statements.Queries
 
 	queries.Process()
-
-	db := Conn()
-	defer db.Close()
 
 	var count int
 	row := db.QueryRow("SELECT COUNT(1) FROM columns_in_queries where query_uid = $1", "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b")

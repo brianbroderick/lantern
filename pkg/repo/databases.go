@@ -1,6 +1,7 @@
 package repo
 
 import (
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -8,12 +9,23 @@ import (
 )
 
 type Databases struct {
-	Databases map[string]uuid.UUID `json:"databases,omitempty"` // the key is the UUIDv5 sha of the database
+	Databases map[string]*Database `json:"databases,omitempty"` // the key is the UUIDv5 sha of the database
 }
 
-func (d *Databases) addDatabase(database string) uuid.UUID {
+type Database struct {
+	UID      uuid.UUID `json:"uid,omitempty"`      // unique UUID of the database
+	Name     string    `json:"name,omitempty"`     // the name of the database
+	Template string    `json:"template,omitempty"` // the template of the database
+}
+
+func (d *Databases) AddDatabase(database, template string) *Database {
 	if _, ok := d.Databases[database]; !ok {
-		d.Databases[database] = SetDatabaseUID(database)
+		d.Databases[database] = &Database{
+			UID:      SetDatabaseUID(database),
+			Name:     database,
+			Template: template,
+		}
+
 	}
 
 	return d.Databases[database]
@@ -21,7 +33,7 @@ func (d *Databases) addDatabase(database string) uuid.UUID {
 
 func NewDatabases() *Databases {
 	return &Databases{
-		Databases: make(map[string]uuid.UUID),
+		Databases: make(map[string]*Database),
 	}
 }
 
@@ -36,7 +48,7 @@ func (d *Databases) CountInDB() int {
 	return count
 }
 
-func (d *Databases) Upsert() {
+func (d *Databases) Upsert(db *sql.DB) {
 	if len(d.Databases) == 0 {
 		return
 	}
@@ -44,13 +56,11 @@ func (d *Databases) Upsert() {
 	rows := d.insValues()
 	query := fmt.Sprintf(d.ins(), strings.Join(rows, ",\n"))
 
-	db := Conn()
-	defer db.Close()
 	ExecuteQuery(db, query)
 }
 
 func (d *Databases) ins() string {
-	return `INSERT INTO databases (uid, name) 
+	return `INSERT INTO databases (uid, name, template) 
 	VALUES %s 
 	ON CONFLICT (uid) DO NOTHING;`
 }
@@ -58,10 +68,10 @@ func (d *Databases) ins() string {
 func (d *Databases) insValues() []string {
 	var rows []string
 
-	for name, uid := range d.Databases {
+	for _, record := range d.Databases {
 		rows = append(rows,
-			fmt.Sprintf("('%s', '%s')",
-				uid, name))
+			fmt.Sprintf("('%s', '%s', '%s')",
+				record.UID, record.Name, record.Template))
 	}
 	return rows
 }
