@@ -27,8 +27,8 @@ func (t *Tables) Add(tab *Table) *Table {
 	return t.Tables[fqtn]
 }
 
-func (t *Tables) CountInDB(db *sql.DB) int {
-	var count int
+func (t *Tables) CountInDB(db *sql.DB) int64 {
+	var count int64
 	row := db.QueryRow("SELECT COUNT(1) FROM tables")
 	row.Scan(&count)
 
