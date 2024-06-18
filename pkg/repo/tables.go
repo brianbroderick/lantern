@@ -17,6 +17,25 @@ func NewTables() *Tables {
 	}
 }
 
+func (t *Tables) SetAll(db *sql.DB) {
+	sql := `SELECT uid, database_uid, schema_name, table_name, estimated_row_count, data_size_bytes, table_type, updated_at FROM tables`
+	rows, err := db.Query(sql)
+	if HasErr("SetAll Query", err) {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var tab Table
+		err := rows.Scan(&tab.UID, &tab.DatabaseUID, &tab.Schema, &tab.Name, &tab.EstimatedRowCount, &tab.DataSizeBytes, &tab.TableType, &tab.UpdatedAt)
+		if HasErr("SetAll Scan", err) {
+			return
+		}
+
+		t.Add(&tab)
+	}
+}
+
 func (t *Tables) Add(tab *Table) *Table {
 	fqtn := fmt.Sprintf("%s.%s", tab.Schema, tab.Name)
 
@@ -63,7 +82,17 @@ func (t *Tables) ins() string {
 func (t *Tables) insValues() []string {
 	var rows []string
 
+	uids := make(map[string]bool)
+
 	for _, table := range t.Tables {
+		uidStr := table.UID.String()
+		if _, ok := uids[uidStr]; ok {
+			fmt.Printf("Duplicate UID: %s\n%+v\n\n", table.UID, table)
+			continue
+		} else {
+			uids[uidStr] = true
+		}
+
 		rows = append(rows,
 			fmt.Sprintf("('%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s')",
 				table.UID, table.DatabaseUID, table.Schema, table.Name, table.EstimatedRowCount, table.DataSizeBytes, table.TableType, table.UpdatedAt.Format(time.DateTime)))

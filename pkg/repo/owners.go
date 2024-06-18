@@ -16,12 +16,12 @@ func NewOwners() *Owners {
 	}
 }
 
-func (o *Owners) Add(own *Owner) *Owner {
-	if _, ok := o.Owners[own.Name]; !ok {
-		o.Owners[own.Name] = own
+func (o *Owners) Add(name string) *Owner {
+	if _, ok := o.Owners[name]; !ok {
+		o.Owners[name] = &Owner{Name: name, UID: UuidV5(name)}
 	}
 
-	return o.Owners[own.Name]
+	return o.Owners[name]
 }
 
 func (o *Owners) CountInDB(db *sql.DB) int {
