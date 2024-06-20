@@ -61,10 +61,12 @@ func (o *OwnersImports) Import(data []byte) error {
 
 		for _, owner := range oi.Owners {
 			owners.Add(owner)
-			collection.Add(&OwnersTables{
+			ot := &OwnersTables{
 				OwnerUID: owners.Owners[owner].UID,
 				TableUID: tables.Tables[fmt.Sprintf("%s.%s", schema, tableName)].UID,
-			})
+			}
+			ot.SetUID()
+			collection.Add(ot)
 		}
 	}
 

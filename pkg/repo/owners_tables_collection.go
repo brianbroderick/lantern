@@ -3,6 +3,7 @@ package repo
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 )
 
 type OwnersTablesCollection struct {
@@ -41,14 +42,14 @@ func (o *OwnersTablesCollection) Upsert(db *sql.DB) {
 	}
 
 	rows := o.insValues()
-	query := o.ins(rows)
+	query := fmt.Sprintf(o.ins(), strings.Join(rows, ",\n"))
 
 	ExecuteQuery(db, query)
 }
 
-func (o *OwnersTablesCollection) ins(rows []string) string {
+func (o *OwnersTablesCollection) ins() string {
 	return `INSERT INTO owners_tables (uid, owner_uid, table_uid)
-	VALUES ` + rows[0] + `
+	VALUES %s
 	ON CONFLICT (uid) DO UPDATE 
 	SET uid = EXCLUDED.uid, 
 	    owner_uid = EXCLUDED.owner_uid, 
