@@ -25,4 +25,5 @@ CREATE TABLE IF NOT EXISTS tables (
 
 CREATE INDEX IF NOT EXISTS idx_tables_database_uid ON tables (database_uid);
 CREATE INDEX IF NOT EXISTS idx_tables_table_name ON tables (table_name);
+CREATE INDEX IF NOT EXISTS idx_tables_table_type ON tables (table_type);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tables_schema_name_table_name ON tables (schema_name, table_name);
