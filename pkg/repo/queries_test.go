@@ -102,12 +102,17 @@ func JsonQueries() string {
 }
 
 func JsonDatabases() string {
-	return `{
-			"databases": {
-				"admin": "718d4687-8950-555b-a560-7b2795c4d2f3",
-				"logs": "fd68aa5c-a9c0-58db-a05f-13270c8c09dd"				
-			}
-		}`
+	return `{ "databases": {
+							"admin": {
+								"uid": "718d4687-8950-555b-a560-7b2795c4d2f3",
+								"name": "admin"
+							},
+							"competitor": {
+								"uid": "93444d0e-5976-5afb-95f1-61fcf074e7cd",
+								"name": "competitor"
+							}
+						}
+		      }`
 }
 
 func JsonSources() string {

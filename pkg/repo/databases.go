@@ -56,6 +56,8 @@ func (d *Databases) Upsert(db *sql.DB) {
 	rows := d.insValues()
 	query := fmt.Sprintf(d.ins(), strings.Join(rows, ",\n"))
 
+	// fmt.Println(query)
+
 	ExecuteQuery(db, query)
 }
 
