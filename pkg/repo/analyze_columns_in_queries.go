@@ -7,10 +7,11 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/extractor"
 )
 
+// 14584 in load
 // addColumnsInQueries adds the columns in a query the Queries struct
 func (q *Queries) addColumnsInQueries(qu *Query, ext *extractor.Extractor) {
 	for _, column := range ext.ColumnsInQueries {
-		uid := UuidV5(fmt.Sprintf("%s|%s.%s.%s", column.Clause.String(), column.Schema, column.Table, column.Name))
+		uid := UuidV5(fmt.Sprintf("%s|%s|%s.%s.%s", qu.UID, column.Clause.String(), column.Schema, column.Table, column.Name))
 		uidStr := uid.String()
 		if _, ok := q.ColumnsInQueries[uidStr]; !ok {
 			q.ColumnsInQueries[uidStr] = &extractor.ColumnsInQueries{

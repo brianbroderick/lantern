@@ -53,18 +53,18 @@ func TestQueriesIntegration(t *testing.T) {
 
 	usersTable := UuidV5(fmt.Sprintf("%s.%s", "public", "users"))
 
-	sql := `SELECT uid, table_uid, column_uid, schema_name, table_name, column_name, clause FROM columns_in_queries where query_uid = 'a2497c7b-dd5d-5be9-99b7-637eb8bacc4b'`
+	sql := `SELECT uid, table_uid, column_uid, schema_name, table_name, column_name, clause, query_uid FROM columns_in_queries where query_uid = 'a2497c7b-dd5d-5be9-99b7-637eb8bacc4b'`
 	ctx, _ := getCtx()
 	rows, err := db.QueryContext(ctx, sql)
 	assert.NoError(t, err)
 	for rows.Next() {
 		r := &extractor.ColumnsInQueries{}
 		clause := ""
-		err = rows.Scan(&r.UID, &r.TableUID, &r.ColumnUID, &r.Schema, &r.Table, &r.Name, &clause)
+		err = rows.Scan(&r.UID, &r.TableUID, &r.ColumnUID, &r.Schema, &r.Table, &r.Name, &clause, &r.QueryUID)
 		r.Clause = token.Lookup(clause)
 		assert.NoError(t, err)
 
-		fqcn := fmt.Sprintf("%s|%s.%s.%s", r.Clause.String(), r.Schema, r.Table, r.Name)
+		fqcn := fmt.Sprintf("%s|%s|%s.%s.%s", r.QueryUID, r.Clause.String(), r.Schema, r.Table, r.Name)
 		assert.Equal(t, UuidV5(fqcn), r.UID)
 
 		if r.Schema == "public" && r.Table == "users" {
