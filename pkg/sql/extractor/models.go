@@ -190,7 +190,7 @@ func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.Toke
 			Table:     table,
 			TableUID:  UuidV5(fmt.Sprintf("%s.%s", schema, table)),
 			Name:      column,
-			ColumnUID: UuidV5(fmt.Sprintf("%s.%s.%s", schema, table, column)),
+			ColumnUID: UuidV5(fmt.Sprintf("%s.%s.%s", schema, table, column)), // don't include the clause in the column UID
 			Clause:    clause,
 		}
 	}

@@ -32,6 +32,37 @@ func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
 	}
 }
 
+// InferColumnsInTables will set the table if there is only one table in the query
+func (r *Extractor) InferColumnsInTables() {
+	// If there are more than one table in the query, there's no way to map a column directly to a table
+	if len(r.TablesInQueries) != 1 {
+		return
+	}
+	var table *TablesInQueries
+	for _, t := range r.TablesInQueries {
+		table = t
+	}
+
+	newColumnsInQueries := make(map[string]*ColumnsInQueries)
+
+	for _, column := range r.ColumnsInQueries {
+		column.Table = table.Name
+		fqcn := fmt.Sprintf("%s|%s.%s.%s", column.Clause, column.Schema, column.Table, column.Name)
+
+		newColumnsInQueries[fqcn] = &ColumnsInQueries{
+			UID:       UuidV5(fqcn),
+			Schema:    column.Schema,
+			Table:     column.Table,
+			TableUID:  UuidV5(fmt.Sprintf("%s.%s", column.Schema, column.Table)),
+			Name:      column.Name,
+			ColumnUID: UuidV5(fmt.Sprintf("%s.%s.%s", column.Schema, column.Table, column.Name)), // don't include the clause in the column UID
+			Clause:    column.Clause,
+		}
+	}
+
+	r.ColumnsInQueries = newColumnsInQueries
+}
+
 func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	switch node := node.(type) {
 	case *ast.Program:
@@ -186,6 +217,11 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	default:
 		r.newError("unknown node type: %T", node)
 	}
+
+	// Run post operations after everything has been recursively extracted
+
+	// Go back through and infer the table if there is only one table in the query
+	r.InferColumnsInTables()
 }
 
 func (r *Extractor) extractProgram(program *ast.Program, env *object.Environment) {
