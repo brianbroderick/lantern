@@ -2,7 +2,8 @@
 *.o
 *.a
 *.so
-lantern
+cmd/lantern/lantern
+cmd/pg-logs/pg-logs
 
 automated_payloads*
 

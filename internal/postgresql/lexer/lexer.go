@@ -8,6 +8,9 @@ import (
 	"github.com/brianbroderick/lantern/internal/postgresql/token"
 )
 
+// DOTs (i.e. periods) are allowed as part of an identity in this parser whereas the
+// query parser at /pkg/sql/parser/parser.go does not allow them as
+
 type Lexer struct {
 	r       io.RuneScanner
 	lastPos Pos
@@ -257,4 +260,4 @@ func isLetter(ch rune) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && c
 func isDigit(ch rune) bool { return (ch >= '0' && ch <= '9') }
 
 // isIdentChar returns true if the rune can be used in an unquoted identifier.
-func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' }
+func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' || ch == '.' }

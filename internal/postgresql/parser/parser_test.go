@@ -48,6 +48,26 @@ func TestParserStatements(t *testing.T) {
 			result:        "2023-01-02 01:02:03 MDT:127.0.0.1(12345):postgres@sampledb:[23456]:LOG:  duration: 0.123 ms  execute <unnamed>: select * from multi where line = $1",
 			lenStatements: 2,
 		},
+		// From RDS Log
+		{
+			str:           "2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SET STATEMENT_TIMEOUT = '360s';",
+			result:        "2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SET STATEMENT_TIMEOUT = '360s';",
+			lenStatements: 1,
+		},
+		// From RDS Log on multiple lines.
+		// TODO: Missing first token in subsequent lines.
+		{
+			str: `2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SELECT
+                                                        c.id AS id,
+                                                        c.name AS name
+                                                FROM
+                                                        user_groups ug
+                                                        JOIN companies c ON ( c.id = ug.group_id )
+                                                WHERE
+                                                        ug.user_id = 204782`,
+			result:        "2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SELECT c.id AS id, c.name AS name FROM user_groups ug JOIN companies c ON ( c.id = ug.group_id ) WHERE ug.user_id = 204782",
+			lenStatements: 1,
+		},
 	}
 
 	for _, tt := range tests {

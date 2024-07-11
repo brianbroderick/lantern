@@ -35,7 +35,7 @@ const (
 	RPAREN   // )
 	LBRACKET // [
 	RBRACKET // ]
-	DOT      // .
+	// DOT      // .
 	COLON    // :
 	ATSYMBOL // @
 	GT       // >
@@ -69,7 +69,7 @@ var Tokens = [...]string{
 	RPAREN:   "RPAREN ')'",
 	LBRACKET: "LBRACKET '['",
 	RBRACKET: "RBRACKET ']'",
-	DOT:      "DOT '.'",
+	// DOT:      "DOT '.'",
 	COLON:    "COLON ':'",
 	ATSYMBOL: "ATSYMBOL '@'",
 	GT:       "GT '>'",

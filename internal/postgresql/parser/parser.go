@@ -32,7 +32,10 @@ func New(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) scanQuery() {
-	p.peekToken = p.l.ScanQuery()
+	origPeek := p.peekToken
+	scan := p.l.ScanQuery()
+
+	p.peekToken = token.Token{Type: token.QUERY, Lit: fmt.Sprintf("%s %s", origPeek.Lit, scan.Lit)}
 	p.nextToken()
 }
 
@@ -220,48 +223,64 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
 			}
 			stmt.PreparedStep = p.curToken.Lit
+
+			if p.peekTokenIs(token.LT) {
+				p.nextToken()
+				p.nextToken()
+
+				if !p.curTokenIs(token.IDENT) {
+					return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+				}
+				stmt.PreparedName = p.curToken.Lit
+
+				p.nextToken()
+				if !p.curTokenIs(token.GT) {
+					return nil, parseErr(iter, token.GT, p.curToken.Type)
+				}
+
+			}
 		case 24:
-			if !p.curTokenIs(token.LT) {
-				return nil, parseErr(iter, token.LT, p.curToken.Type)
-			}
-		case 25:
-			if !p.curTokenIs(token.IDENT) {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
-			}
-			stmt.PreparedName = p.curToken.Lit
-		case 26:
-			if !p.curTokenIs(token.GT) {
-				return nil, parseErr(iter, token.GT, p.curToken.Type)
-			}
-		case 27:
 			if !p.curTokenIs(token.COLON) {
 				return nil, parseErr(iter, token.COLON, p.curToken.Type)
 			}
 		default:
 			qLines := make([]string, 0)
 			qLines = append(qLines, p.curToken.Lit)
-			qLines = append(qLines, p.peekToken.Lit)
 
-			// scan to the end of the line
-			p.scanQuery()
-			qLines = append(qLines, p.curToken.Lit)
+			for {
+				// scan to the end of the line and keep going until a new line starts with a date or EOF
+				p.scanQuery()
+				qLines = append(qLines, p.curToken.Lit)
 
-			// if the next line starts with a date or EOF, then we're done with this statement
-			if !p.peekTokenIs(token.DATE) && !p.peekTokenIs(token.EOF) {
-
-				// it's a multi-line query, so grab the peek token, which is an indent with the first word on the line, and keep scanning
-				qLines = append(qLines, p.peekToken.Lit)
-
-				for {
-					// scan to the end of the line and keep going until a new line starts with a date or EOF
-					p.scanQuery()
-					qLines = append(qLines, p.curToken.Lit)
-
-					if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
-						eos = true
-						break
-					}
+				if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
+					eos = true
+					break
 				}
+				// qLines = append(qLines, p.peekToken.Lit)
+
+				// // scan to the end of the line
+				// p.scanQuery()
+				// qLines = append(qLines, p.curToken.Lit)
+
+				// // if the next line starts with a date or EOF, then we're done with this statement
+				// if !p.peekTokenIs(token.DATE) && !p.peekTokenIs(token.EOF) {
+
+				// 	// it's a multi-line query, so grab the peek token, which is an indent with the first word on the line, and keep scanning
+				// 	qLines = append(qLines, p.peekToken.Lit)
+
+				// 	for {
+				// 		// scan to the end of the line and keep going until a new line starts with a date or EOF
+				// 		fmt.Println("curr1", p.curToken.Lit)
+				// 		p.scanQuery()
+				// 		fmt.Println("curr", p.curToken.Lit)
+				// 		fmt.Println("peek", p.peekToken.Lit)
+				// 		qLines = append(qLines, p.curToken.Lit)
+
+				// 		if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
+				// 			eos = true
+				// 			break
+				// 		}
+				// 	}
 			}
 
 			stmt.Query = strings.Join(qLines, " ")
