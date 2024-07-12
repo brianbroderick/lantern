@@ -38,8 +38,8 @@ const (
 	// DOT      // .
 	COLON    // :
 	ATSYMBOL // @
-	GT       // >
-	LT       // <
+	// GT       // >
+	// LT       // <
 
 	// Keywords
 	keywordBeg
@@ -72,8 +72,8 @@ var Tokens = [...]string{
 	// DOT:      "DOT '.'",
 	COLON:    "COLON ':'",
 	ATSYMBOL: "ATSYMBOL '@'",
-	GT:       "GT '>'",
-	LT:       "LT '<'",
+	// GT:       "GT '>'",
+	// LT:       "LT '<'",
 }
 
 var keywords map[string]TokenType

@@ -12,7 +12,10 @@ import (
 )
 
 func Logs() {
-	path := filepath.Join(projectpath.Root, "logs", "postgresql.log.2024-07-10-1748")
+	f := "postgresql.log.2024-07-10-1748"
+	// f := "postgresql-2024-07-09_000000.log"
+	// f := "postgresql-simple.log"
+	path := filepath.Join(projectpath.Root, "logs", f)
 
 	file, err := readPayload(path)
 	if HasErr("processFile", err) {
@@ -45,14 +48,14 @@ func readPayload(file string) ([]byte, error) {
 	return data, nil
 }
 
-func checkParserErrors(p *parser.Parser) {
-	errors := p.Errors()
-	if len(errors) == 0 {
-		return
-	}
+// func checkParserErrors(p *parser.Parser) {
+// 	errors := p.Errors()
+// 	if len(errors) == 0 {
+// 		return
+// 	}
 
-	fmt.Errorf("parser has %d errors", len(errors))
-	for _, msg := range errors {
-		fmt.Errorf("parser error: %q", msg)
-	}
-}
+// 	fmt.Printf("parser has %d errors", len(errors))
+// 	for _, msg := range errors {
+// 		fmt.Printf("parser error: %q", msg)
+// 	}
+// }

@@ -40,10 +40,10 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 	l.read()
 
 	switch l.ch {
-	case '<':
-		tok = newToken(token.LT, l.ch)
-	case '>':
-		tok = newToken(token.GT, l.ch)
+	// case '<':
+	// 	tok = newToken(token.LT, l.ch)
+	// case '>':
+	// 	tok = newToken(token.GT, l.ch)
 	case ':':
 		tok = newToken(token.COLON, l.ch)
 	case '(':
@@ -254,10 +254,38 @@ func (l *Lexer) ScanQuery() token.Token {
 func isWhitespace(ch rune) bool { return ch == ' ' || ch == '\t' || ch == eol || ch == '\r' }
 
 // isLetter returns true if the rune is a letter.
-func isLetter(ch rune) bool { return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') }
+func isLetter(ch rune) bool {
+	if isWhitespace(ch) || isDigit(ch) {
+		return false
+	}
+
+	switch ch {
+	case '(', ')', '[', ']', ':', '@', eof:
+		return false
+	default:
+		return true
+	}
+
+	// return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '<' || ch == '>' || ch == '\''
+}
 
 // isDigit returns true if the rune is a digit.
 func isDigit(ch rune) bool { return (ch >= '0' && ch <= '9') }
 
 // isIdentChar returns true if the rune can be used in an unquoted identifier.
-func isIdentChar(ch rune) bool { return isLetter(ch) || isDigit(ch) || ch == '_' || ch == '.' }
+func isIdentChar(ch rune) bool {
+	if isDigit(ch) {
+		return true
+	}
+
+	if isWhitespace(ch) {
+		return false
+	}
+
+	switch ch {
+	case '(', ')', '[', ']', ':', '@', eof:
+		return false
+	default:
+		return true
+	}
+}

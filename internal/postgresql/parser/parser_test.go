@@ -7,16 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParser(t *testing.T) {
-	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1"
-	l := lexer.New(s)
-	p := New(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+// func TestParser(t *testing.T) {
+// 	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@testdb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1"
+// 	l := lexer.New(s)
+// 	p := New(l)
+// 	program := p.ParseProgram()
+// 	checkParserErrors(t, p)
 
-	assert.Equal(t, 1, len(program.Statements))
-	assert.Equal(t, "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@sampledb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1", program.Statements[0].String())
-}
+// 	assert.Equal(t, 1, len(program.Statements))
+// 	assert.Equal(t, "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@testdb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1", program.Statements[0].String())
+// }
 
 func TestParserStatements(t *testing.T) {
 	var tests = []struct {
@@ -54,18 +54,69 @@ func TestParserStatements(t *testing.T) {
 			result:        "2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SET STATEMENT_TIMEOUT = '360s';",
 			lenStatements: 1,
 		},
+		{
+			str: `2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.031 ms  parse <unnamed>: SHOW TRANSACTION ISOLATION LEVEL
+				2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.006 ms  bind <unnamed>: SHOW TRANSACTION ISOLATION LEVEL
+				2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.015 ms  execute <unnamed>: SHOW TRANSACTION ISOLATION LEVEL`,
+			result:        "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.031 ms  parse <unnamed>: SHOW TRANSACTION ISOLATION LEVEL",
+			lenStatements: 3,
+		},
 		// From RDS Log on multiple lines.
-		// TODO: Missing first token in subsequent lines.
 		{
 			str: `2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SELECT
-                                                        c.id AS id,
-                                                        c.name AS name
-                                                FROM
-                                                        user_groups ug
-                                                        JOIN companies c ON ( c.id = ug.group_id )
-                                                WHERE
-                                                        ug.user_id = 204782`,
+				                                                        c.id AS id,
+				                                                        c.name AS name
+				                                                FROM
+				                                                        user_groups ug
+				                                                        JOIN companies c ON ( c.id = ug.group_id )
+				                                                WHERE
+				                                                        ug.user_id = 204782`,
 			result:        "2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SELECT c.id AS id, c.name AS name FROM user_groups ug JOIN companies c ON ( c.id = ug.group_id ) WHERE ug.user_id = 204782",
+			lenStatements: 1,
+		},
+		// From RDS Log on multiple lines.
+		{
+			str: `2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SELECT
+				                                                        c.id AS id,
+				                                                        c.name AS name
+				                                                FROM
+				                                                        user_groups ug
+				                                                        JOIN companies c ON ( c.id = ug.group_id )
+				                                                WHERE
+				                                                        ug.user_id = 204782
+				2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SELECT
+				                                                        c.id AS id,
+				                                                        c.name AS name
+				                                                FROM
+				                                                        user_groups ug
+				                                                        JOIN companies c ON ( c.id = ug.group_id )
+				                                                WHERE
+				                                                        ug.user_id = 204782`,
+			result:        "2024-07-10 17:48:11 UTC:127.0.0.1(42200):my_app@my_db:[46542]:LOG:  duration: 0.212 ms  statement: SELECT c.id AS id, c.name AS name FROM user_groups ug JOIN companies c ON ( c.id = ug.group_id ) WHERE ug.user_id = 204782",
+			lenStatements: 2,
+		},
+		{
+			str: `2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: select * from users
+		2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute R42: select * from users`,
+			result:        "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: select * from users",
+			lenStatements: 2,
+		},
+		{
+			str:           `2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: BEGIN`,
+			result:        "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: BEGIN",
+			lenStatements: 1,
+		},
+		{
+			str: `2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: BEGIN
+			2024-07-05 17:48:14 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: COMMIT
+			2024-07-05 17:48:14 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: ROLLBACK`,
+			result:        "2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: BEGIN",
+			lenStatements: 3,
+		},
+		{
+			str: `2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: select
+			'2024-07-05 17:48:14 UTC' from users;`,
+			result:        "2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: select '2024-07-05 17:48:14 UTC' from users;",
 			lenStatements: 1,
 		},
 	}

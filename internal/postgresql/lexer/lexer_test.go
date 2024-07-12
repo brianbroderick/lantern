@@ -8,11 +8,9 @@ import (
 )
 
 func TestSimpleScan(t *testing.T) {
-	input := `< > : ( ) [ ] foo 12345 `
+	input := `: ( ) [ ] foo 12345 `
 
 	tests := []token.Token{
-		{Type: token.LT, Lit: "<"},
-		{Type: token.GT, Lit: ">"},
 		{Type: token.COLON, Lit: ":"},
 		{Type: token.LPAREN, Lit: "("},
 		{Type: token.RPAREN, Lit: ")"},

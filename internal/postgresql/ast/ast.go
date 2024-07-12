@@ -72,7 +72,7 @@ func (ls *LogStatement) TokenLiteral() string { return ls.Token.Lit }
 func (ls *LogStatement) String() string {
 	var out bytes.Buffer
 	if ls.PreparedName != "" {
-		out.WriteString(fmt.Sprintf("%s %s %s:%s(%d):%s@%s:[%d]:%s:  duration: %s %s  %s <%s>: %s",
+		out.WriteString(fmt.Sprintf("%s %s %s:%s(%d):%s@%s:[%d]:%s:  duration: %s %s  %s %s: %s",
 			ls.Date, ls.Time, ls.Timezone, ls.RemoteHost, ls.RemotePort, ls.User,
 			ls.Database, ls.Pid, ls.Severity, ls.DurationLit, ls.DurationMeasure,
 			ls.PreparedStep, ls.PreparedName, ls.Query))
