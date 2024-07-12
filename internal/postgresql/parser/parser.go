@@ -80,7 +80,10 @@ func (p *Parser) ParseProgram() *ast.Program {
 		stmt := p.parseStatement()
 		program.Statements = append(program.Statements, stmt)
 
-		fmt.Println("Length of statements", len(program.Statements))
+		l := len(program.Statements)
+		if l%10000 == 0 {
+			fmt.Printf("statements: %d, line number: %d\n", len(program.Statements), p.l.Pos.Line)
+		}
 
 		p.nextToken()
 	}
