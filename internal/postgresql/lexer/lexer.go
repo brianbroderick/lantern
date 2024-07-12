@@ -14,7 +14,7 @@ import (
 type Lexer struct {
 	r       io.RuneScanner
 	lastPos Pos
-	pos     Pos
+	Pos     Pos
 	ch      rune
 	eof     bool // true if reader has ever seen eof.
 }
@@ -57,7 +57,7 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 	case '@':
 		tok = newToken(token.ATSYMBOL, l.ch)
 	case '"':
-		pos = l.pos
+		pos = l.Pos
 		tok = l.scanString()
 		return tok, pos
 	case 0:
@@ -66,13 +66,13 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		if isLetter(l.ch) {
 			l.unread()
 			// get position before we scan the identity
-			pos = l.pos
+			pos = l.Pos
 			tok = l.scanIdent()
 			return tok, pos
 		} else if isDigit(l.ch) {
 			l.unread()
 			// get position before we scan the number
-			pos = l.pos
+			pos = l.Pos
 			tok = l.scanNumber()
 			return tok, pos
 		} else {
@@ -94,16 +94,16 @@ func (l *Lexer) read() {
 		l.ch = eof
 	}
 
-	l.lastPos.Char = l.pos.Char
-	l.lastPos.Line = l.pos.Line
+	l.lastPos.Char = l.Pos.Char
+	l.lastPos.Line = l.Pos.Line
 
 	// Update position
 	// Only count EOF once.
 	if l.ch == eol {
-		l.pos.Line++
-		l.pos.Char = 0
+		l.Pos.Line++
+		l.Pos.Char = 0
 	} else if !l.eof {
-		l.pos.Char++
+		l.Pos.Char++
 	}
 
 	if l.ch == eof {
@@ -113,8 +113,8 @@ func (l *Lexer) read() {
 
 func (l *Lexer) unread() {
 	l.r.UnreadRune()
-	l.pos.Char = l.lastPos.Char
-	l.pos.Line = l.lastPos.Line
+	l.Pos.Char = l.lastPos.Char
+	l.Pos.Line = l.lastPos.Line
 }
 
 // func (l *Lexer) peek() rune {

@@ -55,10 +55,10 @@ func TestParserStatements(t *testing.T) {
 			lenStatements: 1,
 		},
 		{
-			str: `2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.031 ms  parse <unnamed>: SHOW TRANSACTION ISOLATION LEVEL
-				2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.006 ms  bind <unnamed>: SHOW TRANSACTION ISOLATION LEVEL
-				2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.015 ms  execute <unnamed>: SHOW TRANSACTION ISOLATION LEVEL`,
-			result:        "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.031 ms  parse <unnamed>: SHOW TRANSACTION ISOLATION LEVEL",
+			str: `2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.031 ms  parse <unnamed>: SHOW TRANSACTION ISOLATION LEVEL
+				2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.006 ms  bind <unnamed>: SHOW TRANSACTION ISOLATION LEVEL
+				2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.015 ms  execute <unnamed>: SHOW TRANSACTION ISOLATION LEVEL`,
+			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.031 ms  parse <unnamed>: SHOW TRANSACTION ISOLATION LEVEL",
 			lenStatements: 3,
 		},
 		// From RDS Log on multiple lines.
@@ -96,28 +96,44 @@ func TestParserStatements(t *testing.T) {
 			lenStatements: 2,
 		},
 		{
-			str: `2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: select * from users
-		2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute R42: select * from users`,
-			result:        "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: select * from users",
+			str: `2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: select * from users
+		2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute R42: select * from users`,
+			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: select * from users",
 			lenStatements: 2,
 		},
 		{
-			str:           `2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: BEGIN`,
-			result:        "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: BEGIN",
+			str:           `2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: BEGIN`,
+			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  bind R42: BEGIN",
 			lenStatements: 1,
 		},
 		{
-			str: `2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: BEGIN
-			2024-07-05 17:48:14 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: COMMIT
-			2024-07-05 17:48:14 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: ROLLBACK`,
-			result:        "2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: BEGIN",
+			str: `2024-07-04 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: BEGIN
+			2024-07-05 17:48:14 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: COMMIT
+			2024-07-05 17:48:14 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: ROLLBACK`,
+			result:        "2024-07-04 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: BEGIN",
 			lenStatements: 3,
 		},
 		{
-			str: `2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: select
+			str: `2024-07-04 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: select
 			'2024-07-05 17:48:14 UTC' from users;`,
-			result:        "2024-07-04 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: select '2024-07-05 17:48:14 UTC' from users;",
+			result:        "2024-07-04 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: select '2024-07-05 17:48:14 UTC' from users;",
 			lenStatements: 1,
+		},
+		{
+			str:           "2024-07-10 17:48:11 UTC:10.1.1.1(48684):pp@mydb:[40113]:LOG:  duration: 1.410 ms  statement: SET STATEMENT_TIMEOUT = '360s'; /*some comments*/SELECT * from users",
+			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(48684):pp@mydb:[40113]:LOG:  duration: 1.410 ms  statement: SET STATEMENT_TIMEOUT = '360s'; /*some comments*/SELECT * from users",
+			lenStatements: 1,
+		},
+		{
+			str:           "2024-07-10 17:48:11 UTC:10.1.1.1(48684):pp@mydb:[40113]:LOG:  duration: 1.410 ms",
+			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(48684):pp@mydb:[40113]:LOG:  duration: 1.410 ms",
+			lenStatements: 1,
+		},
+		{
+			str: `2024-07-10 17:48:11 UTC:10.1.1.1(48684):pp@mydb:[40113]:LOG:  duration: 1.410 ms
+			2024-07-04 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:LOG:  duration: 0.004 ms  execute <unnamed>: BEGIN`,
+			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(48684):pp@mydb:[40113]:LOG:  duration: 1.410 ms",
+			lenStatements: 2,
 		},
 	}
 
@@ -139,8 +155,8 @@ func TestParserStatementDetails(t *testing.T) {
 		lenStatements int
 	}{
 		{
-			str:           "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
-			result:        "2024-07-10 17:48:11 UTC:10.69.140.212(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
+			str:           "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
+			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
 			lenStatements: 1,
 		},
 	}
@@ -153,7 +169,6 @@ func TestParserStatementDetails(t *testing.T) {
 		assert.Equal(t, tt.lenStatements, len(program.Statements))
 		assert.Equal(t, tt.result, program.Statements[0].String())
 	}
-
 }
 
 func checkParserErrors(t *testing.T, p *Parser) {
