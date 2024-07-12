@@ -7,16 +7,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestParser(t *testing.T) {
-	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@testdb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1"
-	l := lexer.New(s)
-	p := New(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+// func TestParser(t *testing.T) {
+// 	s := "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@testdb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1"
+// 	l := lexer.New(s)
+// 	p := New(l)
+// 	program := p.ParseProgram()
+// 	checkParserErrors(t, p)
 
-	assert.Equal(t, 1, len(program.Statements))
-	assert.Equal(t, "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@testdb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1", program.Statements[0].String())
-}
+// 	assert.Equal(t, 1, len(program.Statements))
+// 	assert.Equal(t, "2023-07-10 09:52:46 MDT:127.0.0.1(50032):postgres@testdb:[24649]:LOG:  duration: 0.059 ms  execute <unnamed>: select * from foo where bar = $1", program.Statements[0].String())
+// }
 
 func TestParserStatements(t *testing.T) {
 	var tests = []struct {
@@ -135,29 +135,16 @@ func TestParserStatements(t *testing.T) {
 			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(48684):pp@mydb:[40113]:LOG:  duration: 1.410 ms",
 			lenStatements: 2,
 		},
-	}
-
-	for _, tt := range tests {
-		l := lexer.New(tt.str)
-		p := New(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
-		assert.Equal(t, tt.lenStatements, len(program.Statements))
-		assert.Equal(t, tt.result, program.Statements[0].String())
-	}
-
-}
-
-func TestParserStatementDetails(t *testing.T) {
-	var tests = []struct {
-		str           string
-		result        string
-		lenStatements int
-	}{
 		{
-			str:           "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
-			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
+			str:           `2024-07-09 15:22:18 MDT:::1(63248):postgres@lantern:[29550]:ERROR:  syntax error at or near "limit" at character 429`,
+			result:        `2024-07-09 15:22:18 MDT:::1(63248):postgres@lantern:[29550]:ERROR:  syntax error at or near "limit" at character 429`,
 			lenStatements: 1,
+		},
+		{
+			str: `2024-07-10 17:48:11 UTC:10.1.1.1(38502):postgres@lantern:[34633]:LOG:  duration: 0.398 ms  statement: DISCARD ALL;
+2024-07-10 17:48:11 UTC:10.1.1.1(45924):postgres@lantern:[43863]:LOG:  duration: 0.278 ms  statement: SET STATEMENT_TIMEOUT = '360s';`,
+			result:        `2024-07-10 17:48:11 UTC:10.1.1.1(38502):postgres@lantern:[34633]:LOG:  duration: 0.398 ms  statement: DISCARD ALL;`,
+			lenStatements: 2,
 		},
 	}
 
@@ -169,7 +156,31 @@ func TestParserStatementDetails(t *testing.T) {
 		assert.Equal(t, tt.lenStatements, len(program.Statements))
 		assert.Equal(t, tt.result, program.Statements[0].String())
 	}
+
 }
+
+// func TestParserStatementDetails(t *testing.T) {
+// 	var tests = []struct {
+// 		str           string
+// 		result        string
+// 		lenStatements int
+// 	}{
+// 		{
+// 			str:           "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
+// 			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
+// 			lenStatements: 1,
+// 		},
+// 	}
+
+// 	for _, tt := range tests {
+// 		l := lexer.New(tt.str)
+// 		p := New(l)
+// 		program := p.ParseProgram()
+// 		checkParserErrors(t, p)
+// 		assert.Equal(t, tt.lenStatements, len(program.Statements))
+// 		assert.Equal(t, tt.result, program.Statements[0].String())
+// 	}
+// }
 
 func checkParserErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()

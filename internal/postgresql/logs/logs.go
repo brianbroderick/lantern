@@ -5,14 +5,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
+	"github.com/brianbroderick/lantern/internal/postgresql/ast"
 	"github.com/brianbroderick/lantern/internal/postgresql/lexer"
 	"github.com/brianbroderick/lantern/internal/postgresql/parser"
+	"github.com/brianbroderick/lantern/pkg/repo"
 	"github.com/brianbroderick/lantern/pkg/sql/projectpath"
 )
 
 func Logs() {
-	f := "postgresql.log.2024-07-10-1748"
+	databases := repo.NewDatabases()
+	statements := repo.NewQueries()
+
+	f := "postgresql.log.2024-07-10-1748.cp"
 	// f := "postgresql-2024-07-09_000000.log"
 	// f := "postgresql-simple.log"
 	path := filepath.Join(projectpath.Root, "logs", f)
@@ -25,7 +31,33 @@ func Logs() {
 	p := parser.New(l)
 	program := p.ParseProgram()
 
-	fmt.Println("Number of statements", len(program.Statements))
+	fmt.Println("Number of statements from file", len(program.Statements))
+
+	for i, stmt := range program.Statements {
+		query := stmt.(*ast.LogStatement)
+
+		if query.Query == "" || query.DurationLit == "" {
+			continue
+		}
+
+		w := repo.QueryWorker{
+			Databases:   databases,
+			Database:    query.Database,
+			Input:       query.Query,
+			Duration:    convertTime(query.DurationLit, query.DurationMeasure),
+			MustExtract: false, // We're passing in false into mustExtract because that'll happen at a later step
+		}
+
+		fmt.Println("Query:", i, query.Query)
+		fmt.Println("")
+
+		statements.Analyze(w)
+
+		// if i%10000 == 0 {
+		fmt.Printf("Parsed %d statements\n\n", i)
+		// }
+	}
+
 }
 
 func HasErr(msg string, err error) bool {
@@ -48,14 +80,22 @@ func readPayload(file string) ([]byte, error) {
 	return data, nil
 }
 
-// func checkParserErrors(p *parser.Parser) {
-// 	errors := p.Errors()
-// 	if len(errors) == 0 {
-// 		return
-// 	}
+// convertTime converts a string like "0.0001 sec" to an int64 of microseconds
+func convertTime(time, measure string) int64 {
+	if time == "" {
+		return -1
+	}
 
-// 	fmt.Printf("parser has %d errors", len(errors))
-// 	for _, msg := range errors {
-// 		fmt.Printf("parser error: %q", msg)
-// 	}
-// }
+	ms, err := strconv.ParseFloat(time, 64)
+	if err != nil {
+		HasErr("convertTime", err)
+	}
+	switch measure {
+	case "ms":
+		return int64(ms * 1000)
+	case "sec":
+		return int64(ms * 1000000)
+	default:
+		return 0
+	}
+}

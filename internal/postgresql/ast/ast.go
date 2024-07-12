@@ -65,6 +65,7 @@ type LogStatement struct {
 	PreparedName    string
 	Query           string
 	Parameters      string
+	Error           string
 }
 
 func (ls *LogStatement) statementNode()       {}
@@ -96,6 +97,11 @@ func (ls *LogStatement) String() string {
 	// Parameters
 	if ls.Parameters != "" {
 		out.WriteString(fmt.Sprintf("  parameters: %s", ls.Parameters))
+	}
+
+	// Error
+	if ls.Error != "" {
+		out.WriteString(fmt.Sprintf("  %s", ls.Error))
 	}
 
 	return out.String()

@@ -138,6 +138,18 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
+func (l *Lexer) skipWhitespaceExceptEOL() {
+	for {
+		l.read()
+		if l.ch == eof {
+			break
+		} else if !isWhitespaceExceptEOL(l.ch) {
+			l.unread()
+			break
+		}
+	}
+}
+
 func (l *Lexer) scanIdent() token.Token {
 	var buf bytes.Buffer
 	for {
@@ -235,7 +247,7 @@ func (l *Lexer) scanDigits() string {
 
 func (l *Lexer) ScanQuery() token.Token {
 	var buf bytes.Buffer
-	l.skipWhitespace()
+	l.skipWhitespaceExceptEOL()
 
 	for {
 		l.read()
@@ -252,6 +264,8 @@ func (l *Lexer) ScanQuery() token.Token {
 
 // isWhitespace returns true if the rune is a space, tab, or newline.
 func isWhitespace(ch rune) bool { return ch == ' ' || ch == '\t' || ch == eol || ch == '\r' }
+
+func isWhitespaceExceptEOL(ch rune) bool { return ch == ' ' || ch == '\t' || ch == '\r' }
 
 // isLetter returns true if the rune is a letter.
 func isLetter(ch rune) bool {

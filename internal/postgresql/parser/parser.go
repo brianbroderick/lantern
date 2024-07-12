@@ -35,7 +35,9 @@ func New(l *lexer.Lexer) *Parser {
 func (p *Parser) scanQuery() {
 	origPeek := p.peekToken
 	scan := p.l.ScanQuery()
-	p.peekToken = token.Token{Type: token.QUERY, Lit: fmt.Sprintf("%s %s", origPeek.Lit, scan.Lit)}
+	if scan.Lit != "" {
+		p.peekToken = token.Token{Type: token.QUERY, Lit: fmt.Sprintf("%s %s", origPeek.Lit, scan.Lit)}
+	}
 	p.nextToken()
 }
 
@@ -83,6 +85,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 		l := len(program.Statements)
 		if l%10000 == 0 {
 			fmt.Printf("statements: %d, line number: %d\n", len(program.Statements), p.l.Pos.Line)
+			break // TODO: remove this
 		}
 
 		p.nextToken()
@@ -172,6 +175,7 @@ loop:
 		p.nextToken()
 	}
 
+	// Database
 	if p.curTokenIs(token.IDENT) {
 		s.Database = p.curToken.Lit
 		p.nextToken()
@@ -185,6 +189,7 @@ loop:
 		p.nextToken()
 	}
 
+	// Pid
 	if p.curTokenIs(token.INT) {
 		i, err := p.convertToInt()
 		if hasErr(err) {
@@ -202,6 +207,7 @@ loop:
 		p.nextToken()
 	}
 
+	// Severity
 	if p.curTokenIs(token.IDENT) {
 		s.Severity = p.curToken.Lit
 		p.nextToken()
@@ -246,28 +252,28 @@ loop:
 			}
 
 			p.nextToken()
+
+			if p.curTokenIs(token.IDENT) {
+				s.PreparedStep = p.curToken.Lit
+
+				if p.peekTokenIs(token.IDENT) {
+					p.nextToken()
+					s.PreparedName = p.curToken.Lit
+				}
+
+				if p.peekTokenIs(token.COLON) {
+					p.nextToken()
+				}
+			}
+
+			if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
+				return s, nil
+			}
+
+			if p.curTokenIs(token.COLON) {
+				p.nextToken()
+			}
 		}
-	}
-
-	if p.curTokenIs(token.IDENT) {
-		s.PreparedStep = p.curToken.Lit
-
-		if p.peekTokenIs(token.IDENT) {
-			p.nextToken()
-			s.PreparedName = p.curToken.Lit
-		}
-
-		if p.peekTokenIs(token.COLON) {
-			p.nextToken()
-		}
-	}
-
-	if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
-		return s, nil
-	}
-
-	if p.curTokenIs(token.COLON) {
-		p.nextToken()
 	}
 
 	// Query
@@ -276,15 +282,27 @@ loop:
 
 	for {
 		if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
-
 			break
 		}
+
+		// fmt.Println("1. Current token", p.curToken)
+		// fmt.Println("1. Peek token", p.peekToken)
+		// fmt.Println("1. Query lines", qLines)
+
 		// scan to the end of the line and keep going until a new line starts with a date or EOF
 		p.scanQuery()
 		qLines = append(qLines, p.curToken.Lit)
+
+		// fmt.Println("2. Current token", p.curToken)
+		// fmt.Println("2. Peek token", p.peekToken)
+		// fmt.Println("2. Query lines", qLines)
 	}
 
-	s.Query = strings.Join(qLines, " ")
+	if s.Severity == "ERROR" {
+		s.Error = strings.Join(qLines, " ")
+	} else {
+		s.Query = strings.Join(qLines, " ")
+	}
 
 	// fmt.Println("Stmt: ", s)
 
