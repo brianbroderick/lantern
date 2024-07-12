@@ -85,7 +85,6 @@ func (p *Parser) ParseProgram() *ast.Program {
 		l := len(program.Statements)
 		if l%10000 == 0 {
 			fmt.Printf("statements: %d, line number: %d\n", len(program.Statements), p.l.Pos.Line)
-			break // TODO: remove this
 		}
 
 		p.nextToken()
