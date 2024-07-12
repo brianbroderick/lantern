@@ -2,7 +2,6 @@ package repo
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/brianbroderick/lantern/pkg/sql/extractor"
@@ -64,7 +63,6 @@ func (q *Queries) Analyze(w QueryWorker) bool {
 		for _, msg := range p.Errors() {
 			logit.Append("queries-process-error", fmt.Sprintf("%s | Input: %s", msg, p.Input()))
 		}
-		os.Exit(1)
 		return false
 	}
 

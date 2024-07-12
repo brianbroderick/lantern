@@ -33,6 +33,8 @@ func Logs() {
 
 	fmt.Println("Number of statements from file", len(program.Statements))
 
+	success := 0
+
 	for i, stmt := range program.Statements {
 		query := stmt.(*ast.LogStatement)
 
@@ -48,16 +50,16 @@ func Logs() {
 			MustExtract: false, // We're passing in false into mustExtract because that'll happen at a later step
 		}
 
-		fmt.Println("Query:", i, query.Query)
-		fmt.Println("")
+		if statements.Analyze(w) {
+			success++
+		}
 
-		statements.Analyze(w)
-
-		// if i%10000 == 0 {
-		fmt.Printf("Parsed %d statements\n\n", i)
-		// }
+		if i%10000 == 0 {
+			fmt.Printf("Parsed %d sucessfully of %d statements\n", success, i+1)
+		}
 	}
 
+	fmt.Printf("Parsed %d sucessfully of %d statements\n", success, len(program.Statements))
 }
 
 func HasErr(msg string, err error) bool {
