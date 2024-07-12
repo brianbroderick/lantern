@@ -64,23 +64,38 @@ type LogStatement struct {
 	PreparedStep    string
 	PreparedName    string
 	Query           string
-	// duration        time.Duration
+	Parameters      string
 }
 
 func (ls *LogStatement) statementNode()       {}
 func (ls *LogStatement) TokenLiteral() string { return ls.Token.Lit }
 func (ls *LogStatement) String() string {
 	var out bytes.Buffer
-	if ls.PreparedName != "" {
-		out.WriteString(fmt.Sprintf("%s %s %s:%s(%d):%s@%s:[%d]:%s:  duration: %s %s  %s %s: %s",
-			ls.Date, ls.Time, ls.Timezone, ls.RemoteHost, ls.RemotePort, ls.User,
-			ls.Database, ls.Pid, ls.Severity, ls.DurationLit, ls.DurationMeasure,
-			ls.PreparedStep, ls.PreparedName, ls.Query))
-	} else {
-		out.WriteString(fmt.Sprintf("%s %s %s:%s(%d):%s@%s:[%d]:%s:  duration: %s %s  %s: %s",
-			ls.Date, ls.Time, ls.Timezone, ls.RemoteHost, ls.RemotePort, ls.User,
-			ls.Database, ls.Pid, ls.Severity, ls.DurationLit, ls.DurationMeasure,
-			ls.PreparedStep, ls.Query))
+
+	// Prefix
+	out.WriteString(fmt.Sprintf("%s %s %s:%s(%d):%s@%s:[%d]:%s:",
+		ls.Date, ls.Time, ls.Timezone, ls.RemoteHost, ls.RemotePort, ls.User, ls.Database, ls.Pid, ls.Severity))
+
+	// Duration
+	if ls.DurationLit != "" {
+		out.WriteString(fmt.Sprintf("  duration: %s %s", ls.DurationLit, ls.DurationMeasure))
+	}
+
+	// Prepared Statement
+	if ls.PreparedStep != "" && ls.PreparedName != "" {
+		out.WriteString(fmt.Sprintf("  %s %s:", ls.PreparedStep, ls.PreparedName))
+	} else if ls.PreparedStep != "" {
+		out.WriteString(fmt.Sprintf("  %s:", ls.PreparedStep))
+	}
+
+	// Query
+	if ls.Query != "" {
+		out.WriteString(fmt.Sprintf(" %s", ls.Query))
+	}
+
+	// Parameters
+	if ls.Parameters != "" {
+		out.WriteString(fmt.Sprintf("  parameters: %s", ls.Parameters))
 	}
 
 	return out.String()

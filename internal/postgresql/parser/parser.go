@@ -123,28 +123,28 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 		switch iter {
 		case 0:
 			if !p.curTokenIs(token.DATE) {
-				return nil, parseErr(iter, token.DATE, p.curToken.Type)
+				return nil, parseErr(iter, token.DATE, p.curToken)
 			}
 			stmt.Date = p.curToken.Lit
 
 			// fmt.Printf("Date: %s\n", stmt.Date)
 		case 1:
 			if !p.curTokenIs(token.TIME) {
-				return nil, parseErr(iter, token.TIME, p.curToken.Type)
+				return nil, parseErr(iter, token.TIME, p.curToken)
 			}
 			stmt.Time = p.curToken.Lit
 
 			// fmt.Printf("Time: %s\n", stmt.Time)
 		case 2:
 			if !p.curTokenIs(token.IDENT) {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+				return nil, parseErr(iter, token.IDENT, p.curToken)
 			}
 			stmt.Timezone = p.curToken.Lit
 
 			// fmt.Printf("Timezone: %s\n", stmt.Timezone)
 		case 3:
 			if !p.curTokenIs(token.COLON) {
-				return nil, parseErr(iter, token.COLON, p.curToken.Type)
+				return nil, parseErr(iter, token.COLON, p.curToken)
 			}
 		case 4:
 			qToks := make([]string, 0, 1)
@@ -166,81 +166,101 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 			// fmt.Printf("RemoteHost: %s\n", stmt.RemoteHost)
 		case 5:
 			if !p.curTokenIs(token.LPAREN) {
-				return nil, parseErr(iter, token.LPAREN, p.curToken.Type)
+				return stmt, parseErr(iter, token.LPAREN, p.curToken)
 			}
 		case 6:
 			if !p.curTokenIs(token.INT) {
-				return nil, parseErr(iter, token.INT, p.curToken.Type)
+				return stmt, parseErr(iter, token.INT, p.curToken)
 			}
 			stmt.RemotePort = intLit
 		case 7:
 			if !p.curTokenIs(token.RPAREN) {
-				return nil, parseErr(iter, token.RPAREN, p.curToken.Type)
+				return stmt, parseErr(iter, token.RPAREN, p.curToken)
 			}
 		case 8:
 			if !p.curTokenIs(token.COLON) {
-				return nil, parseErr(iter, token.COLON, p.curToken.Type)
+				return stmt, parseErr(iter, token.COLON, p.curToken)
 			}
 		case 9:
 			if !p.curTokenIs(token.IDENT) {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+				return stmt, parseErr(iter, token.IDENT, p.curToken)
 			}
 			stmt.User = p.curToken.Lit
 		case 10:
 			if !p.curTokenIs(token.ATSYMBOL) {
-				return nil, parseErr(iter, token.ATSYMBOL, p.curToken.Type)
+				return stmt, parseErr(iter, token.ATSYMBOL, p.curToken)
 			}
 		case 11:
 			if !p.curTokenIs(token.IDENT) {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+				return stmt, parseErr(iter, token.IDENT, p.curToken)
 			}
 			stmt.Database = p.curToken.Lit
 		case 12:
 			if !p.curTokenIs(token.COLON) {
-				return nil, parseErr(iter, token.COLON, p.curToken.Type)
+				return stmt, parseErr(iter, token.COLON, p.curToken)
 			}
 		case 13:
 			if !p.curTokenIs(token.LBRACKET) {
-				return nil, parseErr(iter, token.LBRACKET, p.curToken.Type)
+				return stmt, parseErr(iter, token.LBRACKET, p.curToken)
 			}
 		case 14:
 			if !p.curTokenIs(token.INT) {
-				return nil, parseErr(iter, token.INT, p.curToken.Type)
+				return stmt, parseErr(iter, token.INT, p.curToken)
 			}
 			stmt.Pid = intLit
 		case 15:
 			if !p.curTokenIs(token.RBRACKET) {
-				return nil, parseErr(iter, token.RBRACKET, p.curToken.Type)
+				return stmt, parseErr(iter, token.RBRACKET, p.curToken)
 			}
 		case 16:
 			if !p.curTokenIs(token.COLON) {
-				return nil, parseErr(iter, token.COLON, p.curToken.Type)
+				return stmt, parseErr(iter, token.COLON, p.curToken)
 			}
 		case 17:
 			if !p.curTokenIs(token.IDENT) {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+				return stmt, parseErr(iter, token.IDENT, p.curToken)
 			}
 			stmt.Severity = p.curToken.Lit
 		case 18:
 			if !p.curTokenIs(token.COLON) {
-				return nil, parseErr(iter, token.COLON, p.curToken.Type)
+				return stmt, parseErr(iter, token.COLON, p.curToken)
 			}
 		case 19:
-			if !p.curTokenIs(token.IDENT) && p.curToken.Lit != "duration" {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+			// is this a query with a duration, or something else like a parameter?
+			// parameters: $1 = 'entrata_g_01_11866'",
+			if p.curToken.Lit == "parameters" {
+				p.nextToken() // skip the colon
+				p.nextToken() // skip the space
+
+				pLines := make([]string, 0, 2)
+				pLines = append(pLines, p.curToken.Lit)
+
+				for {
+					if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
+						eos = true
+						break
+					}
+					// scan to the end of the line and keep going until a new line starts with a date or EOF
+					p.scanQuery()
+					pLines = append(pLines, p.curToken.Lit)
+				}
+
+				stmt.Parameters = strings.Join(pLines, " ")
+				eos = true
 			}
+
 		case 20:
 			if !p.curTokenIs(token.COLON) {
-				return nil, parseErr(iter, token.COLON, p.curToken.Type)
+				return stmt, parseErr(iter, token.COLON, p.curToken)
 			}
 		case 21:
 			if !p.curTokenIs(token.NUMBER) {
-				return nil, parseErr(iter, token.NUMBER, p.curToken.Type)
+				return stmt, parseErr(iter, token.NUMBER, p.curToken)
 			}
 			stmt.DurationLit = p.curToken.Lit
 		case 22:
 			if !p.curTokenIs(token.IDENT) {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+				return stmt, parseErr(iter, token.IDENT, p.curToken)
 			}
 			stmt.DurationMeasure = p.curToken.Lit
 
@@ -252,7 +272,7 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 		case 23:
 			// bind R_42: BEGIN
 			if !p.curTokenIs(token.IDENT) {
-				return nil, parseErr(iter, token.IDENT, p.curToken.Type)
+				return stmt, parseErr(iter, token.IDENT, p.curToken)
 			}
 			stmt.PreparedStep = p.curToken.Lit
 
@@ -264,7 +284,7 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 		case 24:
 			if !p.curTokenIs(token.COLON) {
 				fmt.Println("Current token", p.curToken)
-				return stmt, parseErr(iter, token.COLON, p.curToken.Type)
+				return stmt, parseErr(iter, token.COLON, p.curToken)
 			}
 		default:
 			qLines := make([]string, 0, 2)
@@ -294,8 +314,8 @@ func (p *Parser) parseLogStatement() (*ast.LogStatement, error) {
 	return stmt, nil
 }
 
-func parseErr(iter int, expected token.TokenType, tok token.TokenType) error {
-	return fmt.Errorf("%d: expected %s, got %s", iter, expected, tok)
+func parseErr(iter int, expected token.TokenType, tok token.Token) error {
+	return fmt.Errorf("%d: expected %s, got %s. Lit: %s", iter, expected, tok.Type, tok.Lit)
 }
 
 func hasErr(err error) bool {
