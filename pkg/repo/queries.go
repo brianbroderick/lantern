@@ -60,8 +60,17 @@ func (q *Queries) Analyze(w QueryWorker) bool {
 	program := p.ParseProgram()
 
 	if len(p.Errors()) > 0 {
+		sqlLen := len(w.Input)
+		truncated := ""
+		if sqlLen > 1048576 {
+			truncated = "... [truncated]"
+			sqlLen = 1048576
+		}
+
+		logit.Append("queries-process-error", fmt.Sprintf("Next Errors from %s%s", w.Input[0:sqlLen], truncated))
+
 		for _, msg := range p.Errors() {
-			logit.Append("queries-process-error", fmt.Sprintf("%s | Input: %s", msg, p.Input()))
+			logit.Append("queries-process-error", msg)
 		}
 		return false
 	}

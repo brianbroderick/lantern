@@ -11,10 +11,13 @@ import (
 	"github.com/brianbroderick/lantern/internal/postgresql/lexer"
 	"github.com/brianbroderick/lantern/internal/postgresql/parser"
 	"github.com/brianbroderick/lantern/pkg/repo"
+	"github.com/brianbroderick/lantern/pkg/sql/logit"
 	"github.com/brianbroderick/lantern/pkg/sql/projectpath"
 )
 
 func Logs() {
+	logit.Clear("queries-process-error")
+
 	databases := repo.NewDatabases()
 	statements := repo.NewQueries()
 
