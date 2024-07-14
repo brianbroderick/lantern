@@ -75,7 +75,7 @@ func (p *Parser) peekError(t token.TokenType) {
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
-	steps := map[string]int{}
+	// steps := map[string]int{}
 	lenProgramStatements := 0
 
 	program := &ast.Program{}
@@ -86,25 +86,25 @@ func (p *Parser) ParseProgram() *ast.Program {
 		program.Statements = append(program.Statements, stmt)
 		lenProgramStatements++
 
-		query := stmt.(*ast.LogStatement)
+		// query := stmt.(*ast.LogStatement)
 
-		if val, ok := steps[query.PreparedStep]; !ok {
-			steps[query.PreparedStep] = 1
-		} else {
-			steps[query.PreparedStep] = val + 1
-		}
+		// if val, ok := steps[query.PreparedStep]; !ok {
+		// 	steps[query.PreparedStep] = 1
+		// } else {
+		// 	steps[query.PreparedStep] = val + 1
+		// }
 
 		l := lenProgramStatements
-		if l%10000 == 0 {
+		if l%250000 == 0 {
 			fmt.Printf("statements: %d, line number: %d\n", lenProgramStatements, p.l.Pos.Line)
 		}
 
 		p.nextToken()
 	}
 
-	for k, v := range steps {
-		fmt.Printf("Step: %s, Count: %d\n", k, v)
-	}
+	// for k, v := range steps {
+	// 	fmt.Printf("Step: %s, Count: %d\n", k, v)
+	// }
 
 	return program
 }

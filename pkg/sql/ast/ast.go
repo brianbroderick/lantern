@@ -93,7 +93,50 @@ func (x *ExpressionStatement) Inspect(maskParams bool) string {
 	return x.String(maskParams)
 }
 
+type SemicolonStatement struct {
+	Token      token.Token `json:"token,omitempty"` // the token.SEMICOLON token
+	Expression Expression  `json:"expression,omitempty"`
+}
+
+func (x *SemicolonStatement) Clause() token.TokenType     { return x.Expression.Clause() }
+func (x *SemicolonStatement) SetClause(c token.TokenType) {}
+func (x *SemicolonStatement) Command() token.TokenType    { return x.Expression.Command() }
+func (x *SemicolonStatement) statementNode()              {}
+func (x *SemicolonStatement) TokenLiteral() string        { return x.Token.Lit }
+func (x *SemicolonStatement) String(maskParams bool) string {
+	if x.Expression != nil {
+		return x.Expression.String(maskParams)
+	}
+	return ""
+}
+func (x *SemicolonStatement) Inspect(maskParams bool) string {
+	return x.String(maskParams)
+}
+
 // Expressions
+type SemicolonExpression struct {
+	Token  token.Token     `json:"token,omitempty"` // the token.SEMICOLON token
+	Value  string          `json:"value,omitempty"`
+	Cast   Expression      `json:"cast,omitempty"`
+	Branch token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+}
+
+func (x *SemicolonExpression) Clause() token.TokenType     { return x.Branch }
+func (x *SemicolonExpression) SetClause(c token.TokenType) { x.Branch = c }
+func (x *SemicolonExpression) Command() token.TokenType    { return x.Token.Type }
+func (x *SemicolonExpression) expressionNode()             {}
+func (x *SemicolonExpression) TokenLiteral() string        { return x.Token.Lit }
+func (x *SemicolonExpression) String(maskParams bool) string {
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast.String(maskParams)))
+	}
+
+	return x.Value
+}
+func (x *SemicolonExpression) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
 type SimpleIdentifier struct {
 	Token  token.Token     `json:"token,omitempty"` // the token.IDENT token
 	Value  string          `json:"value,omitempty"`

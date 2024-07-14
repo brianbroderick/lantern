@@ -205,6 +205,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.TRAILING, p.parseTrimExpression)
 	p.registerPrefix(token.COLON, p.parsePrefixArrayRangeExpression)
 	p.registerPrefix(token.VALUES, p.parseValuesExpression)
+	p.registerPrefix(token.SEMICOLON, p.parseSemicolonExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -725,6 +726,12 @@ func (p *Parser) parseEscapeStringLiteral() ast.Expression {
 		str.SetCast(p.parseDoubleColonExpression())
 	}
 	return str
+}
+
+func (p *Parser) parseSemicolonExpression() ast.Expression {
+	defer p.untrace(p.trace("parseSemicolonExpression"))
+
+	return &ast.SemicolonExpression{Token: p.curToken, Branch: p.clause}
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {

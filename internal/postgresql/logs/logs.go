@@ -66,13 +66,13 @@ loop:
 			success++
 		}
 
-		if analyzed%10000 == 0 {
-			fmt.Printf("Parsed %d sucessfully of %d statements\n", success, analyzed)
+		if analyzed%100000 == 0 {
+			fmt.Printf("Parsed %7d sucessfully of %7d statements: %f%%\n", success, analyzed, (float64(success)/float64(analyzed))*100)
 		}
 	}
 
-	fmt.Printf("Analyzed %d of %d statements\n", analyzed, len(program.Statements))
-	fmt.Printf("Parsed %d sucessfully of %d statements\n", success, analyzed)
+	fmt.Printf("Analyzed %7d of %7d statements\n", analyzed, len(program.Statements))
+	fmt.Printf("Parsed %7d sucessfully of %7d statements: %f%%\n", success, analyzed, (float64(success)/float64(analyzed))*100)
 
 	fmt.Printf("Number of statements: %d\n", len(statements.Queries))
 	json := repo.MarshalJSON(statements)
