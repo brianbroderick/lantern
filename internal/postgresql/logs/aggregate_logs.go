@@ -15,7 +15,7 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/projectpath"
 )
 
-func Logs() {
+func AggregateLogs() {
 	logit.Clear("queries-process-error")
 
 	databases := repo.NewDatabases()
