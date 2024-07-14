@@ -5,6 +5,8 @@
 cmd/lantern/lantern
 cmd/pg-logs/pg-logs
 
+processed/*.json
+
 automated_payloads*
 
 
