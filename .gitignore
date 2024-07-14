@@ -3,7 +3,7 @@
 *.a
 *.so
 cmd/lantern/lantern
-cmd/pg-logs/pg-logs
+cmd/lantern-logs/lantern-logs
 
 processed/*.json
 
