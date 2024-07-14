@@ -73,6 +73,14 @@ loop:
 
 	fmt.Printf("Analyzed %d of %d statements\n", analyzed, len(program.Statements))
 	fmt.Printf("Parsed %d sucessfully of %d statements\n", success, analyzed)
+
+	fmt.Printf("Number of statements: %d\n", len(statements.Queries))
+	json := repo.MarshalJSON(statements)
+	writeFile(filepath.Join(projectpath.Root, "processed", "queries.json"), []byte(json))
+
+	fmt.Printf("Number of databases: %d\n", len(databases.Databases))
+	dbJSON := repo.MarshalJSON(databases)
+	writeFile(filepath.Join(projectpath.Root, "processed", "databases.json"), []byte(dbJSON))
 }
 
 func HasErr(msg string, err error) bool {
@@ -113,4 +121,16 @@ func convertTime(time, measure string) int64 {
 	default:
 		return 0
 	}
+}
+
+func writeFile(file string, data []byte) error {
+	if len(file) == 0 {
+		return errors.New("file is empty")
+	}
+
+	err := os.WriteFile(string(file), data, 0644)
+	if HasErr("writeFile", err) {
+		return err
+	}
+	return nil
 }
