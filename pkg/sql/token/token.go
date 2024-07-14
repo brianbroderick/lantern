@@ -44,6 +44,7 @@ const (
 	STRING       // "foobar"
 	ESCAPESTRING // E'foobar'
 	INFINITY     // Infinity: this is used as a placeholder for array ranges with no right value, i.e. array[1:]
+	PARAM        // $1, $2, $3, etc.
 	literalEnd
 
 	// Operators
@@ -273,6 +274,7 @@ var Tokens = [...]string{
 	STRING:       "STRING",
 	ESCAPESTRING: "ESCAPESTRING", // E'foobar'
 	INFINITY:     "INFINITY",
+	PARAM:        "PARAM", // $1, $2, $3, etc.
 
 	ASSIGN:   "ASSIGN",   // =
 	PLUS:     "PLUS",     // +

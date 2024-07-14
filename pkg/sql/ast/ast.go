@@ -369,6 +369,33 @@ func (x *IntegerLiteral) SetCast(cast Expression) {
 	x.Cast = cast
 }
 
+type ParamLiteral struct {
+	Token       token.Token     `json:"token,omitempty"`
+	Cast        Expression      `json:"cast,omitempty"`
+	ParamOffset int             `json:"param_offset,omitempty"`
+	Branch      token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+}
+
+func (x *ParamLiteral) Clause() token.TokenType     { return x.Branch }
+func (x *ParamLiteral) SetClause(c token.TokenType) { x.Branch = c }
+func (x *ParamLiteral) Command() token.TokenType    { return x.Token.Type }
+func (x *ParamLiteral) expressionNode()             {}
+func (x *ParamLiteral) TokenLiteral() string        { return x.Token.Lit }
+func (x *ParamLiteral) String(maskParams bool) string {
+	literal := x.Token.Lit
+	if maskParams {
+		// literal = fmt.Sprintf("$%d", x.ParamOffset)
+		literal = "?"
+	}
+	if x.Cast != nil {
+		return fmt.Sprintf("%s::%s", literal, strings.ToUpper(x.Cast.String(maskParams)))
+	}
+	return literal
+}
+func (x *ParamLiteral) SetCast(cast Expression) {
+	x.Cast = cast
+}
+
 type FloatLiteral struct {
 	Token       token.Token     `json:"token,omitempty"`
 	Value       float64         `json:"value,omitempty"`

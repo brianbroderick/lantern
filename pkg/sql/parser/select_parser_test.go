@@ -359,6 +359,8 @@ func TestSingleSelectStatements(t *testing.T) {
 				from users u
 				JOIN addresses a ON (u.id = a.user_id)
 				where id = 42;`, "(SELECT * FROM users u INNER JOIN addresses a ON (u.id = a.user_id) WHERE (id = 42));"}, // multiple single line comments
+
+		{`select id from users where id = $1`, "(SELECT id FROM users WHERE (id = $1));"}, // $1 is a parameter
 	}
 
 	for _, tt := range tests {

@@ -57,7 +57,7 @@ func TestCodeScan(t *testing.T) {
 func TestSimpleScan(t *testing.T) {
 	input := ` . + - * < >
 	; , { } ( ) = == ! != / foo 12345 
-	-> ->> #> #>> #- @> <@ ? ?| ?& || foo
+	-> ->> #> #>> #- @> <@ ? ?| ?& || foo $1 $2
 	`
 
 	tests := []token.Token{
@@ -92,6 +92,8 @@ func TestSimpleScan(t *testing.T) {
 		{Type: token.JSONHASALLKEYS, Lit: "?&"},
 		{Type: token.JSONCONCAT, Lit: "||"},
 		{Type: token.IDENT, Lit: "foo"},
+		{Type: token.PARAM, Lit: "$1"},
+		{Type: token.PARAM, Lit: "$2"},
 		{Type: token.EOF, Lit: ""},
 	}
 

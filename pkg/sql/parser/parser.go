@@ -176,6 +176,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.TRUE, p.parseBoolean)
 	p.registerPrefix(token.FALSE, p.parseBoolean)
 	p.registerPrefix(token.NULL, p.parseNull)
+	p.registerPrefix(token.PARAM, p.parseParam)
 	p.registerPrefix(token.UNKNOWN, p.parseUnknown)
 	p.registerPrefix(token.TIMESTAMP, p.parseTimestampExpression)
 
@@ -680,6 +681,13 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	}
 
 	return lit
+}
+
+func (p *Parser) parseParam() ast.Expression {
+	defer p.untrace(p.trace("parseParam"))
+
+	p.paramOffset++
+	return &ast.ParamLiteral{Token: p.curToken, ParamOffset: p.paramOffset, Branch: p.clause}
 }
 
 func (p *Parser) parseFloatLiteral() ast.Expression {

@@ -188,6 +188,15 @@ func (l *Lexer) Scan() (tok token.Token, pos Pos) {
 		// tok = l.scanIdent()
 		tok = l.scanDoubleQuoteString()
 		return tok, pos
+	case '$':
+		if isDigit(l.peek()) {
+			pos = l.pos
+			num := l.scanNumber()
+			lit := fmt.Sprintf("$%s", num.Lit)
+			tok = token.Token{Type: token.PARAM, Lit: lit, Upper: lit}
+		} else {
+			tok = newToken(token.ILLEGAL, l.ch)
+		}
 	case '#': // JSON operators
 		if l.peek() == '>' {
 			l.read()
