@@ -67,7 +67,7 @@ func (q *Queries) Analyze(w QueryWorker) bool {
 			sqlLen = 1048576
 		}
 
-		logit.Append("queries-process-error", fmt.Sprintf("Next Errors from %s%s", w.Input[0:sqlLen], truncated))
+		logit.Append("queries-process-error", fmt.Sprintf("Next Errors from: %s%s", w.Input[0:sqlLen], truncated))
 
 		for _, msg := range p.Errors() {
 			logit.Append("queries-process-error", msg)

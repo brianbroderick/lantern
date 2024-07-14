@@ -37,13 +37,21 @@ func Logs() {
 	fmt.Println("Number of statements from file", len(program.Statements))
 
 	success := 0
+	analyzed := 0
 
-	for i, stmt := range program.Statements {
+loop:
+	for _, stmt := range program.Statements {
 		query := stmt.(*ast.LogStatement)
 
-		if query.Query == "" || query.DurationLit == "" {
-			continue
+		switch query.PreparedStep {
+		case "statement", "execute":
+		default:
+			continue loop
 		}
+
+		// if query.Query == "" || query.DurationLit == "" {
+		// 	continue
+		// }
 
 		w := repo.QueryWorker{
 			Databases:   databases,
@@ -53,16 +61,18 @@ func Logs() {
 			MustExtract: false, // We're passing in false into mustExtract because that'll happen at a later step
 		}
 
+		analyzed++
 		if statements.Analyze(w) {
 			success++
 		}
 
-		if i%10000 == 0 {
-			fmt.Printf("Parsed %d sucessfully of %d statements\n", success, i+1)
+		if analyzed%10000 == 0 {
+			fmt.Printf("Parsed %d sucessfully of %d statements\n", success, analyzed)
 		}
 	}
 
-	fmt.Printf("Parsed %d sucessfully of %d statements\n", success, len(program.Statements))
+	fmt.Printf("Analyzed %d of %d statements\n", analyzed, len(program.Statements))
+	fmt.Printf("Parsed %d sucessfully of %d statements\n", success, analyzed)
 }
 
 func HasErr(msg string, err error) bool {

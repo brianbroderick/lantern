@@ -75,19 +75,35 @@ func (p *Parser) peekError(t token.TokenType) {
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
+	steps := map[string]int{}
+	lenProgramStatements := 0
+
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
 
 	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
 		program.Statements = append(program.Statements, stmt)
+		lenProgramStatements++
 
-		l := len(program.Statements)
+		query := stmt.(*ast.LogStatement)
+
+		if val, ok := steps[query.PreparedStep]; !ok {
+			steps[query.PreparedStep] = 1
+		} else {
+			steps[query.PreparedStep] = val + 1
+		}
+
+		l := lenProgramStatements
 		if l%10000 == 0 {
-			fmt.Printf("statements: %d, line number: %d\n", len(program.Statements), p.l.Pos.Line)
+			fmt.Printf("statements: %d, line number: %d\n", lenProgramStatements, p.l.Pos.Line)
 		}
 
 		p.nextToken()
+	}
+
+	for k, v := range steps {
+		fmt.Printf("Step: %s, Count: %d\n", k, v)
 	}
 
 	return program
@@ -252,12 +268,25 @@ loop:
 
 			p.nextToken()
 
+			// Options are blank, statement, execute, bind, parse.
+			// We only care about parsing statement and execute right now.
 			if p.curTokenIs(token.IDENT) {
 				s.PreparedStep = p.curToken.Lit
 
 				if p.peekTokenIs(token.IDENT) {
-					p.nextToken()
-					s.PreparedName = p.curToken.Lit
+					nameToks := make([]string, 0, 1)
+
+					for {
+						p.nextToken()
+
+						nameToks = append(nameToks, p.curToken.Lit)
+
+						if p.peekTokenIs(token.COLON) || p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
+							break
+						}
+					}
+
+					s.PreparedName = strings.Join(nameToks, " ")
 				}
 
 				if p.peekTokenIs(token.COLON) {
