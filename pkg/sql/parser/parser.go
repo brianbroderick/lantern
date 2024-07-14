@@ -206,6 +206,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.COLON, p.parsePrefixArrayRangeExpression)
 	p.registerPrefix(token.VALUES, p.parseValuesExpression)
 	p.registerPrefix(token.SEMICOLON, p.parseSemicolonExpression)
+	p.registerPrefix(token.COMMIT, p.parseCommitExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -525,6 +526,10 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseUpdateStatement()
 	case token.DELETE:
 		return p.parseDeleteStatement()
+	case token.SEMICOLON:
+		return p.parseSemicolonStatement()
+	case token.COMMIT:
+		return p.parseCommitStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -726,6 +731,38 @@ func (p *Parser) parseEscapeStringLiteral() ast.Expression {
 		str.SetCast(p.parseDoubleColonExpression())
 	}
 	return str
+}
+
+func (p *Parser) parseCommitExpression() ast.Expression {
+	defer p.untrace(p.trace("parseCommitExpression"))
+
+	return &ast.CommitExpression{Token: p.curToken, Branch: p.clause}
+}
+
+func (p *Parser) parseSemicolonStatement() *ast.SemicolonStatement {
+	defer p.untrace(p.trace("parseSemicolonStatement"))
+
+	s := &ast.SemicolonStatement{Token: p.curToken}
+	s.Expression = p.parseExpression(STATEMENT)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return s
+}
+
+func (p *Parser) parseCommitStatement() *ast.CommitStatement {
+	defer p.untrace(p.trace("parseCommitStatement"))
+
+	s := &ast.CommitStatement{Token: p.curToken}
+	s.Expression = p.parseExpression(STATEMENT)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return s
 }
 
 func (p *Parser) parseSemicolonExpression() ast.Expression {
