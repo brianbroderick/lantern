@@ -14,32 +14,34 @@ import (
 )
 
 type Query struct {
-	UID             uuid.UUID       `json:"uid,omitempty"`               // unique sha of the query
-	DatabaseUID     uuid.UUID       `json:"database_uid,omitempty"`      // the dataset the query belongs to
-	SourceUID       uuid.UUID       `json:"source_uid,omitempty"`        // the source the query belongs to
-	Command         token.TokenType `json:"command,omitempty"`           // the type of query
-	TotalCount      int64           `json:"total_count,omitempty"`       // the number of times the query was executed
-	TotalDurationUs int64           `json:"total_duration_us,omitempty"` // the total duration of all executions of the query in microseconds
-	MaskedQuery     string          `json:"masked_query,omitempty"`      // the query with parameters masked
-	UnmaskedQuery   string          `json:"unmasked_query,omitempty"`    // the query with parameters unmasked
-	SourceQuery     string          `json:"source,omitempty"`            // the original query from the source
+	UID                       uuid.UUID       `json:"uid,omitempty"`                          // unique sha of the query
+	DatabaseUID               uuid.UUID       `json:"database_uid,omitempty"`                 // the dataset the query belongs to
+	SourceUID                 uuid.UUID       `json:"source_uid,omitempty"`                   // the source the query belongs to
+	Command                   token.TokenType `json:"command,omitempty"`                      // the type of query
+	TotalCount                int64           `json:"total_count,omitempty"`                  // the number of times the query was executed
+	TotalDurationUs           int64           `json:"total_duration_us,omitempty"`            // the total duration of all executions of the query in microseconds
+	TotalQueriesInTransaction int64           `json:"total_queries_in_transaction,omitempty"` // the sum total number of queries each time this query was executed in a transaction
+	MaskedQuery               string          `json:"masked_query,omitempty"`                 // the query with parameters masked
+	UnmaskedQuery             string          `json:"unmasked_query,omitempty"`               // the query with parameters unmasked
+	SourceQuery               string          `json:"source,omitempty"`                       // the original query from the source
 }
 
 // This is an interim struct with additional Query meta data. The struct is passed around and built up instead
 // of passing around a ton of individual variables.
 // This is used both initially when compiling a list of queries and then individually when processing each query
 type QueryWorker struct {
-	Databases   *Databases
-	Source      *Source
-	SourceUID   uuid.UUID
-	Database    string
-	DatabaseUID uuid.UUID
-	Input       string // Original query. This may contain many queries
-	DurationUs  int64  // Duration of the query in microseconds
-	MustExtract bool
-	Command     token.TokenType
-	Masked      string // Masked query. This is the query with all values replaced with ?
-	Unmasked    string // Unmasked query. This is the query with all values left alone
+	Databases             *Databases
+	Source                *Source
+	SourceUID             uuid.UUID
+	Database              string
+	DatabaseUID           uuid.UUID
+	Input                 string // Original query. This may contain many queries
+	TransactionQueryCount int64  // Number of queries in a transaction
+	DurationUs            int64  // Duration of the query in microseconds
+	MustExtract           bool
+	Command               token.TokenType
+	Masked                string // Masked query. This is the query with all values replaced with ?
+	Unmasked              string // Unmasked query. This is the query with all values left alone
 }
 
 // Process processes a query and returns a bool whether or not the query was parsed successfully

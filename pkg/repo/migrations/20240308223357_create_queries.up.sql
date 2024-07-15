@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS queries (
    command TEXT NOT NULL,
    total_count BIGINT NOT NULL,
    total_duration_us BIGINT NOT NULL, -- in microseconds
+   total_queries_in_transaction BIGINT NOT NULL,
+   average_duration_us BIGINT NOT NULL, -- in microseconds
+   average_queries_in_transaction NUMERIC(10,3) NOT NULL,
    masked_query TEXT NOT NULL,
    unmasked_query TEXT NOT NULL,
    source_query TEXT NOT NULL

@@ -2,6 +2,7 @@ package repo
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/brianbroderick/lantern/pkg/sql/extractor"
@@ -9,6 +10,7 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/logit"
 	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/google/uuid"
 )
 
@@ -75,6 +77,18 @@ func (q *Queries) Analyze(w QueryWorker) bool {
 		return false
 	}
 
+	var queryCount int64
+loop:
+	for _, stmt := range program.Statements {
+		cmd := stmt.Command()
+		switch cmd {
+		case token.SEMICOLON, token.SET, token.COMMIT, token.ROLLBACK: // add token.BEGIN when we're parsing this token
+			continue loop
+		}
+		queryCount++
+	}
+	w.TransactionQueryCount = queryCount
+
 	for _, stmt := range program.Statements {
 		env := object.NewEnvironment()
 		r := extractor.NewExtractor(&stmt, w.MustExtract)
@@ -103,22 +117,38 @@ func (q *Queries) addQuery(w QueryWorker) {
 		sourceUID = w.SourceUID
 	}
 
+	var (
+		durationUs            int64
+		transactionQueryCount int64
+	)
+
+	switch w.Command {
+	case token.SEMICOLON, token.SET, token.COMMIT, token.ROLLBACK: // add token.BEGIN when we're parsing this token
+		durationUs = 0
+		transactionQueryCount = 1
+	default:
+		durationUs = int64(math.Round(float64(w.DurationUs) / float64(w.TransactionQueryCount)))
+		transactionQueryCount = w.TransactionQueryCount
+	}
+
 	if _, ok := q.Queries[uidStr]; !ok {
 		database := w.Databases.AddDatabase(w.Database, "")
 		q.Queries[uidStr] = &Query{
-			UID:             uid,
-			DatabaseUID:     database.UID,
-			SourceUID:       sourceUID,
-			SourceQuery:     w.Input,
-			MaskedQuery:     w.Masked,
-			UnmaskedQuery:   w.Unmasked,
-			TotalCount:      1,
-			TotalDurationUs: w.DurationUs,
-			Command:         w.Command,
+			UID:                       uid,
+			DatabaseUID:               database.UID,
+			SourceUID:                 sourceUID,
+			SourceQuery:               w.Input,
+			MaskedQuery:               w.Masked,
+			UnmaskedQuery:             w.Unmasked,
+			TotalCount:                1,
+			TotalDurationUs:           durationUs,
+			TotalQueriesInTransaction: transactionQueryCount,
+			Command:                   w.Command,
 		}
 	} else {
 		q.Queries[uidStr].TotalCount++
-		q.Queries[uidStr].TotalDurationUs += w.DurationUs
+		q.Queries[uidStr].TotalDurationUs += durationUs
+		q.Queries[uidStr].TotalQueriesInTransaction += transactionQueryCount
 	}
 }
 
@@ -147,7 +177,11 @@ func (q *Queries) Upsert() {
 }
 
 func (q *Queries) ins() string {
-	return `INSERT INTO queries (uid, database_uid, source_uid, command, total_count, total_duration_us, masked_query, unmasked_query, source_query) 
+	return `INSERT INTO queries (
+	uid, database_uid, source_uid, command, 
+	total_count, total_duration_us, total_queries_in_transaction, 
+	average_duration_us, average_queries_in_transaction,
+	masked_query, unmasked_query, source_query) 
 	VALUES %s 
 	ON CONFLICT (uid) DO NOTHING;`
 }
@@ -161,9 +195,11 @@ func (q *Queries) insValues() []string {
 		original := strings.ReplaceAll(query.SourceQuery, "'", "''")
 
 		rows = append(rows,
-			fmt.Sprintf("('%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s')",
-				uid, query.DatabaseUID, query.SourceUID, query.Command.String(), query.TotalCount, query.TotalDurationUs, masked, unmasked, original))
-
+			fmt.Sprintf("('%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%.3f', '%s', '%s', '%s')",
+				uid, query.DatabaseUID, query.SourceUID, query.Command.String(),
+				query.TotalCount, query.TotalDurationUs, query.TotalQueriesInTransaction,
+				int64(math.Round(float64(query.TotalDurationUs)/float64(query.TotalCount))), float64(query.TotalQueriesInTransaction)/float64(query.TotalCount),
+				masked, unmasked, original))
 	}
 	return rows
 }
