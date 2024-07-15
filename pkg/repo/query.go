@@ -14,15 +14,15 @@ import (
 )
 
 type Query struct {
-	UID           uuid.UUID       `json:"uid,omitempty"`            // unique sha of the query
-	DatabaseUID   uuid.UUID       `json:"database_uid,omitempty"`   // the dataset the query belongs to
-	SourceUID     uuid.UUID       `json:"source_uid,omitempty"`     // the source the query belongs to
-	Command       token.TokenType `json:"command,omitempty"`        // the type of query
-	TotalCount    int64           `json:"total_count,omitempty"`    // the number of times the query was executed
-	TotalDuration int64           `json:"total_duration,omitempty"` // the total duration of all executions of the query in microseconds
-	MaskedQuery   string          `json:"masked_query,omitempty"`   // the query with parameters masked
-	UnmaskedQuery string          `json:"unmasked_query,omitempty"` // the query with parameters unmasked
-	SourceQuery   string          `json:"source,omitempty"`         // the original query from the source
+	UID             uuid.UUID       `json:"uid,omitempty"`               // unique sha of the query
+	DatabaseUID     uuid.UUID       `json:"database_uid,omitempty"`      // the dataset the query belongs to
+	SourceUID       uuid.UUID       `json:"source_uid,omitempty"`        // the source the query belongs to
+	Command         token.TokenType `json:"command,omitempty"`           // the type of query
+	TotalCount      int64           `json:"total_count,omitempty"`       // the number of times the query was executed
+	TotalDurationUs int64           `json:"total_duration_us,omitempty"` // the total duration of all executions of the query in microseconds
+	MaskedQuery     string          `json:"masked_query,omitempty"`      // the query with parameters masked
+	UnmaskedQuery   string          `json:"unmasked_query,omitempty"`    // the query with parameters unmasked
+	SourceQuery     string          `json:"source,omitempty"`            // the original query from the source
 }
 
 // This is an interim struct with additional Query meta data. The struct is passed around and built up instead
@@ -35,7 +35,7 @@ type QueryWorker struct {
 	Database    string
 	DatabaseUID uuid.UUID
 	Input       string // Original query. This may contain many queries
-	Duration    int64
+	DurationUs  int64  // Duration of the query in microseconds
 	MustExtract bool
 	Command     token.TokenType
 	Masked      string // Masked query. This is the query with all values replaced with ?

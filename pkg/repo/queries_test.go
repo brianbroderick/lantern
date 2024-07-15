@@ -135,10 +135,10 @@ func TestQueriesAnalyze(t *testing.T) {
 	source := NewSource("testDB", "testDB")
 
 	tests := []struct {
-		input    string
-		output   string
-		duration int64
-		uid      string
+		input      string
+		output     string
+		durationUs int64 // microseconds
+		uid        string
 	}{
 		{"select * from users where id = 42", "(SELECT * FROM users WHERE (id = ?));", 3, "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b"},
 		{"select * from users where id = 74", "(SELECT * FROM users WHERE (id = ?));", 5, "a2497c7b-dd5d-5be9-99b7-637eb8bacc4b"},
@@ -151,7 +151,7 @@ func TestQueriesAnalyze(t *testing.T) {
 			SourceUID:   source.UID,
 			DatabaseUID: UuidFromString("fd68aa5c-a9c0-58db-a05f-13270c8c09dd"),
 			Input:       tt.input,
-			Duration:    tt.duration,
+			DurationUs:  tt.durationUs,
 			MustExtract: false,
 		}
 
@@ -168,7 +168,7 @@ func TestQueriesAnalyze(t *testing.T) {
 	}
 
 	assert.Equal(t, int64(2), queries.Queries["a2497c7b-dd5d-5be9-99b7-637eb8bacc4b"].TotalCount)
-	assert.Equal(t, int64(8), queries.Queries["a2497c7b-dd5d-5be9-99b7-637eb8bacc4b"].TotalDuration)
+	assert.Equal(t, int64(8), queries.Queries["a2497c7b-dd5d-5be9-99b7-637eb8bacc4b"].TotalDurationUs)
 
 	timeDiff := t2.Sub(t1)
 	avg := timeDiff / time.Duration(len(tests))

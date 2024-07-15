@@ -106,19 +106,19 @@ func (q *Queries) addQuery(w QueryWorker) {
 	if _, ok := q.Queries[uidStr]; !ok {
 		database := w.Databases.AddDatabase(w.Database, "")
 		q.Queries[uidStr] = &Query{
-			UID:           uid,
-			DatabaseUID:   database.UID,
-			SourceUID:     sourceUID,
-			SourceQuery:   w.Input,
-			MaskedQuery:   w.Masked,
-			UnmaskedQuery: w.Unmasked,
-			TotalCount:    1,
-			TotalDuration: w.Duration,
-			Command:       w.Command,
+			UID:             uid,
+			DatabaseUID:     database.UID,
+			SourceUID:       sourceUID,
+			SourceQuery:     w.Input,
+			MaskedQuery:     w.Masked,
+			UnmaskedQuery:   w.Unmasked,
+			TotalCount:      1,
+			TotalDurationUs: w.DurationUs,
+			Command:         w.Command,
 		}
 	} else {
 		q.Queries[uidStr].TotalCount++
-		q.Queries[uidStr].TotalDuration += w.Duration
+		q.Queries[uidStr].TotalDurationUs += w.DurationUs
 	}
 }
 
@@ -147,7 +147,7 @@ func (q *Queries) Upsert() {
 }
 
 func (q *Queries) ins() string {
-	return `INSERT INTO queries (uid, database_uid, source_uid, command, total_count, total_duration, masked_query, unmasked_query, source_query) 
+	return `INSERT INTO queries (uid, database_uid, source_uid, command, total_count, total_duration_us, masked_query, unmasked_query, source_query) 
 	VALUES %s 
 	ON CONFLICT (uid) DO NOTHING;`
 }
@@ -162,7 +162,7 @@ func (q *Queries) insValues() []string {
 
 		rows = append(rows,
 			fmt.Sprintf("('%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%s')",
-				uid, query.DatabaseUID, query.SourceUID, query.Command.String(), query.TotalCount, query.TotalDuration, masked, unmasked, original))
+				uid, query.DatabaseUID, query.SourceUID, query.Command.String(), query.TotalCount, query.TotalDurationUs, masked, unmasked, original))
 
 	}
 	return rows
