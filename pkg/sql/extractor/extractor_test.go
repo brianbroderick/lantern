@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
-	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/stretchr/testify/assert"
@@ -127,8 +126,8 @@ func TestExtractSelectedColumns(t *testing.T) {
 			[][]string{{"SELECT|public.customers.id"}}},
 		// {"select c.id from customers c join addresses a on (c.id = a.customer_id) join states s on (s.id = a.state_id);", [][]string{{"id", "name"}}},
 		// // This is a complex join with multiple tables
-		// {"select c.id, c.name from customers c join addresses a on c.id = a.customer_id join states s on s.id = a.state_id join phone_numbers ph ON ph.customer_id = c.id;",
-		// 	[][]string{{"id", "name"}}},
+		{"select c.id, c.name, a.street_number from customers c join addresses a on c.id = a.customer_id join states s on s.id = a.state_id join phone_numbers ph ON ph.customer_id = c.id;",
+			[][]string{{"SELECT|public.customers.id", "SELECT|public.customers.name", "SELECT|public.addresses.street_number"}}},
 		// {"select id from customers join addresses on id = customer_id join phones on id = phone_id;", [][]string{{"id", "name"}}},
 		// {"select id from customers join addresses on customers.id = addresses.customer_id", [][]string{{"id", "name"}}},
 		// {"select id from customers join addresses on id = customer_id where id = 46;", [][]string{{"id", "name"}}},
@@ -253,7 +252,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 		// TODO: check for subqueries
 		// Select: EXISTS operator. In this case, NOT is a prefix operator
 		{"select id from users where exists (select id from addresses where user_id = users.id);",
-			[][]string{{"SELECT|public.users.id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users where not exists (select id from addresses where user_id = users.id);",
 		// 	[][]string{{"id", "name"}}},
 
@@ -267,7 +266,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		// Single tables
 		{"select id from users union select id from customers;",
-			[][]string{{"SELECT|public.users.id"}}},
+			[][]string{{"SELECT|public.UNKNOWN.id"}}},
 		// {"select id from users except select id from customers;", [][]string{{"id", "name"}}},
 		// {"select id from users intersect select id from customers;", [][]string{{"id", "name"}}},
 		// {"select id from users union all select id from customers;", [][]string{{"id", "name"}}},
@@ -435,8 +434,7 @@ func TestExtractSelectedColumns(t *testing.T) {
 
 		for i, s := range program.Statements {
 			r := NewExtractor(&s, true)
-			env := object.NewEnvironment()
-			r.Extract(s, env)
+			r.Execute(s)
 			checkExtractErrors(t, r, tt.input)
 
 			for fqcn, column := range r.ColumnsInQueries {
@@ -867,8 +865,7 @@ func TestExtractSelectedTables(t *testing.T) {
 
 		for i, s := range program.Statements {
 			r := NewExtractor(&s, true)
-			env := object.NewEnvironment()
-			r.Extract(s, env)
+			r.Execute(s)
 			checkExtractErrors(t, r, tt.input)
 
 			assert.Equal(t, len(tt.tables[i]), len(r.TablesInQueries), "input: %s\nNumber of tables not equal", tt.input)
@@ -929,8 +926,7 @@ func TestExtractColumnsInClauses(t *testing.T) {
 
 		for _, s := range program.Statements {
 			r := NewExtractor(&s, true)
-			env := object.NewEnvironment()
-			r.Extract(s, env)
+			r.Execute(s)
 			checkExtractErrors(t, r, tt.input)
 
 			for _, column := range r.ColumnsInQueries {

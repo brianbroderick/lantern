@@ -32,12 +32,19 @@ func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
 	}
 }
 
+func (r *Extractor) Execute(node ast.Node) {
+	env := object.NewEnvironment()
+	r.Extract(node, env)
+	r.InferColumnsInTables()
+}
+
 // InferColumnsInTables will set the table if there is only one table in the query
 func (r *Extractor) InferColumnsInTables() {
 	// If there are more than one table in the query, there's no way to map a column directly to a table
 	if len(r.TablesInQueries) != 1 {
 		return
 	}
+
 	var table *TablesInQueries
 	for _, t := range r.TablesInQueries {
 		table = t
@@ -217,11 +224,6 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	default:
 		r.newError("unknown node type: %T", node)
 	}
-
-	// Run post operations after everything has been recursively extracted
-
-	// Go back through and infer the table if there is only one table in the query
-	r.InferColumnsInTables()
 }
 
 func (r *Extractor) extractProgram(program *ast.Program, env *object.Environment) {

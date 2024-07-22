@@ -8,7 +8,6 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/extractor"
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/logit"
-	"github.com/brianbroderick/lantern/pkg/sql/object"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/google/uuid"
@@ -90,9 +89,8 @@ loop:
 	w.TransactionQueryCount = queryCount
 
 	for _, stmt := range program.Statements {
-		env := object.NewEnvironment()
 		r := extractor.NewExtractor(&stmt, w.MustExtract)
-		r.Extract(*r.Ast, env)
+		r.Execute(*r.Ast)
 
 		w.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
 		w.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone
