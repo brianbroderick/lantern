@@ -424,7 +424,6 @@ func TestExtractSelectedColumns(t *testing.T) {
 			[][]string{{"WHERE|public.UNKNOWN.id"}}},
 	}
 
-	// TODO: add table to non-aliased columns
 	// TODO: handle wildcards better
 
 	for _, tt := range tests {
