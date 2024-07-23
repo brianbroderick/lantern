@@ -94,7 +94,10 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 			r.Extract(a, env)
 		}
 	case *ast.InsertExpression:
-		r.Extract(node.Query, env)
+		switch node.Table.(type) {
+		case *ast.Identifier, *ast.SimpleIdentifier:
+			r.AddTablesInQueries(node.Table.(*ast.Identifier))
+		}
 	case *ast.ExpressionStatement:
 		r.Extract(node.Expression, env)
 	case *ast.SelectExpression:
