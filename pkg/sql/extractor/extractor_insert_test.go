@@ -29,7 +29,6 @@ func TestExtractInsertStatements(t *testing.T) {
 			[][]string{{"public.films"}}},
 		{"insert into products (name, price, product_no) values ('Cheese', 9.99, 1);",
 			[][]string{{"public.products"}}},
-		// TODO: Need to extract if tables are being read or written to (which is an insert vs a select)
 		{"insert into products (product_no, name, price) select product_no, name, price from new_products where release_date = 'today';",
 			[][]string{{"public.products"}, {"public.new_products"}}},
 		{"insert into films select * from tmp_films where date_prod < '2004-05-07';",
@@ -64,6 +63,73 @@ func TestExtractInsertStatements(t *testing.T) {
 
 			for _, table := range r.TablesInQueries {
 				assert.Contains(t, tt.tables[i], fmt.Sprintf("%s.%s", table.Schema, table.Name), "input: %s\nTable %s not found in %v", tt.input, table.Name, tt.tables[i])
+			}
+		}
+	}
+
+	t2 := time.Now()
+	timeDiff := t2.Sub(t1)
+	fmt.Printf("TestExtractInsertStatements, Elapsed Time: %s\n", timeDiff)
+}
+
+func TestExtractCommandTags(t *testing.T) {
+	t1 := time.Now()
+
+	tests := []struct {
+		input  string
+		tables [][]string
+	}{
+		{"insert into films values ('UA502', 'Bananas', 105, '1971-07-13', 'Comedy', '82 minutes');",
+			[][]string{{"public.films", "INSERT"}}},
+		{"insert into films values ('UA502', 'Bananas', 105, DEFAULT, 'Comedy', '82 minutes');",
+			[][]string{{"public.films", "INSERT"}}},
+		{"insert into users (name, email) values ('Brian', 'foo@bar.com');",
+			[][]string{{"public.users", "INSERT"}}},
+		{"insert into users (name, email) values ('Brian', 'foo@bar.com'), ('Bob', 'bar@foo.com');",
+			[][]string{{"public.users", "INSERT"}}},
+		{"insert into films default values;",
+			[][]string{{"public.films", "INSERT"}}},
+		{"insert into products (name, price, product_no) values ('Cheese', 9.99, 1);",
+			[][]string{{"public.products", "INSERT"}}},
+		{"insert into products (product_no, name, price) select product_no, name, price from new_products where release_date = 'today';",
+			[][]string{{"public.products", "INSERT"}, {"public.new_products", "SELECT"}}},
+		{"insert into films select * from tmp_films where date_prod < '2004-05-07';",
+			[][]string{{"public.films", "INSERT"}, {"public.tmp_films", "SELECT"}}},
+		{"insert into distributors (did, dname) values (default, 'XYZ Widgets')	returning did;",
+			[][]string{{"public.distributors", "INSERT"}}},
+		{"insert into distributors (did, dname) values (default, 'XYZ Widgets')	returning did, dname;",
+			[][]string{{"public.distributors", "INSERT"}}},
+		{"insert into distributors (did, dname) values (7, 'Redline GmbH') on conflict (did) do nothing;",
+			[][]string{{"public.distributors", "INSERT"}}},
+		{"insert into distributors (did, dname) values (7, 'Redline GmbH') on conflict (did) do update set dname = excluded.dname;",
+			[][]string{{"public.distributors", "INSERT"}}},
+		{"insert into people (id, fname, lname) values (42, 'Brian', 'Broderick') on conflict (id) do update set fname = excluded.fname, lname = excluded.lname;",
+			[][]string{{"public.people", "INSERT"}}},
+		{"insert into people (id, fname, lname) values (42, 'Brian', 'Broderick') on conflict (id) do update set (fname = excluded.fname, lname = excluded.lname);",
+			[][]string{{"public.people", "INSERT"}}},
+		{"insert into distributors as d (did, dname) values (8, 'Anvil Distribution') on conflict (did) do update set dname = excluded.dname where d.zipcode <> '21201';",
+			[][]string{{"public.distributors", "INSERT"}}},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+
+		for _, s := range program.Statements {
+			r := NewExtractor(&s, true)
+			r.Execute(s)
+			checkExtractErrors(t, r, tt.input)
+
+			for _, table := range r.TablesInQueries {
+				fqtn := fmt.Sprintf("%s.%s", table.Schema, table.Name)
+				for _, ss := range tt.tables {
+					for _, testTbl := range ss {
+						if testTbl == fqtn {
+							assert.Equal(t, table.Command.String(), ss[1], "input: %s\nCommand not equal", tt.input)
+						}
+					}
+				}
 			}
 		}
 	}
