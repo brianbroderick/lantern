@@ -7,7 +7,7 @@ import (
 
 func (p *Parser) parseValuesExpression() ast.Expression {
 	defer p.untrace(p.trace("parseValuesExpression"))
-	x := &ast.ValuesExpression{Token: p.curToken, Branch: p.clause}
+	x := &ast.ValuesExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 
 	if p.curTokenIs(token.VALUES) {
 		if p.peekTokenIs(token.LPAREN) {
@@ -17,7 +17,7 @@ func (p *Parser) parseValuesExpression() ast.Expression {
 			x.Tuples = append(x.Tuples, values)
 		} else {
 			// A values expression is only when it's a function call
-			return &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit, Branch: p.clause}
+			return &ast.SimpleIdentifier{Token: p.curToken, Value: p.curToken.Lit, Branch: p.clause, CommandTag: p.command}
 		}
 	}
 

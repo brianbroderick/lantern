@@ -29,15 +29,17 @@ type ColumnsInQueries struct {
 	Schema    string          `json:"schema_name"`
 	Table     string          `json:"table_name"`
 	Name      string          `json:"column_name"`
+	Command   token.TokenType `json:"command"`
 	Clause    token.TokenType `json:"clause"`
 }
 
 type TablesInQueries struct {
-	UID      uuid.UUID `json:"uid"`
-	TableUID uuid.UUID `json:"table_uid"`
-	QueryUID uuid.UUID `json:"query_uid"`
-	Schema   string    `json:"schema_name"`
-	Name     string    `json:"table_name"`
+	UID      uuid.UUID       `json:"uid"`
+	TableUID uuid.UUID       `json:"table_uid"`
+	QueryUID uuid.UUID       `json:"query_uid"`
+	Command  token.TokenType `json:"command"`
+	Schema   string          `json:"schema_name"`
+	Name     string          `json:"table_name"`
 }
 
 type Tables struct {
@@ -138,7 +140,7 @@ func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_conditio
 // AddColumnsInQueries adds a column to the extractor. If the column already exists, it returns the existing column.
 // This will potentially add calculated columns as it doesn't yet map to an existing table, just whatever is in the identifier.
 // In a later step, columns will be mapped to real tables.
-func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.TokenType) *ColumnsInQueries {
+func (d *Extractor) AddColumnsInQueries(i *ast.Identifier) *ColumnsInQueries {
 	var (
 		schema string
 		table  string
@@ -151,47 +153,48 @@ func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.Toke
 	// TODO: add support for adding tables in the resolver when not specified.
 	table = "UNKNOWN"
 
-	switch len(ident.Value) {
+	switch len(i.Value) {
 	case 1:
-		switch ident.Value[0].(type) {
+		switch i.Value[0].(type) {
 		case *ast.SimpleIdentifier:
-			column = ident.Value[0].(*ast.SimpleIdentifier).Value
+			column = i.Value[0].(*ast.SimpleIdentifier).Value
 		case *ast.WildcardLiteral:
 			column = "*"
 		}
 	case 2:
-		table = ident.Value[0].(*ast.SimpleIdentifier).Value
-		switch ident.Value[1].(type) {
+		table = i.Value[0].(*ast.SimpleIdentifier).Value
+		switch i.Value[1].(type) {
 		case *ast.SimpleIdentifier:
-			column = ident.Value[1].(*ast.SimpleIdentifier).Value
+			column = i.Value[1].(*ast.SimpleIdentifier).Value
 		case *ast.WildcardLiteral:
 			column = "*"
 		}
 	case 3:
-		schema = ident.Value[0].(*ast.SimpleIdentifier).Value
-		table = ident.Value[1].(*ast.SimpleIdentifier).Value
+		schema = i.Value[0].(*ast.SimpleIdentifier).Value
+		table = i.Value[1].(*ast.SimpleIdentifier).Value
 
-		switch ident.Value[2].(type) {
+		switch i.Value[2].(type) {
 		case *ast.SimpleIdentifier:
-			column = ident.Value[2].(*ast.SimpleIdentifier).Value
+			column = i.Value[2].(*ast.SimpleIdentifier).Value
 		case *ast.WildcardLiteral:
 			column = "*"
 		}
 	}
 
-	fqcn := fmt.Sprintf("%s|%s.%s.%s", clause.String(), schema, table, column) // fqcn is the fully qualified column name with clause
+	fqcn := fmt.Sprintf("%s|%s.%s.%s", i.Clause().String(), schema, table, column) // fqcn is the fully qualified column name with clause
 
 	if _, ok := d.ColumnsInQueries[fqcn]; !ok {
 		uid := UuidV5(fqcn)
 
 		d.ColumnsInQueries[fqcn] = &ColumnsInQueries{
 			UID:       uid,
+			Command:   i.Command(),
 			Schema:    schema,
 			Table:     table,
 			TableUID:  UuidV5(fmt.Sprintf("%s.%s", schema, table)),
 			Name:      column,
 			ColumnUID: UuidV5(fmt.Sprintf("%s.%s.%s", schema, table, column)), // don't include the clause in the column UID
-			Clause:    clause,
+			Clause:    i.Clause(),
 		}
 	}
 
@@ -200,16 +203,16 @@ func (d *Extractor) AddColumnsInQueries(ident *ast.Identifier, clause token.Toke
 
 // AddTablesInQueries adds a table to the extractor. If the table already exists, it returns the existing table.
 // It doesn't know the QueryUID yet, so this is a generic table that will be mapped to a query later.
-func (d *Extractor) AddTablesInQueries(ident *ast.Identifier) *TablesInQueries {
+func (d *Extractor) AddTablesInQueries(i *ast.Identifier) *TablesInQueries {
 	schema := "public"
 	table := "UNKNOWN"
 
-	switch len(ident.Value) {
+	switch len(i.Value) {
 	case 1:
-		table = ident.Value[0].(*ast.SimpleIdentifier).Value
+		table = i.Value[0].(*ast.SimpleIdentifier).Value
 	case 2:
-		schema = ident.Value[0].(*ast.SimpleIdentifier).Value
-		table = ident.Value[1].(*ast.SimpleIdentifier).Value
+		schema = i.Value[0].(*ast.SimpleIdentifier).Value
+		table = i.Value[1].(*ast.SimpleIdentifier).Value
 	}
 
 	fqtn := fmt.Sprintf("%s.%s", schema, table) // fqtn is the fully qualified table name
@@ -219,6 +222,7 @@ func (d *Extractor) AddTablesInQueries(ident *ast.Identifier) *TablesInQueries {
 
 		d.TablesInQueries[fqtn] = &TablesInQueries{
 			TableUID: tableUid,
+			Command:  i.Command(),
 			Schema:   schema,
 			Name:     table,
 		}

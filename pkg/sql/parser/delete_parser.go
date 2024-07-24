@@ -21,7 +21,9 @@ func (p *Parser) parseDeleteStatement() *ast.DeleteStatement {
 func (p *Parser) parseDeleteExpression() ast.Expression {
 	defer p.untrace(p.trace("parseDeleteExpression"))
 
-	x := &ast.DeleteExpression{Token: p.curToken, Branch: p.clause}
+	p.command = token.DELETE
+
+	x := &ast.DeleteExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 
 	if p.peekTokenIs(token.FROM) {
 		p.nextToken()

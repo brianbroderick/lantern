@@ -10,7 +10,7 @@ import (
 func (p *Parser) parseCaseExpression() ast.Expression {
 	// defer p.untrace(p.trace("parseCaseExpression"))
 
-	x := &ast.CaseExpression{Token: p.curToken, Branch: p.clause}
+	x := &ast.CaseExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 
 	if !p.peekTokenIs(token.WHEN) {
 		p.nextToken()
@@ -20,7 +20,7 @@ func (p *Parser) parseCaseExpression() ast.Expression {
 	for p.peekTokenIs(token.WHEN) {
 		p.nextToken()
 		p.nextToken()
-		condition := &ast.ConditionExpression{Token: p.curToken, Branch: p.clause}
+		condition := &ast.ConditionExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 		condition.Condition = p.parseExpression(LOWEST)
 
 		// Peek must be THEN

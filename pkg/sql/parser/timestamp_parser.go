@@ -7,7 +7,7 @@ import (
 
 func (p *Parser) parseTimestampExpression() ast.Expression {
 	// defer untrace(trace("parseTimestampExpression " + p.curToken.Lit))
-	x := &ast.TimestampExpression{Token: p.curToken, Branch: p.clause}
+	x := &ast.TimestampExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 
 	// timestamp with time zone
 	if p.peekTokenIs(token.WITH) {

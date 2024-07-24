@@ -26,11 +26,12 @@ type CreateStatement struct {
 	Expression   Expression  `json:"expression,omitempty"`   // the expression to create the object
 }
 
-func (x *CreateStatement) Clause() token.TokenType     { return x.Token.Type }
-func (x *CreateStatement) SetClause(c token.TokenType) {}
-func (x *CreateStatement) Command() token.TokenType    { return x.Token.Type }
-func (x *CreateStatement) statementNode()              {}
-func (x *CreateStatement) TokenLiteral() string        { return x.Token.Lit }
+func (x *CreateStatement) Clause() token.TokenType      { return x.Token.Type }
+func (x *CreateStatement) SetClause(c token.TokenType)  {}
+func (x *CreateStatement) Command() token.TokenType     { return x.Token.Type }
+func (x *CreateStatement) SetCommand(c token.TokenType) {}
+func (x *CreateStatement) statementNode()               {}
+func (x *CreateStatement) TokenLiteral() string         { return x.Token.Lit }
 func (x *CreateStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("CREATE")
@@ -81,18 +82,20 @@ func (x *CreateStatement) Inspect(maskParams bool) string {
 }
 
 type LikeExpression struct {
-	Token   token.Token     `json:"token,omitempty"` // the token.LIKE token
-	Table   Expression      `json:"table,omitempty"`
-	Options []string        `json:"options,omitempty"`
-	Cast    Expression      `json:"cast,omitempty"`
-	Branch  token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+	Token      token.Token     `json:"token,omitempty"` // the token.LIKE token
+	Table      Expression      `json:"table,omitempty"`
+	Options    []string        `json:"options,omitempty"`
+	Cast       Expression      `json:"cast,omitempty"`
+	Branch     token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+	CommandTag token.TokenType `json:"command,omitempty"`
 }
 
-func (x *LikeExpression) Clause() token.TokenType     { return x.Branch }
-func (x *LikeExpression) SetClause(c token.TokenType) { x.Branch = c }
-func (x *LikeExpression) Command() token.TokenType    { return x.Token.Type }
-func (x *LikeExpression) expressionNode()             {}
-func (x *LikeExpression) TokenLiteral() string        { return x.Token.Lit }
+func (x *LikeExpression) Clause() token.TokenType      { return x.Branch }
+func (x *LikeExpression) SetClause(c token.TokenType)  { x.Branch = c }
+func (x *LikeExpression) Command() token.TokenType     { return x.CommandTag }
+func (x *LikeExpression) SetCommand(c token.TokenType) { x.CommandTag = c }
+func (x *LikeExpression) expressionNode()              {}
+func (x *LikeExpression) TokenLiteral() string         { return x.Token.Lit }
 func (x *LikeExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString("(LIKE ")

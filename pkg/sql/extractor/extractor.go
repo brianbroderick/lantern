@@ -95,7 +95,10 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		}
 	case *ast.InsertExpression:
 		switch node.Table.(type) {
-		case *ast.Identifier, *ast.SimpleIdentifier:
+		// case *ast.Identifier, *ast.SimpleIdentifier:
+		// we used to call out SimpleIdentifier here, but it would break the AddTablesInQueries function
+		// Not sure why we were doing that, so there might be a bug here
+		case *ast.Identifier:
 			r.AddTablesInQueries(node.Table.(*ast.Identifier))
 		}
 	case *ast.ExpressionStatement:
@@ -320,7 +323,7 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 	if r.MustExtract {
 		switch i.Clause() {
 		case token.SELECT, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
-			r.AddColumnsInQueries(i, i.Clause())
+			r.AddColumnsInQueries(i)
 		case token.FROM: // The FROM clause will have tables
 			r.AddTablesInQueries(i)
 		case token.FUNCTION_CALL:

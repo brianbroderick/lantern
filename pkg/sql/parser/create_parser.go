@@ -97,7 +97,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 func (p *Parser) parseLikeExpression() ast.Expression {
 	// defer p.untrace(p.trace("parseLikeExpression"))
 
-	x := &ast.LikeExpression{Token: p.curToken, Branch: p.clause}
+	x := &ast.LikeExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 
 	if p.peekTokenIs(token.IDENT) {
 		p.nextToken()

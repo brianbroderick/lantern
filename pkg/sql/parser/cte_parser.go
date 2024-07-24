@@ -19,8 +19,9 @@ func (p *Parser) parseCTEStatement() *ast.CTEStatement {
 
 func (p *Parser) parseCTEExpression() ast.Expression {
 	// defer p.untrace(p.trace("parseCTEExpression"))
+	p.command = token.WITH
 
-	x := &ast.CTEExpression{Token: p.curToken, Branch: p.clause}
+	x := &ast.CTEExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 	p.nextToken()
 
 	if p.curTokenIs(token.RECURSIVE) {

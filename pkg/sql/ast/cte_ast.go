@@ -18,11 +18,12 @@ type CTEStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-func (s *CTEStatement) Clause() token.TokenType     { return s.Token.Type }
-func (x *CTEStatement) SetClause(c token.TokenType) {}
-func (s *CTEStatement) Command() token.TokenType    { return s.Token.Type }
-func (s *CTEStatement) statementNode()              {}
-func (s *CTEStatement) TokenLiteral() string        { return s.Token.Lit }
+func (s *CTEStatement) Clause() token.TokenType      { return s.Token.Type }
+func (x *CTEStatement) SetClause(c token.TokenType)  {}
+func (s *CTEStatement) Command() token.TokenType     { return s.Token.Type }
+func (x *CTEStatement) SetCommand(c token.TokenType) {}
+func (s *CTEStatement) statementNode()               {}
+func (s *CTEStatement) TokenLiteral() string         { return s.Token.Lit }
 func (s *CTEStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(s.Expression.String(maskParams))
@@ -38,19 +39,21 @@ func (s *CTEStatement) Inspect(maskParams bool) string {
 }
 
 type CTEExpression struct {
-	Token     token.Token     `json:"token,omitempty"`
-	Recursive bool            `json:"recursive,omitempty"`
-	Auxiliary []Expression    `json:"auxiliary,omitempty"`
-	Primary   Expression      `json:"primary,omitempty"`
-	Cast      Expression      `json:"cast,omitempty"`
-	Branch    token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+	Token      token.Token     `json:"token,omitempty"`
+	Recursive  bool            `json:"recursive,omitempty"`
+	Auxiliary  []Expression    `json:"auxiliary,omitempty"`
+	Primary    Expression      `json:"primary,omitempty"`
+	Cast       Expression      `json:"cast,omitempty"`
+	Branch     token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+	CommandTag token.TokenType `json:"command,omitempty"`
 }
 
-func (x *CTEExpression) Clause() token.TokenType     { return x.Branch }
-func (x *CTEExpression) SetClause(c token.TokenType) { x.Branch = c }
-func (x *CTEExpression) Command() token.TokenType    { return x.Token.Type }
-func (x *CTEExpression) expressionNode()             {}
-func (x *CTEExpression) TokenLiteral() string        { return x.Token.Lit }
+func (x *CTEExpression) Clause() token.TokenType      { return x.Branch }
+func (x *CTEExpression) SetClause(c token.TokenType)  { x.Branch = c }
+func (x *CTEExpression) Command() token.TokenType     { return x.CommandTag }
+func (x *CTEExpression) SetCommand(c token.TokenType) { x.CommandTag = c }
+func (x *CTEExpression) expressionNode()              {}
+func (x *CTEExpression) TokenLiteral() string         { return x.Token.Lit }
 func (x *CTEExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -90,13 +93,15 @@ type CTEAuxiliaryExpression struct {
 	Expression   Expression      `json:"expression,omitempty"`
 	Cast         Expression      `json:"cast,omitempty"`
 	Branch       token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+	CommandTag   token.TokenType `json:"command,omitempty"`
 }
 
-func (x *CTEAuxiliaryExpression) Clause() token.TokenType     { return x.Branch }
-func (x *CTEAuxiliaryExpression) SetClause(c token.TokenType) { x.Branch = c }
-func (x *CTEAuxiliaryExpression) Command() token.TokenType    { return x.Token.Type }
-func (x *CTEAuxiliaryExpression) expressionNode()             {}
-func (x *CTEAuxiliaryExpression) TokenLiteral() string        { return x.Token.Lit }
+func (x *CTEAuxiliaryExpression) Clause() token.TokenType      { return x.Branch }
+func (x *CTEAuxiliaryExpression) SetClause(c token.TokenType)  { x.Branch = c }
+func (x *CTEAuxiliaryExpression) Command() token.TokenType     { return x.CommandTag }
+func (x *CTEAuxiliaryExpression) SetCommand(c token.TokenType) { x.CommandTag = c }
+func (x *CTEAuxiliaryExpression) expressionNode()              {}
+func (x *CTEAuxiliaryExpression) TokenLiteral() string         { return x.Token.Lit }
 func (x *CTEAuxiliaryExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(x.Name.String(maskParams))

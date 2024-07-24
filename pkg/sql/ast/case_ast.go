@@ -14,13 +14,15 @@ type CaseExpression struct {
 	Alternative Expression             `json:"alternative,omitempty"`
 	Cast        Expression             `json:"cast,omitempty"`
 	Branch      token.TokenType        `json:"clause,omitempty"` // location in the tree representing a clause
+	CommandTag  token.TokenType        `json:"command,omitempty"`
 }
 
-func (x *CaseExpression) Clause() token.TokenType     { return x.Branch }
-func (x *CaseExpression) SetClause(c token.TokenType) { x.Branch = c }
-func (x *CaseExpression) Command() token.TokenType    { return x.Token.Type }
-func (x *CaseExpression) expressionNode()             {}
-func (x *CaseExpression) TokenLiteral() string        { return x.Token.Lit }
+func (x *CaseExpression) Clause() token.TokenType      { return x.Branch }
+func (x *CaseExpression) SetClause(c token.TokenType)  { x.Branch = c }
+func (x *CaseExpression) Command() token.TokenType     { return x.CommandTag }
+func (x *CaseExpression) SetCommand(c token.TokenType) { x.CommandTag = c }
+func (x *CaseExpression) expressionNode()              {}
+func (x *CaseExpression) TokenLiteral() string         { return x.Token.Lit }
 func (x *CaseExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 
@@ -58,13 +60,15 @@ type ConditionExpression struct {
 	Consequence Expression      `json:"consequence,omitempty"`
 	Cast        Expression      `json:"cast,omitempty"`
 	Branch      token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
+	CommandTag  token.TokenType `json:"command,omitempty"`
 }
 
-func (x *ConditionExpression) Clause() token.TokenType     { return x.Branch }
-func (x *ConditionExpression) SetClause(c token.TokenType) { x.Branch = c }
-func (x *ConditionExpression) Command() token.TokenType    { return x.Token.Type }
-func (x *ConditionExpression) expressionNode()             {}
-func (x *ConditionExpression) TokenLiteral() string        { return x.Token.Lit }
+func (x *ConditionExpression) Clause() token.TokenType      { return x.Branch }
+func (x *ConditionExpression) SetClause(c token.TokenType)  { x.Branch = c }
+func (x *ConditionExpression) Command() token.TokenType     { return x.CommandTag }
+func (x *ConditionExpression) SetCommand(c token.TokenType) { x.CommandTag = c }
+func (x *ConditionExpression) expressionNode()              {}
+func (x *ConditionExpression) TokenLiteral() string         { return x.Token.Lit }
 func (x *ConditionExpression) String(maskParams bool) string {
 	var out bytes.Buffer
 

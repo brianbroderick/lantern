@@ -13,11 +13,12 @@ type DeleteStatement struct {
 	Expression Expression  `json:"expression,omitempty"`
 }
 
-func (s *DeleteStatement) Clause() token.TokenType     { return s.Token.Type }
-func (x *DeleteStatement) SetClause(c token.TokenType) {}
-func (s *DeleteStatement) Command() token.TokenType    { return s.Token.Type }
-func (s *DeleteStatement) statementNode()              {}
-func (s *DeleteStatement) TokenLiteral() string        { return s.Token.Upper }
+func (s *DeleteStatement) Clause() token.TokenType      { return s.Token.Type }
+func (x *DeleteStatement) SetClause(c token.TokenType)  {}
+func (s *DeleteStatement) Command() token.TokenType     { return s.Token.Type }
+func (x *DeleteStatement) SetCommand(c token.TokenType) {}
+func (s *DeleteStatement) statementNode()               {}
+func (s *DeleteStatement) TokenLiteral() string         { return s.Token.Upper }
 func (s *DeleteStatement) String(maskParams bool) string {
 	var out bytes.Buffer
 	out.WriteString(s.Expression.String(maskParams))
@@ -44,13 +45,15 @@ type DeleteExpression struct {
 	Cast         Expression        `json:"cast,omitempty"`
 	TableAliases map[string]string `json:"-"`                // map of table aliases
 	Branch       token.TokenType   `json:"clause,omitempty"` // location in the tree representing a clause
+	CommandTag   token.TokenType   `json:"command,omitempty"`
 }
 
-func (x *DeleteExpression) Clause() token.TokenType     { return x.Branch }
-func (x *DeleteExpression) SetClause(c token.TokenType) { x.Branch = c }
-func (x *DeleteExpression) Command() token.TokenType    { return x.Token.Type }
-func (x *DeleteExpression) expressionNode()             {}
-func (x *DeleteExpression) TokenLiteral() string        { return x.Token.Upper }
+func (x *DeleteExpression) Clause() token.TokenType      { return x.Branch }
+func (x *DeleteExpression) SetClause(c token.TokenType)  { x.Branch = c }
+func (x *DeleteExpression) Command() token.TokenType     { return x.CommandTag }
+func (x *DeleteExpression) SetCommand(c token.TokenType) { x.CommandTag = c }
+func (x *DeleteExpression) expressionNode()              {}
+func (x *DeleteExpression) TokenLiteral() string         { return x.Token.Upper }
 func (x *DeleteExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
