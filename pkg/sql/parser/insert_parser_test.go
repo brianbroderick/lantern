@@ -50,3 +50,48 @@ func TestInsertStatements(t *testing.T) {
 		// fmt.Printf("output: %s\n", output)
 	}
 }
+
+func TestInsertMaskParams(t *testing.T) {
+	maskParams := true
+
+	tests := []struct {
+		input  string
+		output string
+	}{
+		{"insert into films values ('UA502', 'Bananas', 105, '1971-07-13', 'Comedy', '82 minutes');", "(INSERT INTO films VALUES ('?', '?', ?, '?', '?', '?'));"},
+		{"insert into films values ('UA502', 'Bananas', 105, DEFAULT, 'Comedy', '82 minutes');", "(INSERT INTO films VALUES ('?', '?', ?, DEFAULT, '?', '?'));"}, // TODO: DEFAULT should also be masked
+		{"insert into users (name, email) values ('Brian', 'foo@bar.com');", "(INSERT INTO users (name, email) VALUES ('?', '?'));"},
+		{"insert into users (name, email) values ('Brian', 'foo@bar.com'), ('Bob', 'bar@foo.com');", "(INSERT INTO users (name, email) VALUES ('?', '?'));"},
+		{"insert into films default values;", "(INSERT INTO films DEFAULT VALUES);"},
+		{"insert into products (name, price, product_no) values ('Cheese', 9.99, 1);", "(INSERT INTO products (name, price, product_no) VALUES ('?', ?, ?));"},
+		{"insert into products (product_no, name, price) select product_no, name, price from new_products where release_date = 'today';", "(INSERT INTO products (product_no, name, price) (SELECT product_no, name, price FROM new_products WHERE (release_date = '?')));"},
+		{"insert into films select * from tmp_films where date_prod < '2004-05-07';", "(INSERT INTO films (SELECT * FROM tmp_films WHERE (date_prod < '?')));"},
+		{"insert into distributors (did, dname) values (default, 'XYZ Widgets')	returning did;", "(INSERT INTO distributors (did, dname) VALUES (default, '?') RETURNING did);"}, // TODO: DEFAULT should also be masked
+		{"insert into distributors (did, dname) values (default, 'XYZ Widgets')	returning did, dname;", "(INSERT INTO distributors (did, dname) VALUES (default, '?') RETURNING did, dname);"},
+		{"insert into distributors (did, dname) values (7, 'Redline GmbH') on conflict (did) do nothing;", "(INSERT INTO distributors (did, dname) VALUES (?, '?') ON CONFLICT (did) DO NOTHING);"},
+		{"insert into distributors (did, dname) values (7, 'Redline GmbH') on conflict (did) do update set dname = excluded.dname;", "(INSERT INTO distributors (did, dname) VALUES (?, '?') ON CONFLICT (did) DO UPDATE SET (dname = excluded.dname));"},
+		{"insert into people (id, fname, lname) values (42, 'Brian', 'Broderick') on conflict (id) do update set fname = excluded.fname, lname = excluded.lname;", "(INSERT INTO people (id, fname, lname) VALUES (?, '?', '?') ON CONFLICT (id) DO UPDATE SET (fname = excluded.fname), (lname = excluded.lname));"},
+		{"insert into people (id, fname, lname) values (42, 'Brian', 'Broderick') on conflict (id) do update set (fname = excluded.fname, lname = excluded.lname);", "(INSERT INTO people (id, fname, lname) VALUES (?, '?', '?') ON CONFLICT (id) DO UPDATE SET ((fname = excluded.fname), (lname = excluded.lname)));"},
+		{"insert into distributors as d (did, dname) values (8, 'Anvil Distribution') on conflict (did) do update set dname = excluded.dname where d.zipcode <> '21201';", "(INSERT INTO distributors AS d (did, dname) VALUES (?, '?') ON CONFLICT (did) DO UPDATE SET (dname = excluded.dname) WHERE (d.zipcode <> '?'));"},
+	}
+
+	for _, tt := range tests {
+		// fmt.Printf("\ninput:  %s\n", tt.input)
+		l := lexer.New(tt.input)
+		p := New(l)
+		program := p.ParseProgram()
+		checkParserErrors(t, p, tt.input)
+
+		assert.Equal(t, 1, len(program.Statements), "input: %s\nprogram.Statements does not contain %d statements. got=%d\n", tt.input, 1, len(program.Statements))
+
+		stmt := program.Statements[0]
+		assert.Equal(t, "INSERT", stmt.TokenLiteral(), "input: %s\nprogram.Statements[0] is not ast.InsertStatement. got=%T", tt.input, stmt)
+
+		_, ok := stmt.(*ast.InsertStatement)
+		assert.True(t, ok, "input: %s\nstmt is not *ast.InsertStatement. got=%T", tt.input, stmt)
+
+		output := program.String(maskParams)
+		assert.Equal(t, tt.output, output, "input: %s\nprogram.String() not '%s'. got=%s", tt.input, tt.output, output)
+		// fmt.Printf("output: %s\n", output)
+	}
+}

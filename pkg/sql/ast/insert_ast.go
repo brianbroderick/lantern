@@ -91,18 +91,31 @@ func (x *InsertExpression) String(maskParams bool) string {
 	}
 	if len(x.Values) > 0 {
 		out.WriteString(" VALUES ")
-		for i, v := range x.Values {
-			if i > 0 {
-				out.WriteString(", ")
-			}
+		if maskParams {
 			out.WriteString("(")
-			for j, e := range v {
+
+			for j, e := range x.Values[0] {
 				if j > 0 {
 					out.WriteString(", ")
 				}
 				out.WriteString(e.String(maskParams))
 			}
+
 			out.WriteString(")")
+		} else {
+			for i, v := range x.Values {
+				if i > 0 {
+					out.WriteString(", ")
+				}
+				out.WriteString("(")
+				for j, e := range v {
+					if j > 0 {
+						out.WriteString(", ")
+					}
+					out.WriteString(e.String(maskParams))
+				}
+				out.WriteString(")")
+			}
 		}
 	}
 	if x.Query != nil {
