@@ -37,9 +37,9 @@ type TablesInQueries struct {
 	UID      uuid.UUID       `json:"uid"`
 	TableUID uuid.UUID       `json:"table_uid"`
 	QueryUID uuid.UUID       `json:"query_uid"`
-	Command  token.TokenType `json:"command"`
 	Schema   string          `json:"schema_name"`
 	Name     string          `json:"table_name"`
+	Command  token.TokenType `json:"command"`
 }
 
 type Tables struct {

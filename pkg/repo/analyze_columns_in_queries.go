@@ -22,6 +22,7 @@ func (q *Queries) addColumnsInQueries(qu *Query, ext *extractor.Extractor) {
 				Schema:    column.Schema,
 				Table:     column.Table,
 				Name:      column.Name,
+				Command:   column.Command,
 				Clause:    column.Clause,
 			}
 		}
@@ -42,11 +43,12 @@ func (q *Queries) UpsertColumnsInQueries() {
 }
 
 func (q *Queries) insColumnsInQueries() string {
-	return `INSERT INTO columns_in_queries (uid, query_uid, table_uid, column_uid, schema_name, table_name, column_name, clause)
+	return `INSERT INTO columns_in_queries (uid, query_uid, table_uid, column_uid, schema_name, table_name, column_name, command, clause)
 	VALUES %s 
 	ON CONFLICT (uid) DO UPDATE 
 	SET query_uid = EXCLUDED.query_uid, table_uid = EXCLUDED.table_uid, column_uid = EXCLUDED.column_uid, 
-	    schema_name = EXCLUDED.schema_name, table_name = EXCLUDED.table_name, column_name = EXCLUDED.column_name, clause = EXCLUDED.clause;`
+	    schema_name = EXCLUDED.schema_name, table_name = EXCLUDED.table_name, column_name = EXCLUDED.column_name, 
+			command = EXCLUDED.command, clause = EXCLUDED.clause;`
 }
 
 func (q *Queries) insValuesColumnsInQueries() []string {
@@ -54,8 +56,8 @@ func (q *Queries) insValuesColumnsInQueries() []string {
 
 	for uid, query := range q.ColumnsInQueries {
 		rows = append(rows,
-			fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
-				uid, query.QueryUID, query.TableUID, query.ColumnUID, query.Schema, query.Table, query.Name, query.Clause))
+			fmt.Sprintf("('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')",
+				uid, query.QueryUID, query.TableUID, query.ColumnUID, query.Schema, query.Table, query.Name, query.Command, query.Clause))
 	}
 	return rows
 }
