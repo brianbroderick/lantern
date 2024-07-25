@@ -93,14 +93,6 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		for _, a := range node.Auxiliary {
 			r.Extract(a, env)
 		}
-	case *ast.InsertExpression:
-		switch node.Table.(type) {
-		// case *ast.Identifier, *ast.SimpleIdentifier:
-		// we used to call out SimpleIdentifier here, but it would break the AddTablesInQueries function
-		// Not sure why we were doing that, so there might be a bug here
-		case *ast.Identifier:
-			r.AddTablesInQueries(node.Table.(*ast.Identifier))
-		}
 	case *ast.ExpressionStatement:
 		r.Extract(node.Expression, env)
 	case *ast.SelectExpression:
@@ -209,15 +201,48 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	case *ast.UnionExpression:
 		r.Extract(node.Left, env)
 		r.Extract(node.Right, env)
+	case *ast.InsertExpression:
+		switch node.Table.(type) {
+		// case *ast.Identifier, *ast.SimpleIdentifier:
+		// we used to call out SimpleIdentifier here, but it would break the AddTablesInQueries function
+		// Not sure why we were doing that, so there might be a bug here
+		case *ast.Identifier:
+			r.AddTablesInQueries(node.Table.(*ast.Identifier))
+		}
+		// The query in an insert statement is when we're inserting a select statement
+		if node.Query != nil {
+			r.Extract(node.Query, env)
+		}
+	case *ast.UpdateExpression:
+		switch n := node.Table.(type) {
+		case *ast.Identifier:
+			r.AddTablesInQueries(n)
+		}
+
+		if node.Set != nil {
+			for _, s := range node.Set {
+				r.Extract(s, env)
+			}
+		}
+
+		if len(node.From) > 0 {
+			for _, f := range node.From {
+				switch f := f.(type) {
+				case *ast.Identifier:
+					r.AddTablesInQueries(f)
+				}
+			}
+		}
+
+		if node.Where != nil {
+			r.Extract(node.Where, env)
+		}
 
 	// Primitive Expressions
 	case *ast.Identifier:
 		r.extractIdentifier(node, env)
 
-	// Noops
-	case *ast.UpdateExpression:
-		// Currently do nothing till we verify that we don't have aliases to extract
-
+		// Noops
 	case nil, *ast.AnalyzeStatement, *ast.DropStatement, *ast.SetStatement,
 		*ast.ValuesExpression,
 		*ast.WildcardLiteral, *ast.Boolean, *ast.Null,

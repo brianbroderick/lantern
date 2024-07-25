@@ -61,27 +61,33 @@ func (x *UpdateExpression) SetCast(cast Expression) {
 
 func (x *UpdateExpression) String(maskParams bool) string {
 	var out bytes.Buffer
+	fmt.Println("UpdateExpression")
 	out.WriteString("(UPDATE ")
 
 	if x.Only {
 		out.WriteString("ONLY ")
 	}
 	if x.Table != nil {
+		fmt.Println("Table", x.Table.String(maskParams))
 		out.WriteString(x.Table.String(maskParams))
 	}
 	if x.Asterisk {
+		fmt.Println("Asterisk")
 		out.WriteString(" *")
 	}
 	if x.Alias != nil {
+		fmt.Println("Alias", x.Alias.String(maskParams))
 		out.WriteString(" ")
 		out.WriteString(x.Alias.String(maskParams))
 	}
 	if len(x.Set) > 0 {
+		fmt.Println("Set 1")
 		out.WriteString(" SET ")
 		for i, s := range x.Set {
 			if i > 0 {
 				out.WriteString(", ")
 			}
+			fmt.Println("Set", s.String(maskParams))
 			out.WriteString(s.String(maskParams))
 		}
 	}
@@ -91,15 +97,18 @@ func (x *UpdateExpression) String(maskParams bool) string {
 			if i > 0 {
 				out.WriteString(", ")
 			}
+			fmt.Println("From", f.String(maskParams))
 			out.WriteString(f.String(maskParams))
 		}
 	}
 	if x.Cursor != nil {
 		out.WriteString(" WHERE CURRENT OF ")
+		fmt.Println("Cursor", x.Cursor.String(maskParams))
 		out.WriteString(x.Cursor.String(maskParams))
 	}
 	if x.Where != nil {
 		out.WriteString(" WHERE ")
+		fmt.Println("Where", x.Where.String(maskParams))
 		out.WriteString(x.Where.String(maskParams))
 	}
 	if len(x.Returning) > 0 {
@@ -108,6 +117,7 @@ func (x *UpdateExpression) String(maskParams bool) string {
 			if i > 0 {
 				out.WriteString(", ")
 			}
+			fmt.Println("Returning", r.String(maskParams))
 			out.WriteString(r.String(maskParams))
 		}
 	}

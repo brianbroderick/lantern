@@ -23,6 +23,10 @@ func (p *Parser) parseUpdateExpression() ast.Expression {
 
 	p.command = token.UPDATE
 
+	context := p.context
+	p.setContext(XUPDATE)         // sets the context for the parseExpressionListItem function
+	defer p.resetContext(context) // reset to prior context
+
 	x := &ast.UpdateExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 	if p.peekTokenIs(token.ONLY) {
 		p.nextToken()

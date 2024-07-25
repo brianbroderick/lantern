@@ -130,6 +130,7 @@ const (
 	XNOT
 	XIN
 	XCREATE
+	XUPDATE
 )
 
 // We may want to add the caller to the parser, to allow for context in conditions
@@ -580,6 +581,8 @@ func (p *Parser) determineInfix(precedence int, leftExp ast.Expression) ast.Expr
 		end = []token.TokenType{token.COMMA}
 	case XCREATE:
 		end = []token.TokenType{token.INCLUDING, token.EXCLUDING}
+	case XUPDATE:
+		end = []token.TokenType{token.SET, token.FROM, token.WHERE, token.RETURNING, token.SEMICOLON, token.EOF}
 	default:
 		end = []token.TokenType{token.COMMA, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON}
 	}
