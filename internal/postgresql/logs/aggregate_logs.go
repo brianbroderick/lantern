@@ -67,12 +67,12 @@ loop:
 		}
 
 		if analyzed%100000 == 0 {
-			fmt.Printf("Parsed %7d sucessfully of %7d statements: %f%%\n", success, analyzed, (float64(success)/float64(analyzed))*100)
+			fmt.Printf("Parsed %7d successfully of %7d statements: %f%%\n", success, analyzed, (float64(success)/float64(analyzed))*100)
 		}
 	}
 
 	fmt.Printf("Analyzed %7d of %7d statements\n", analyzed, len(program.Statements))
-	fmt.Printf("Parsed %7d sucessfully of %7d statements: %f%%\n", success, analyzed, (float64(success)/float64(analyzed))*100)
+	fmt.Printf("Parsed %7d successfully of %7d statements: %f%%\n", success, analyzed, (float64(success)/float64(analyzed))*100)
 
 	fmt.Printf("Number of statements: %d\n", len(statements.Queries))
 	json := repo.MarshalJSON(statements)
@@ -81,6 +81,8 @@ loop:
 	fmt.Printf("Number of databases: %d\n", len(databases.Databases))
 	dbJSON := repo.MarshalJSON(databases)
 	writeFile(filepath.Join(projectpath.Root, "processed", "databases.json"), []byte(dbJSON))
+
+	statements.LogAggregateOfErrors()
 }
 
 func HasErr(msg string, err error) bool {

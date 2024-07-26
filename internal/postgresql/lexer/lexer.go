@@ -249,12 +249,18 @@ func (l *Lexer) ScanQuery() token.Token {
 	var buf bytes.Buffer
 	l.skipWhitespaceExceptEOL()
 
+loop:
 	for {
 		l.read()
-		if l.ch == eol || l.ch == eof {
+		switch l.ch {
+		case eof:
 			l.unread()
-			break
-		} else {
+			break loop
+		case eol:
+			// keep end of line. We need this for single line comments to work (i.e. --)
+			_, _ = buf.WriteRune(l.ch)
+			break loop
+		default:
 			_, _ = buf.WriteRune(l.ch)
 		}
 	}

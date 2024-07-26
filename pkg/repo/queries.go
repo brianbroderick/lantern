@@ -3,6 +3,7 @@ package repo
 import (
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 
 	"github.com/brianbroderick/lantern/pkg/sql/extractor"
@@ -20,6 +21,7 @@ type Queries struct {
 	TablesInQueries     map[string]*extractor.TablesInQueries     `json:"tables_in_queries,omitempty"`
 	TableJoinsInQueries map[string]*extractor.TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
 	Tables              map[string]*extractor.Tables              `json:"tables,omitempty"`
+	Errors              map[string]int                            `json:"errors,omitempty"`
 }
 
 // NewQueries creates a new Queries struct
@@ -31,6 +33,7 @@ func NewQueries() *Queries {
 		TablesInQueries:     make(map[string]*extractor.TablesInQueries),
 		TableJoinsInQueries: make(map[string]*extractor.TableJoinsInQueries),
 		Tables:              make(map[string]*extractor.Tables),
+		Errors:              make(map[string]int),
 	}
 }
 
@@ -61,6 +64,12 @@ func (q *Queries) Analyze(w QueryWorker) bool {
 	program := p.ParseProgram()
 
 	if len(p.Errors()) > 0 {
+		if val, ok := q.Errors[p.Errors()[0]]; ok {
+			q.Errors[p.Errors()[0]] = val + 1
+		} else {
+			q.Errors[p.Errors()[0]] = 1
+		}
+
 		sqlLen := len(w.Input)
 		truncated := ""
 		if sqlLen > 1048576 {
@@ -207,4 +216,23 @@ func (q *Queries) ExtractStats() {
 	fmt.Printf("TablesInQueries Len: %d\n", len(q.TablesInQueries))
 	fmt.Printf("ColumnsInQueries Len: %d\n", len(q.ColumnsInQueries))
 	fmt.Printf("TableJoinsInQueries Len: %d\n", len(q.TableJoinsInQueries))
+}
+
+func (q *Queries) LogAggregateOfErrors() {
+	errCnt := 0
+	errs := make([]string, 0, len(q.Errors))
+
+	for key := range q.Errors {
+		errCnt += q.Errors[key]
+		errs = append(errs, key)
+	}
+
+	sort.SliceStable(errs, func(i, j int) bool {
+		return q.Errors[errs[i]] > q.Errors[errs[j]]
+	})
+
+	for _, key := range errs {
+		msg := fmt.Sprintf("  %s: %d", key, q.Errors[key])
+		logit.Append("queries-process-error-aggregate", msg)
+	}
 }

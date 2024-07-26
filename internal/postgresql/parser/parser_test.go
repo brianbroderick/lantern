@@ -146,6 +146,11 @@ func TestParserStatements(t *testing.T) {
 			result:        `2024-07-10 17:48:11 UTC:10.1.1.1(38502):postgres@lantern:[34633]:LOG:  duration: 0.398 ms  statement: DISCARD ALL;`,
 			lenStatements: 2,
 		},
+		{
+			str:           `2024-07-10 17:48:11 UTC:10.1.1.1(38502):postgres@lantern:[34633]:LOG:  duration: 0.398 ms  statement: SET STATEMENT_TIMEOUT = '360s'; /*{"id":15514,"team_name":"my_team"}*/DROP TABLE IF EXISTS my_tmp_tbl;`,
+			result:        `2024-07-10 17:48:11 UTC:10.1.1.1(38502):postgres@lantern:[34633]:LOG:  duration: 0.398 ms  statement: SET STATEMENT_TIMEOUT = '360s'; /*{"id":15514,"team_name":"my_team"}*/DROP TABLE IF EXISTS my_tmp_tbl;`,
+			lenStatements: 1,
+		},
 	}
 
 	for _, tt := range tests {
@@ -158,29 +163,6 @@ func TestParserStatements(t *testing.T) {
 	}
 
 }
-
-// func TestParserStatementDetails(t *testing.T) {
-// 	var tests = []struct {
-// 		str           string
-// 		result        string
-// 		lenStatements int
-// 	}{
-// 		{
-// 			str:           "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
-// 			result:        "2024-07-10 17:48:11 UTC:10.1.1.1(51010):sys_user@my_db_01_11866:[46031]:DETAIL:  parameters: $1 = 'my_db_01_11866'",
-// 			lenStatements: 1,
-// 		},
-// 	}
-
-// 	for _, tt := range tests {
-// 		l := lexer.New(tt.str)
-// 		p := New(l)
-// 		program := p.ParseProgram()
-// 		checkParserErrors(t, p)
-// 		assert.Equal(t, tt.lenStatements, len(program.Statements))
-// 		assert.Equal(t, tt.result, program.Statements[0].String())
-// 	}
-// }
 
 func checkParserErrors(t *testing.T, p *Parser) {
 	errors := p.Errors()
