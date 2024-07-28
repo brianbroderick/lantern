@@ -117,27 +117,6 @@ func (x *SemicolonStatement) Inspect(maskParams bool) string {
 	return x.String(maskParams)
 }
 
-type CommitStatement struct {
-	Token      token.Token `json:"token,omitempty"` // the token.COMMIT token
-	Expression Expression  `json:"expression,omitempty"`
-}
-
-func (x *CommitStatement) Clause() token.TokenType      { return x.Expression.Clause() }
-func (x *CommitStatement) SetClause(c token.TokenType)  {}
-func (x *CommitStatement) Command() token.TokenType     { return x.Expression.Command() }
-func (x *CommitStatement) SetCommand(c token.TokenType) {}
-func (x *CommitStatement) statementNode()               {}
-func (x *CommitStatement) TokenLiteral() string         { return x.Token.Lit }
-func (x *CommitStatement) String(maskParams bool) string {
-	if x.Expression != nil {
-		return x.Expression.String(maskParams)
-	}
-	return ""
-}
-func (x *CommitStatement) Inspect(maskParams bool) string {
-	return x.String(maskParams)
-}
-
 // Expressions
 type SemicolonExpression struct {
 	Token      token.Token     `json:"token,omitempty"` // the token.SEMICOLON token
@@ -161,31 +140,6 @@ func (x *SemicolonExpression) String(maskParams bool) string {
 	return x.Value
 }
 func (x *SemicolonExpression) SetCast(cast Expression) {
-	x.Cast = cast
-}
-
-type CommitExpression struct {
-	Token      token.Token     `json:"token,omitempty"` // the token.COMMIT token
-	Value      string          `json:"value,omitempty"`
-	Cast       Expression      `json:"cast,omitempty"`
-	Branch     token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
-	CommandTag token.TokenType `json:"command,omitempty"`
-}
-
-func (x *CommitExpression) Clause() token.TokenType      { return x.Branch }
-func (x *CommitExpression) SetClause(c token.TokenType)  { x.Branch = c }
-func (x *CommitExpression) Command() token.TokenType     { return x.CommandTag }
-func (x *CommitExpression) SetCommand(c token.TokenType) { x.CommandTag = c }
-func (x *CommitExpression) expressionNode()              {}
-func (x *CommitExpression) TokenLiteral() string         { return x.Token.Lit }
-func (x *CommitExpression) String(maskParams bool) string {
-	if x.Cast != nil {
-		return fmt.Sprintf("%s::%s", x.Value, strings.ToUpper(x.Cast.String(maskParams)))
-	}
-
-	return x.Value
-}
-func (x *CommitExpression) SetCast(cast Expression) {
 	x.Cast = cast
 }
 

@@ -210,6 +210,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.VALUES, p.parseValuesExpression)
 	p.registerPrefix(token.SEMICOLON, p.parseSemicolonExpression)
 	p.registerPrefix(token.COMMIT, p.parseCommitExpression)
+	p.registerPrefix(token.ROLLBACK, p.parseRollbackExpression)
 
 	// Some tokens don't need special parse rules and can function as an identifier
 	// If this becomes a problem, we can create a generic struct for these cases
@@ -534,6 +535,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseSemicolonStatement()
 	case token.COMMIT:
 		return p.parseCommitStatement()
+	case token.ROLLBACK:
+		return p.parseRollbackStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -750,29 +753,10 @@ func (p *Parser) parseEscapeStringLiteral() ast.Expression {
 	return str
 }
 
-func (p *Parser) parseCommitExpression() ast.Expression {
-	defer p.untrace(p.trace("parseCommitExpression"))
-
-	return &ast.CommitExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
-}
-
 func (p *Parser) parseSemicolonStatement() *ast.SemicolonStatement {
 	defer p.untrace(p.trace("parseSemicolonStatement"))
 
 	s := &ast.SemicolonStatement{Token: p.curToken}
-	s.Expression = p.parseExpression(STATEMENT)
-
-	if p.peekTokenIs(token.SEMICOLON) {
-		p.nextToken()
-	}
-
-	return s
-}
-
-func (p *Parser) parseCommitStatement() *ast.CommitStatement {
-	defer p.untrace(p.trace("parseCommitStatement"))
-
-	s := &ast.CommitStatement{Token: p.curToken}
 	s.Expression = p.parseExpression(STATEMENT)
 
 	if p.peekTokenIs(token.SEMICOLON) {
