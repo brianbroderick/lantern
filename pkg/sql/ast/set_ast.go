@@ -9,11 +9,12 @@ import (
 )
 
 type SetStatement struct {
-	Token      token.Token `json:"token,omitempty"` // the token.SET token
-	Session    bool        `json:"session,omitempty"`
-	Local      bool        `json:"local,omitempty"`
-	TimeZone   bool        `json:"timeZone,omitempty"`
-	Expression Expression  `json:"expression,omitempty"`
+	Token              token.Token `json:"token,omitempty"` // the token.SET token
+	Session            bool        `json:"session,omitempty"`
+	HasCharacteristics bool        `json:"has_characteristics,omitempty"`
+	Local              bool        `json:"local,omitempty"`
+	TimeZone           bool        `json:"timeZone,omitempty"`
+	Expression         Expression  `json:"expression,omitempty"`
 }
 
 func (s *SetStatement) Clause() token.TokenType      { return s.Token.Type }
@@ -37,6 +38,10 @@ func (s *SetStatement) String(maskParams bool) string {
 		out.WriteString("TIME ZONE ")
 	}
 
+	if s.HasCharacteristics {
+		out.WriteString("CHARACTERISTICS AS ")
+	}
+
 	out.WriteString(s.Expression.String(maskParams))
 
 	out.WriteString(";")
@@ -49,4 +54,47 @@ func (s *SetStatement) Inspect(maskParams bool) string {
 		fmt.Printf("Error loading data: %#v\n\n", err)
 	}
 	return string(j)
+}
+
+type TransactionExpression struct {
+	Token          token.Token     `json:"token,omitempty"` // the token.SET token
+	IsolationLevel string          `json:"isolationLevel,omitempty"`
+	Rights         string          `json:"rights,omitempty"`
+	Deferrable     string          `json:"deferrable,omitempty"`
+	Cast           Expression      `json:"cast,omitempty"`
+	Branch         token.TokenType `json:"clause,omitempty"`  // location in the tree representing a clause
+	CommandTag     token.TokenType `json:"command,omitempty"` // location in the tree representing a command
+}
+
+func (t *TransactionExpression) Clause() token.TokenType      { return t.Token.Type }
+func (x *TransactionExpression) SetClause(c token.TokenType)  {}
+func (t *TransactionExpression) Command() token.TokenType     { return t.Token.Type }
+func (x *TransactionExpression) SetCommand(c token.TokenType) {}
+func (t *TransactionExpression) expressionNode()              {}
+func (t *TransactionExpression) TokenLiteral() string         { return t.Token.Upper }
+func (x *TransactionExpression) SetCast(cast Expression) {
+	x.Cast = cast
+}
+func (t *TransactionExpression) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString("TRANSACTION ISOLATION LEVEL ")
+	out.WriteString(t.IsolationLevel)
+
+	if t.Rights != "" {
+		out.WriteString(" ")
+		out.WriteString(t.Rights)
+	}
+
+	if t.Deferrable != "" {
+		out.WriteString(" ")
+		out.WriteString(t.Deferrable)
+	}
+
+	if t.Cast != nil {
+		out.WriteString(" ")
+		out.WriteString(t.Cast.String(maskParams))
+	}
+
+	return out.String()
 }

@@ -25,6 +25,12 @@ func TestSetStatements(t *testing.T) {
 		{"set local time zone mdt;", 1, "SET LOCAL TIME ZONE mdt;"},
 		{"set local time zone local;", 1, "SET LOCAL TIME ZONE local;"},
 		{"set local time zone default;", 1, "SET LOCAL TIME ZONE default;"},
+		{"set session characteristics as transaction isolation level read uncommitted;", 1, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;"},
+		{"set session characteristics as transaction isolation level serializable;", 1, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL SERIALIZABLE;"},
+		{"set session characteristics as transaction isolation level REPEATABLE read;", 1, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ;"},
+		{"set session characteristics as transaction isolation level read committed;", 1, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED;"},
+		{"set session characteristics as transaction isolation level read UNCOMMITTED;", 1, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;"},
+		{"set transaction isolation level repeatable read;", 1, "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;"},
 	}
 
 	for _, tt := range tests {

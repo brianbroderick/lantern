@@ -670,6 +670,10 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	p.paramOffset++
 	lit := &ast.IntegerLiteral{Token: p.curToken, ParamOffset: p.paramOffset, Branch: p.clause, CommandTag: p.command}
 
+	// TODO: sometimes numbers are larger than int64
+	// value := new(big.Int)
+	// value.SetString(p.curToken.Lit, 10)
+
 	value, err := strconv.ParseInt(p.curToken.Lit, 0, 64)
 	if err != nil {
 		msg := fmt.Sprintf("could not parse %q as integer", p.curToken.Lit)

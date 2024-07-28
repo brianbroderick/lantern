@@ -211,7 +211,7 @@ const (
 	// RANGE // Not a reserverd word in PG
 	RECURSIVE
 	REFERENCES
-	REPEATABLE
+	// REPEATABLE
 	RETURNING
 	RIGHT
 	ROLLBACK
@@ -436,9 +436,9 @@ var Tokens = [...]string{
 	PRIMARY:        "PRIMARY",
 	PRECEDING:      "PRECEDING",
 	// RANGE:             "RANGE", // Not a reserverd word in PG
-	RECURSIVE:    "RECURSIVE",
-	REFERENCES:   "REFERENCES",
-	REPEATABLE:   "REPEATABLE",
+	RECURSIVE:  "RECURSIVE",
+	REFERENCES: "REFERENCES",
+	// REPEATABLE:   "REPEATABLE",
 	RETURNING:    "RETURNING",
 	RIGHT:        "RIGHT",
 	ROLLBACK:     "ROLLBACK",
