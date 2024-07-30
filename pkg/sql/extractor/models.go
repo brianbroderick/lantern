@@ -43,9 +43,10 @@ type TablesInQueries struct {
 }
 
 type Tables struct {
-	UID    uuid.UUID `json:"uid"`
-	Schema string    `json:"schema_name"`
-	Name   string    `json:"table_name"`
+	UID       uuid.UUID `json:"uid"`
+	Schema    string    `json:"schema_name"`
+	Name      string    `json:"table_name"`
+	TableType string    `json:"table_type,omitempty"`
 }
 
 // May have to store the reverse join as well

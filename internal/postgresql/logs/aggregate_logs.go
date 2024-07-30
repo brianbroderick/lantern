@@ -10,27 +10,28 @@ import (
 	"github.com/brianbroderick/lantern/internal/postgresql/ast"
 	"github.com/brianbroderick/lantern/internal/postgresql/lexer"
 	"github.com/brianbroderick/lantern/internal/postgresql/parser"
+	"github.com/brianbroderick/lantern/internal/postgresql/projectpath"
 	"github.com/brianbroderick/lantern/pkg/repo"
 	"github.com/brianbroderick/lantern/pkg/sql/logit"
-	"github.com/brianbroderick/lantern/pkg/sql/projectpath"
 )
 
-func AggregateLogs() {
+func LoadLogFile(f string) string {
+	path := filepath.Join(projectpath.Root, "logs", f)
+
+	file, err := readPayload(path)
+	if HasErr("processFile", err) {
+		return ""
+	}
+	return string(file)
+}
+
+func AggregateLogs(log, queriesFile, databasesFile string) (*repo.Databases, *repo.Queries) {
 	logit.Clear("queries-process-error")
 
 	databases := repo.NewDatabases()
 	statements := repo.NewQueries()
 
-	f := "postgresql.log.2024-07-10-1748.cp"
-	// f := "postgresql-2024-07-09_000000.log"
-	// f := "postgresql-simple.log"
-	path := filepath.Join(projectpath.Root, "logs", f)
-
-	file, err := readPayload(path)
-	if HasErr("processFile", err) {
-		return
-	}
-	l := lexer.New(string(file))
+	l := lexer.New(log)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
@@ -48,10 +49,6 @@ loop:
 		default:
 			continue loop
 		}
-
-		// if query.Query == "" || query.DurationLit == "" {
-		// 	continue
-		// }
 
 		w := repo.QueryWorker{
 			Databases:   databases,
@@ -76,13 +73,15 @@ loop:
 
 	fmt.Printf("Number of statements: %d\n", len(statements.Queries))
 	json := repo.MarshalJSON(statements)
-	writeFile(filepath.Join(projectpath.Root, "processed", "queries.json"), []byte(json))
+	writeFile(filepath.Join(projectpath.Root, "processed", queriesFile), []byte(json))
 
 	fmt.Printf("Number of databases: %d\n", len(databases.Databases))
 	dbJSON := repo.MarshalJSON(databases)
-	writeFile(filepath.Join(projectpath.Root, "processed", "databases.json"), []byte(dbJSON))
+	writeFile(filepath.Join(projectpath.Root, "processed", databasesFile), []byte(dbJSON))
 
 	statements.LogAggregateOfErrors()
+
+	return databases, statements
 }
 
 func HasErr(msg string, err error) bool {

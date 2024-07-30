@@ -12,8 +12,9 @@ import (
 )
 
 type Parser struct {
-	l      *lexer.Lexer
-	errors []string
+	l                   *lexer.Lexer
+	errors              []string
+	incompleteStatement map[string]*ast.LogStatement
 
 	curToken  token.Token
 	peekToken token.Token
@@ -21,8 +22,9 @@ type Parser struct {
 
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
-		l:      l,
-		errors: []string{},
+		l:                   l,
+		errors:              []string{},
+		incompleteStatement: make(map[string]*ast.LogStatement),
 	}
 
 	// Read two tokens, so curToken and peekToken are both set
@@ -82,12 +84,14 @@ func (p *Parser) ParseProgram() *ast.Program {
 
 	for !p.curTokenIs(token.EOF) {
 		stmt := p.parseStatement()
-		program.Statements = append(program.Statements, stmt)
-		lenProgramStatements++
+		if stmt != nil {
+			program.Statements = append(program.Statements, stmt)
+			lenProgramStatements++
 
-		l := lenProgramStatements
-		if l%250000 == 0 {
-			fmt.Printf("statements: %d, line number: %d\n", lenProgramStatements, p.l.Pos.Line)
+			l := lenProgramStatements
+			if l%250000 == 0 {
+				fmt.Printf("statements: %d, line number: %d\n", lenProgramStatements, p.l.Pos.Line)
+			}
 		}
 
 		p.nextToken()
@@ -104,6 +108,22 @@ func (p *Parser) parseStatement() ast.Statement {
 		fmt.Printf("Error parsing log statement: %s\nCurrent stmt is: %+v\n", err, stmt)
 		os.Exit(1)
 		// return nil
+	}
+
+	if stmt.Severity == "LOG" && stmt.DurationLit == "" {
+		// If we don't have a duration, we need to store the statement so we can match it with the next statement.
+		p.incompleteStatement[stmt.RemoteHost+stmt.User+stmt.Database+stmt.Severity] = stmt
+		return nil
+	} else if stmt.Query == "" {
+		// If we have a duration, we need to match it with the previous statement.
+		key := stmt.RemoteHost + stmt.User + stmt.Database + stmt.Severity
+		if prevStmt, ok := p.incompleteStatement[key]; ok {
+			prevStmt.DurationLit = stmt.DurationLit
+			prevStmt.DurationMeasure = stmt.DurationMeasure
+
+			p.incompleteStatement[key] = nil
+			return prevStmt
+		}
 	}
 	return stmt
 }
@@ -248,46 +268,49 @@ loop:
 		if p.curTokenIs(token.IDENT) {
 			s.DurationMeasure = p.curToken.Lit
 
-			// Sometimes the log just ends here
+			// Sometimes the log entries just end here because they consist of two entries that much be matched together.
+			// The matching happens	in the parent function.
 			if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
 				return s, nil
 			}
 
 			p.nextToken()
+		}
+	}
 
-			// Options are blank, statement, execute, bind, parse.
-			// We only care about parsing statement and execute right now.
-			if p.curTokenIs(token.IDENT) {
-				s.PreparedStep = p.curToken.Lit
+	if s.Severity != "ERROR" {
+		// Options are blank, statement, execute, bind, parse.
+		// We only care about parsing statement and execute right now.
+		if p.curTokenIs(token.IDENT) {
+			s.PreparedStep = p.curToken.Lit
 
-				if p.peekTokenIs(token.IDENT) {
-					nameToks := make([]string, 0, 1)
+			if p.peekTokenIs(token.IDENT) {
+				nameToks := make([]string, 0, 1)
 
-					for {
-						p.nextToken()
-
-						nameToks = append(nameToks, p.curToken.Lit)
-
-						if p.peekTokenIs(token.COLON) || p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
-							break
-						}
-					}
-
-					s.PreparedName = strings.Join(nameToks, " ")
-				}
-
-				if p.peekTokenIs(token.COLON) {
+				for {
 					p.nextToken()
+
+					nameToks = append(nameToks, p.curToken.Lit)
+
+					if p.peekTokenIs(token.COLON) || p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
+						break
+					}
 				}
+
+				s.PreparedName = strings.Join(nameToks, " ")
 			}
 
-			if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
-				return s, nil
-			}
-
-			if p.curTokenIs(token.COLON) {
+			if p.peekTokenIs(token.COLON) {
 				p.nextToken()
 			}
+		}
+
+		if p.peekTokenIs(token.DATE) || p.peekTokenIs(token.EOF) {
+			return s, nil
+		}
+
+		if p.curTokenIs(token.COLON) {
+			p.nextToken()
 		}
 	}
 
