@@ -122,6 +122,7 @@ func (p *Parser) parseStatement() ast.Statement {
 			prevStmt.DurationMeasure = stmt.DurationMeasure
 
 			p.incompleteStatement[key] = nil
+			delete(p.incompleteStatement, key)
 			return prevStmt
 		}
 	}

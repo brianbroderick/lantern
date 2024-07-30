@@ -9,10 +9,10 @@ import (
 func main() {
 	// TODO: make the file name dynamic
 	f := "postgresql.log.2024-07-10-1748.cp"
+
+	fmt.Println("Processing log file", f)
+
 	log := logs.LoadLogFile(f)
-
-	fmt.Println("Processing log file, length:", len(log))
-
 	logs.AggregateLogs(log, "queries.json", "databases.json")
 
 	logs.UpsertQueries()
