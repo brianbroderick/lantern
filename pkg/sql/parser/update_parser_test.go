@@ -24,7 +24,10 @@ func TestUpdateStatements(t *testing.T) {
 		{"update employees set sales_count = sales_count + 1 where id =	(select sales_person from accounts where name = 'Acme Corporation');", "(UPDATE employees SET (sales_count = (sales_count + 1)) WHERE (id = (SELECT sales_person FROM accounts WHERE (name = 'Acme Corporation'))));"},
 		{"update accounts SET (contact_first_name, contact_last_name) = (select first_name, last_name from employees where employees.id = accounts.sales_person);", "(UPDATE accounts SET ((contact_first_name, contact_last_name) = (SELECT first_name, last_name FROM employees WHERE (employees.id = accounts.sales_person))));"},
 		{"update accounts set contact_first_name = first_name, contact_last_name = last_name from employees where employees.id = accounts.sales_person;", "(UPDATE accounts SET (contact_first_name = first_name), (contact_last_name = last_name) FROM employees WHERE (employees.id = accounts.sales_person));"},
-		{"UPDATE summary s SET (sum_x, sum_y, avg_x, avg_y) = (SELECT sum(x), sum(y), avg(x), avg(y) FROM data d WHERE d.group_id = s.group_id);", "(UPDATE summary s SET ((sum_x, sum_y, avg_x, avg_y) = (SELECT sum(x), sum(y), avg(x), avg(y) FROM data d WHERE (d.group_id = s.group_id))));"},
+		{"UPDATE summary s SET (sum_x, sum_y, avg_x, avg_y) = (SELECT sum(x), sum(y), avg(x), avg(y) FROM data d WHERE d.group_id = s.group_id);",
+			"(UPDATE summary s SET ((sum_x, sum_y, avg_x, avg_y) = (SELECT sum(x), sum(y), avg(x), avg(y) FROM data d WHERE (d.group_id = s.group_id))));"},
+		{"update customers c set name = 'new name' from suppliers where c.id = suppliers.id;", "(UPDATE customers c SET (name = 'new name') FROM suppliers WHERE (c.id = suppliers.id));"},
+		{"update customers c set name = 'new name' from suppliers s where c.id = s.id;", "(UPDATE customers c SET (name = 'new name') FROM suppliers s WHERE (c.id = s.id));"},
 		{"UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;", "(UPDATE films SET (kind = 'Dramatic') WHERE CURRENT OF c_films);"},
 	}
 

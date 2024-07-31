@@ -214,6 +214,9 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 			r.Extract(node.Query, env)
 		}
 	case *ast.UpdateExpression:
+		envUE := object.NewEnvironment()
+		setTableAliases(envUE, node.TableAliases)
+
 		switch n := node.Table.(type) {
 		case *ast.Identifier:
 			r.AddTablesInQueries(n)
@@ -221,21 +224,18 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 
 		if node.Set != nil {
 			for _, s := range node.Set {
-				r.Extract(s, env)
+				r.Extract(s, envUE)
 			}
 		}
 
-		if len(node.From) > 0 {
-			for _, f := range node.From {
-				switch f := f.(type) {
-				case *ast.Identifier:
-					r.AddTablesInQueries(f)
-				}
+		if len(node.Tables) > 0 {
+			for _, t := range node.Tables {
+				r.Extract(t, envUE)
 			}
 		}
 
 		if node.Where != nil {
-			r.Extract(node.Where, env)
+			r.Extract(node.Where, envUE)
 		}
 
 	// Primitive Expressions
@@ -275,10 +275,6 @@ func (r *Extractor) extractSelectExpression(x *ast.SelectExpression, env *object
 		r.Extract(c, env)
 	}
 	for _, t := range x.Tables {
-		// switch table := t.(type) {
-		// case *ast.TableExpression:
-		// 	r.extractTableExpression(table, env)
-		// }
 		r.Extract(t, env)
 	}
 	r.Extract(x.Where, env)
@@ -349,7 +345,7 @@ func (r *Extractor) extractIdentifier(i *ast.Identifier, env *object.Environment
 		switch i.Clause() {
 		case token.SELECT, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER: // These columns are what are selected (select id...)
 			r.AddColumnsInQueries(i)
-		case token.FROM: // The FROM clause will have tables
+		case token.UPDATE, token.INSERT, token.FROM: // The FROM clause will have tables
 			r.AddTablesInQueries(i)
 		case token.FUNCTION_CALL:
 			r.AddFunctionsInQueries(i)

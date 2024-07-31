@@ -22,6 +22,7 @@ func (p *Parser) parseUpdateExpression() ast.Expression {
 	defer p.untrace(p.trace("parseUpdateExpression"))
 
 	p.command = token.UPDATE
+	p.clause = token.UPDATE
 
 	context := p.context
 	p.setContext(XUPDATE)         // sets the context for the parseExpressionListItem function
@@ -56,14 +57,23 @@ func (p *Parser) parseUpdateExpression() ast.Expression {
 	if p.peekTokenIs(token.SET) {
 		p.nextToken()
 		p.nextToken()
+		p.clause = token.SET
 		x.Set = p.parseExpressionList([]token.TokenType{token.FROM, token.WHERE, token.RETURNING, token.SEMICOLON, token.EOF})
 	}
+
 	if p.curTokenIs(token.FROM) {
 		p.nextToken()
-		x.From = p.parseExpressionList([]token.TokenType{token.WHERE, token.RETURNING, token.SEMICOLON, token.EOF})
+		p.clause = token.FROM
+		x.Tables, x.TableAliases = p.parseTables()
 	}
+
+	if p.peekTokenIs(token.WHERE) {
+		p.nextToken()
+	}
+
 	// it can be a normal where expression or it could reference a cursor
 	if p.curTokenIs(token.WHERE) {
+		p.clause = token.WHERE
 		p.nextToken()
 		if p.curTokenIs(token.CURRENT) && p.peekTokenIs(token.OF) {
 			p.nextToken()
@@ -79,6 +89,7 @@ func (p *Parser) parseUpdateExpression() ast.Expression {
 	}
 	if p.curTokenIs(token.RETURNING) {
 		p.nextToken()
+		p.clause = token.RETURNING
 		x.Returning = p.parseExpressionList([]token.TokenType{token.SEMICOLON, token.EOF})
 	}
 

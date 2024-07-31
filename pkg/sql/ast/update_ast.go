@@ -34,19 +34,20 @@ func (s *UpdateStatement) Inspect(maskParams bool) string {
 }
 
 type UpdateExpression struct {
-	Token      token.Token     `json:"token,omitempty"` // the token.UPDATE token
-	Only       bool            `json:"only,omitempty"`
-	Table      Expression      `json:"table,omitempty"`
-	Asterisk   bool            `json:"asterisk,omitempty"`
-	Alias      Expression      `json:"alias,omitempty"`
-	Set        []Expression    `json:"set,omitempty"`
-	From       []Expression    `json:"from,omitempty"`
-	Cursor     Expression      `json:"cursor,omitempty"`
-	Where      Expression      `json:"where,omitempty"`
-	Returning  []Expression    `json:"returning,omitempty"`
-	Cast       Expression      `json:"cast,omitempty"`
-	Branch     token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
-	CommandTag token.TokenType `json:"command,omitempty"`
+	Token        token.Token       `json:"token,omitempty"` // the token.UPDATE token
+	Only         bool              `json:"only,omitempty"`
+	Table        Expression        `json:"table,omitempty"`
+	Asterisk     bool              `json:"asterisk,omitempty"`
+	Alias        Expression        `json:"alias,omitempty"`
+	Set          []Expression      `json:"set,omitempty"`
+	Tables       []Expression      `json:"tables,omitempty"`
+	Cursor       Expression        `json:"cursor,omitempty"`
+	Where        Expression        `json:"where,omitempty"`
+	Returning    []Expression      `json:"returning,omitempty"`
+	Cast         Expression        `json:"cast,omitempty"`
+	Branch       token.TokenType   `json:"clause,omitempty"` // location in the tree representing a clause
+	CommandTag   token.TokenType   `json:"command,omitempty"`
+	TableAliases map[string]string `json:"-"`
 }
 
 func (x *UpdateExpression) Clause() token.TokenType      { return x.Branch }
@@ -85,9 +86,9 @@ func (x *UpdateExpression) String(maskParams bool) string {
 			out.WriteString(s.String(maskParams))
 		}
 	}
-	if len(x.From) > 0 {
+	if len(x.Tables) > 0 {
 		out.WriteString(" FROM ")
-		for i, f := range x.From {
+		for i, f := range x.Tables {
 			if i > 0 {
 				out.WriteString(", ")
 			}

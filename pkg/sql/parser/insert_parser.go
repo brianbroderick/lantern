@@ -25,6 +25,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 	defer p.untrace(p.trace("parseInsertExpression"))
 
 	p.command = token.INSERT
+	p.clause = token.INSERT
 
 	x := &ast.InsertExpression{Token: p.curToken, Branch: p.clause, CommandTag: p.command}
 
@@ -32,6 +33,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 		return nil
 	}
 
+	// TODO: this should be a table like SELECT and UPDATE
 	if p.peekTokenIs(token.IDENT) {
 		p.nextToken()
 		x.Table = p.parseIdentifier()
@@ -50,6 +52,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 	if p.peekTokenIs(token.LPAREN) {
 		p.nextToken()
 		p.nextToken()
+		p.clause = token.COLUMN
 		x.Columns = p.parseExpressionList([]token.TokenType{token.RPAREN})
 	}
 
@@ -64,6 +67,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 		if p.peekTokenIs(token.LPAREN) {
 			p.nextToken()
 			p.nextToken()
+			p.clause = token.VALUES
 			values := p.parseExpressionList([]token.TokenType{token.RPAREN})
 			x.Values = append(x.Values, values)
 		}
@@ -75,6 +79,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 			p.nextToken()
 			p.nextToken()
 		}
+		p.clause = token.VALUES
 		values := p.parseExpressionList([]token.TokenType{token.RPAREN})
 		x.Values = append(x.Values, values)
 	}
@@ -85,6 +90,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 
 	if p.peekTokenIs(token.SELECT) {
 		p.nextToken()
+		p.clause = token.SELECT
 		x.Query = p.parseSelectExpression()
 	}
 
@@ -99,6 +105,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 			if p.peekTokenIs(token.LPAREN) {
 				p.nextToken()
 				p.nextToken()
+				p.clause = token.CONFLICT
 				x.ConflictTarget = p.parseExpressionList([]token.TokenType{token.RPAREN})
 			}
 		}
@@ -113,6 +120,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 					p.nextToken()
 					p.nextToken()
 				}
+				p.clause = token.SET
 				x.ConflictUpdate = p.parseExpressionList([]token.TokenType{token.RPAREN, token.RETURNING, token.SEMICOLON, token.EOF, token.WHERE})
 
 				if p.curTokenIs(token.WHERE) {
@@ -126,6 +134,7 @@ func (p *Parser) parseInsertExpression() ast.Expression {
 	if p.peekTokenIs(token.RETURNING) {
 		p.nextToken()
 		p.nextToken()
+		p.clause = token.RETURNING
 		x.Returning = p.parseExpressionList([]token.TokenType{token.SEMICOLON})
 	}
 
