@@ -87,6 +87,12 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 		stmt.Expression = p.parseExpression(LOWEST)
 	}
 
+	if p.peekTokenIs(token.WHERE) {
+		p.nextToken()
+		p.nextToken()
+		stmt.Where = p.parseExpression(LOWEST)
+	}
+
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}

@@ -24,6 +24,7 @@ func TestCreateStatements(t *testing.T) {
 		{"CREATE INDEX idx_temp_person on pg_temp.people using btree ( account_id, person_id );", "CREATE INDEX idx_temp_person ON (pg_temp.people USING btree(account_id, person_id));"},
 		{"create temp table temp_my_table on commit drop as (select id from users);", "CREATE TEMP TABLE temp_my_table ON COMMIT DROP AS (SELECT id FROM users);"},
 		{"create temp table temp_my_table( like my_reports );", "CREATE TEMP TABLE temp_my_table((LIKE my_reports));"},
+		{"create index idx_temp_stuff ON my_temp USING btree( id, temp_id ) WHERE ( blah_id = 1 );", "CREATE INDEX idx_temp_stuff ON (my_temp USING btree(id, temp_id)) WHERE (blah_id = 1);"},
 	}
 
 	for _, tt := range tests {

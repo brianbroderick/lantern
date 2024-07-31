@@ -24,6 +24,7 @@ type CreateStatement struct {
 	OnCommit     string      `json:"on_commit,omitempty"`    // PRESERVE ROWS, DELETE ROWS, DROP
 	Operator     string      `json:"operator,omitempty"`     // AS (for CREATE TABLE AS), ON for CREATE INDEX ON, etc.
 	Expression   Expression  `json:"expression,omitempty"`   // the expression to create the object
+	Where        Expression  `json:"where,omitempty"`        // the where clause for the object
 }
 
 func (x *CreateStatement) Clause() token.TokenType      { return x.Token.Type }
@@ -67,6 +68,9 @@ func (x *CreateStatement) String(maskParams bool) string {
 	}
 	if x.Expression != nil {
 		out.WriteString(" " + x.Expression.String(maskParams))
+	}
+	if x.Where != nil {
+		out.WriteString(" WHERE " + x.Where.String(maskParams))
 	}
 	out.WriteString(";")
 
