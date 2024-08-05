@@ -46,7 +46,7 @@ type QueryWorker struct {
 
 // Process processes a query and returns a bool whether or not the query was parsed successfully
 func (q *Query) Process(w QueryWorker, qs *Queries) bool {
-	l := lexer.New(w.Unmasked)
+	l := lexer.New(q.UnmaskedQuery)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
@@ -65,9 +65,8 @@ func (q *Query) Process(w QueryWorker, qs *Queries) bool {
 		qs.addTablesInQueries(q, r)
 		qs.addColumnsInQueries(q, r)
 		qs.addTableJoinsInQueries(q, r)
+		qs.addCreateStatements(q, r)
 
-		// w.Masked = stmt.String(true)    // maskParams = true, i.e. replace all values with ?
-		// w.Unmasked = stmt.String(false) // maskParams = false, i.e. leave params alone
 	}
 
 	return true

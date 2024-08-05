@@ -63,6 +63,72 @@ type TableJoinsInQueries struct {
 	TableB        string    `json:"table_b"`
 }
 
+// type CreateStatementsInQueries struct {
+// 	UID                uuid.UUID `json:"uid"`
+// 	CreateStatementUID uuid.UUID `json:"create_statement_uid"`
+// 	QueryUID           uuid.UUID `json:"query_uid"`
+// 	Statement          string    `json:"statement"`
+// }
+
+type CreateStatements struct {
+	UID              uuid.UUID `json:"uid"`
+	Scope            string    `json:"scope"`             // GLOBAL or LOCAL
+	IsUnique         bool      `json:"is_unique"`         // UNIQUE
+	UsedConcurrently bool      `json:"used_concurrently"` // CONCURRENTLY phrase was used
+	IsTemp           bool      `json:"is_temp"`           // TEMP or TEMPORARY (same thing)
+	IsUnlogged       bool      `json:"is_unlogged"`       // UNLOGGED
+	ObjectType       string    `json:"object_type"`       // TABLE, INDEX, VIEW, etc.
+	IfNotExists      bool      `json:"if_not_exists"`     // IF NOT EXISTS phrase was used
+	Name             string    `json:"name"`              // the name of the object
+	OnCommit         string    `json:"on_commit"`         // PRESERVE ROWS, DELETE ROWS, DROP
+	Operator         string    `json:"operator"`          // AS (for CREATE TABLE AS), ON for CREATE INDEX ON, etc.
+	Expression       string    `json:"expression"`        // the expression to create the object
+	WhereClause      string    `json:"where_clause"`      // the WHERE clause for the object
+}
+
+func (d *Extractor) AddCreateStatement(c *ast.CreateStatement, env *object.Environment) *CreateStatements {
+	exp := ""
+	if c.Expression != nil {
+		exp = c.Expression.String(false)
+	}
+	where := ""
+	if c.Where != nil {
+		where = c.Where.String(false)
+	}
+
+	fqcs := fmt.Sprintf("%s|%t|%t|%t|%s|%s|%s|%s",
+		c.Scope, c.Unique, c.Temp, c.Unlogged, c.Object.Upper, c.Name.String(false), exp, where)
+	uid := UuidV5(fqcs)
+	uidStr := uid.String()
+
+	if _, ok := d.CreateStatements[uidStr]; !ok {
+		d.CreateStatements[fqcs] = &CreateStatements{
+			UID:              uid,
+			Scope:            c.Scope,
+			IsUnique:         c.Unique,
+			UsedConcurrently: c.Concurrently,
+			IsTemp:           c.Temp,
+			IsUnlogged:       c.Unlogged,
+			ObjectType:       c.Object.Upper,
+			IfNotExists:      c.Exists,
+			Name:             c.Name.String(false),
+			OnCommit:         c.OnCommit,
+			Operator:         c.Operator,
+			Expression:       exp,
+			WhereClause:      where,
+		}
+	}
+
+	// if _, ok := d.CreateStatementsInQueries[uidStr]; !ok {
+	// 	d.CreateStatementsInQueries[uidStr] = &CreateStatementsInQueries{
+	// 		CreateStatementUID: uid,
+	// 		Statement:          c.String(false),
+	// 	}
+	// }
+
+	return d.CreateStatements[uidStr]
+}
+
 // This passes around a 3 element slice. []string{schema, table, fully_qualified_table_name}
 func (d *Extractor) AddJoinInQuery(columnA, columnB *ast.Identifier, on_condition string, env *object.Environment) *TableJoinsInQueries {
 	alphabetical := func(a, b []string) ([]string, []string) {

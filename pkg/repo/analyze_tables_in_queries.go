@@ -8,6 +8,7 @@ import (
 )
 
 // addTablesInQueries adds the tables in a query to the Queries struct
+// This is called from queries.Process()
 func (q *Queries) addTablesInQueries(qu *Query, ext *extractor.Extractor) {
 
 	for _, table := range ext.TablesInQueries {

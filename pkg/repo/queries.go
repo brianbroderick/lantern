@@ -15,33 +15,36 @@ import (
 )
 
 type Queries struct {
-	Queries             map[string]*Query                         `json:"queries,omitempty"`
-	FunctionsInQueries  map[string]*extractor.FunctionsInQueries  `json:"functions_in_queries,omitempty"`
-	ColumnsInQueries    map[string]*extractor.ColumnsInQueries    `json:"columns_in_queries,omitempty"`
-	TablesInQueries     map[string]*extractor.TablesInQueries     `json:"tables_in_queries,omitempty"`
-	TableJoinsInQueries map[string]*extractor.TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
-	Tables              map[string]*extractor.Tables              `json:"tables,omitempty"`
-	Errors              map[string]int                            `json:"errors,omitempty"`
+	Queries                   map[string]*Query                         `json:"queries,omitempty"`
+	FunctionsInQueries        map[string]*extractor.FunctionsInQueries  `json:"functions_in_queries,omitempty"`
+	ColumnsInQueries          map[string]*extractor.ColumnsInQueries    `json:"columns_in_queries,omitempty"`
+	TablesInQueries           map[string]*extractor.TablesInQueries     `json:"tables_in_queries,omitempty"`
+	TableJoinsInQueries       map[string]*extractor.TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
+	Tables                    map[string]*extractor.Tables              `json:"tables,omitempty"`
+	CreateStatementsInQueries map[string]*CreateStatementsInQueries     `json:"create_statements_in_queries,omitempty"`
+	CreateStatements          map[string]*CreateStatement               `json:"create_statements,omitempty"`
+
+	Errors map[string]int `json:"errors,omitempty"`
 }
 
 // NewQueries creates a new Queries struct
 func NewQueries() *Queries {
 	return &Queries{
-		Queries:             make(map[string]*Query),
-		FunctionsInQueries:  make(map[string]*extractor.FunctionsInQueries),
-		ColumnsInQueries:    make(map[string]*extractor.ColumnsInQueries),
-		TablesInQueries:     make(map[string]*extractor.TablesInQueries),
-		TableJoinsInQueries: make(map[string]*extractor.TableJoinsInQueries),
-		Tables:              make(map[string]*extractor.Tables),
-		Errors:              make(map[string]int),
+		Queries:                   make(map[string]*Query),
+		FunctionsInQueries:        make(map[string]*extractor.FunctionsInQueries),
+		ColumnsInQueries:          make(map[string]*extractor.ColumnsInQueries),
+		TablesInQueries:           make(map[string]*extractor.TablesInQueries),
+		TableJoinsInQueries:       make(map[string]*extractor.TableJoinsInQueries),
+		Tables:                    make(map[string]*extractor.Tables),
+		CreateStatementsInQueries: make(map[string]*CreateStatementsInQueries),
+		CreateStatements:          make(map[string]*CreateStatement),
+		Errors:                    make(map[string]int),
 	}
 }
 
 func (q *Queries) Process() bool {
 	for _, query := range q.Queries {
 		w := QueryWorker{
-			Masked:      query.MaskedQuery,
-			Unmasked:    query.UnmaskedQuery,
 			MustExtract: true,
 		}
 
@@ -53,6 +56,8 @@ func (q *Queries) Process() bool {
 	q.UpsertColumnsInQueries()
 	q.UpsertTableJoinsInQueries()
 	q.UpsertTables() // must run after UpsertTablesInQueries to populate the tables map
+	q.UpsertCreateStatements()
+	q.UpsertCreateStatementsInQueries()
 
 	return true
 }

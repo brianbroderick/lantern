@@ -9,7 +9,7 @@ import (
 
 type Table struct {
 	UID               uuid.UUID `json:"uid,omitempty"`                 // unique UUID of the table
-	DatabaseUID       uuid.UUID `json:"database_uid,omitempty"`        // the UUID of the database
+	DatabaseUID       uuid.UUID `json:"database_uid,omitempty"`        // the UUID of the database -- TODO: make this a many to many
 	Schema            string    `json:"schema_name,omitempty"`         // the schema of the table
 	Name              string    `json:"table_name,omitempty"`          // the name of the table
 	Description       string    `json:"table_description,omitempty"`   // a description of the table

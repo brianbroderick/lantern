@@ -15,8 +15,10 @@ type Extractor struct {
 	TableJoinsInQueries map[string]*TableJoinsInQueries `json:"table_joins_in_queries,omitempty"`
 	FunctionsInQueries  map[string]*FunctionsInQueries  `json:"functions_in_queries,omitempty"`
 	Tables              map[string]*Tables              `json:"tables,omitempty"`
-	MustExtract         bool
-	errors              []string
+	// CreateStatementsInQueries map[string]*CreateStatementsInQueries `json:"create_statements_in_queries,omitempty"`
+	CreateStatements map[string]*CreateStatements `json:"create_statements,omitempty"`
+	MustExtract      bool
+	errors           []string
 }
 
 func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
@@ -27,8 +29,10 @@ func NewExtractor(stmt *ast.Statement, mustExtract bool) *Extractor {
 		TableJoinsInQueries: make(map[string]*TableJoinsInQueries),
 		FunctionsInQueries:  make(map[string]*FunctionsInQueries),
 		Tables:              make(map[string]*Tables),
-		errors:              []string{},
-		MustExtract:         mustExtract,
+		// CreateStatementsInQueries: make(map[string]*CreateStatementsInQueries),
+		CreateStatements: make(map[string]*CreateStatements),
+		errors:           []string{},
+		MustExtract:      mustExtract,
 	}
 }
 
@@ -38,38 +42,6 @@ func (r *Extractor) Execute(node ast.Node) {
 	r.InferColumnsInTables()
 }
 
-// InferColumnsInTables will set the table if there is only one table in the query
-func (r *Extractor) InferColumnsInTables() {
-	// If there are more than one table in the query, there's no way to map a column directly to a table
-	if len(r.TablesInQueries) != 1 {
-		return
-	}
-
-	var table *TablesInQueries
-	for _, t := range r.TablesInQueries {
-		table = t
-	}
-
-	newColumnsInQueries := make(map[string]*ColumnsInQueries)
-
-	for _, column := range r.ColumnsInQueries {
-		column.Table = table.Name
-		fqcn := fmt.Sprintf("%s|%s.%s.%s", column.Clause, column.Schema, column.Table, column.Name)
-
-		newColumnsInQueries[fqcn] = &ColumnsInQueries{
-			UID:       UuidV5(fqcn),
-			Schema:    column.Schema,
-			Table:     column.Table,
-			TableUID:  UuidV5(fmt.Sprintf("%s.%s", column.Schema, column.Table)),
-			Name:      column.Name,
-			ColumnUID: UuidV5(fmt.Sprintf("%s.%s.%s", column.Schema, column.Table, column.Name)), // don't include the clause in the column UID
-			Clause:    column.Clause,
-		}
-	}
-
-	r.ColumnsInQueries = newColumnsInQueries
-}
-
 func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	switch node := node.(type) {
 	case *ast.Program:
@@ -77,7 +49,8 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 	case *ast.SelectStatement:
 		r.extractSelectStatement(node, env)
 	case *ast.CreateStatement:
-		r.Extract(node.Expression, env)
+		r.AddCreateStatement(node, env)
+		// r.Extract(node.Expression, env)
 	case *ast.CTEStatement:
 		r.Extract(node.Expression, env)
 	case *ast.InsertStatement:
@@ -369,4 +342,36 @@ func (r *Extractor) PrintErrors() {
 	for _, msg := range r.errors {
 		fmt.Printf("Extractor error: %s\n", msg)
 	}
+}
+
+// InferColumnsInTables will set the table if there is only one table in the query
+func (r *Extractor) InferColumnsInTables() {
+	// If there are more than one table in the query, there's no way to map a column directly to a table
+	if len(r.TablesInQueries) != 1 {
+		return
+	}
+
+	var table *TablesInQueries
+	for _, t := range r.TablesInQueries {
+		table = t
+	}
+
+	newColumnsInQueries := make(map[string]*ColumnsInQueries)
+
+	for _, column := range r.ColumnsInQueries {
+		column.Table = table.Name
+		fqcn := fmt.Sprintf("%s|%s.%s.%s", column.Clause, column.Schema, column.Table, column.Name)
+
+		newColumnsInQueries[fqcn] = &ColumnsInQueries{
+			UID:       UuidV5(fqcn),
+			Schema:    column.Schema,
+			Table:     column.Table,
+			TableUID:  UuidV5(fmt.Sprintf("%s.%s", column.Schema, column.Table)),
+			Name:      column.Name,
+			ColumnUID: UuidV5(fmt.Sprintf("%s.%s.%s", column.Schema, column.Table, column.Name)), // don't include the clause in the column UID
+			Clause:    column.Clause,
+		}
+	}
+
+	r.ColumnsInQueries = newColumnsInQueries
 }
