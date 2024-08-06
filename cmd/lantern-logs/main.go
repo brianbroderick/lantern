@@ -47,7 +47,7 @@ func processCli(args []string) (map[string]*string, map[string]*int, map[string]
 	intArgs := make(map[string]*int)
 	boolArgs := make(map[string]*bool)
 
-	boolArgs["rebuildJson"] = processCmd.Bool("rebuild_json", false, "Rebuild the json files from the logs")
+	boolArgs["rebuildJson"] = processCmd.Bool("rebuild_json", true, "Rebuild the json files from the logs")
 	strArgs["file"] = processCmd.String("file", "", "File to be processed")
 
 	processCmd.Parse(args[2:])

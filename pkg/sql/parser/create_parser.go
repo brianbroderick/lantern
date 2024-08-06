@@ -90,6 +90,7 @@ func (p *Parser) parseCreateStatement() *ast.CreateStatement {
 	if p.peekTokenIs(token.WHERE) {
 		p.nextToken()
 		p.nextToken()
+		p.clause = token.WHERE
 		stmt.Where = p.parseExpression(LOWEST)
 	}
 

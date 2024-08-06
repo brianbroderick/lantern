@@ -50,7 +50,8 @@ func (r *Extractor) Extract(node ast.Node, env *object.Environment) {
 		r.extractSelectStatement(node, env)
 	case *ast.CreateStatement:
 		r.AddCreateStatement(node, env)
-		// r.Extract(node.Expression, env)
+		// For the select statement in a create statement
+		r.Extract(node.Expression, env)
 	case *ast.CTEStatement:
 		r.Extract(node.Expression, env)
 	case *ast.InsertStatement:

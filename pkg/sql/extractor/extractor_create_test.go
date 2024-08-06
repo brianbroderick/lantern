@@ -7,6 +7,7 @@ import (
 
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
 	"github.com/brianbroderick/lantern/pkg/sql/parser"
+	"github.com/brianbroderick/lantern/pkg/sql/token"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,4 +61,47 @@ func TestExtractCreateStatements(t *testing.T) {
 	t2 := time.Now()
 	timeDiff := t2.Sub(t1)
 	fmt.Printf("TestExtractCreateStatements, Elapsed Time: %s\n", timeDiff)
+}
+
+func TestExtractColumnsInClausesForCreates(t *testing.T) {
+	// maskParams := false
+	t1 := time.Now()
+
+	tests := []struct {
+		input   string
+		columns [][]ColumnsInQueries
+	}{
+		{"create temp table if not exists temp_my_table as ( select id from my_table );",
+			[][]ColumnsInQueries{{{Schema: "public", Table: "my_table", Name: "id", Clause: token.SELECT}}}},
+	}
+
+	for _, tt := range tests {
+		l := lexer.New(tt.input)
+		p := parser.New(l)
+		program := p.ParseProgram()
+
+		for _, s := range program.Statements {
+			r := NewExtractor(&s, true)
+			r.Execute(s)
+			checkExtractErrors(t, r, tt.input)
+
+			assert.Equal(t, len(tt.columns), len(r.ColumnsInQueries), "input: %s\nColumnsInQueries should match the column count", tt.input)
+
+			for _, column := range r.ColumnsInQueries {
+				found := false
+				for _, testCol := range tt.columns {
+					for _, c := range testCol {
+						if column.Table == c.Table && column.Name == c.Name && column.Clause == c.Clause {
+							found = true
+							break
+						}
+					}
+				}
+				assert.True(t, found, "input: %s\nColumn %s not found in %v", tt.input, column.Name, tt.columns)
+			}
+		}
+	}
+	t2 := time.Now()
+	timeDiff := t2.Sub(t1)
+	fmt.Printf("TestExtractColumnsInClausesForCreates, Elapsed Time: %s\n", timeDiff)
 }
