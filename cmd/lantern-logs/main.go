@@ -25,7 +25,7 @@ func main() {
 		if boolArgs["rebuildJson"] != nil && *boolArgs["rebuildJson"] {
 			// f := "postgresql.log.2024-07-10-1748.cp"
 
-			fmt.Println("Processing log file", strArgs["file"])
+			fmt.Println("Processing log file", *strArgs["file"])
 			log := logs.LoadLogFile(*strArgs["file"])
 			logs.AggregateLogs(log, "queries.json", "databases.json")
 		}

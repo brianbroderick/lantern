@@ -38,3 +38,43 @@ where command in ('ANALYZE', 'COMMIT', 'CREATE', 'DELETE', 'DROP', 'INSERT', 'RO
 group by command
 order by total_duration_sec desc;
 ```
+
+Show creates by object type:
+
+```
+select cs.object_type,
+       count(1) as unique_objects,
+       sum(total_count) as total_count,
+       sum(total_duration_us) as total_duration_us
+from queries q
+join create_statements_in_queries csq on q.uid = csq.query_uid
+join create_statements cs on csq.create_statement_uid = cs.uid
+group by cs.object_type
+order by cs.object_type;
+```
+
+Show temp tables and indexes by name, removing numbers because a lot of people add a random number to the name:
+
+```
+select cs.object_type, regexp_replace(cs.name, '[0-9]', '', 'g'),
+       count(1) as unique_objects,
+       sum(total_count) as total_count,
+       sum(total_duration_us) as total_duration_us
+from queries q
+join create_statements_in_queries csq on q.uid = csq.query_uid
+join create_statements cs on csq.create_statement_uid = cs.uid
+group by cs.object_type, regexp_replace(cs.name, '[0-9]', '', 'g')
+order by total_count desc;
+```
+
+Show temp tables and indexes - per unique query:
+
+```
+select cs.object_type, cs.name, q.masked_query, total_count, total_duration_us
+from queries q
+join create_statements_in_queries csq on q.uid = csq.query_uid
+join create_statements cs on csq.create_statement_uid = cs.uid
+order by
+    -- total_duration_us desc,
+    total_count desc;
+```

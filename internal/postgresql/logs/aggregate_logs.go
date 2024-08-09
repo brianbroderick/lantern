@@ -54,6 +54,7 @@ loop:
 			Databases:   databases,
 			Database:    query.Database,
 			Input:       query.Query,
+			UserName:    query.User,
 			DurationUs:  convertTime(query.DurationLit, query.DurationMeasure),
 			MustExtract: false, // We're passing in false into mustExtract because that'll happen at a later step
 		}

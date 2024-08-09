@@ -1,16 +1,16 @@
 CREATE TABLE IF NOT EXISTS queries (
-   uid UUID PRIMARY KEY NOT NULL,  
-   database_uid UUID, -- foreign key to databases table. Allow NULLs
-   source_uid UUID, -- foreign key to sources table. Allow NULLs
-   command TEXT NOT NULL,
-   total_count BIGINT NOT NULL,
-   total_duration_us BIGINT NOT NULL, -- in microseconds
-   total_queries_in_transaction BIGINT NOT NULL,
-   average_duration_us BIGINT NOT NULL, -- in microseconds
-   average_queries_in_transaction NUMERIC(10,3) NOT NULL,
-   masked_query TEXT NOT NULL,
-   unmasked_query TEXT NOT NULL,
-   source_query TEXT NOT NULL
+  uid UUID PRIMARY KEY NOT NULL,  
+  database_uid UUID, -- foreign key to databases table. Allow NULLs
+  source_uid UUID, -- foreign key to sources table. Allow NULLs
+  command TEXT NOT NULL,
+  total_count BIGINT NOT NULL DEFAULT 0,
+  total_duration_us BIGINT NOT NULL DEFAULT 0, -- in microseconds
+  total_queries_in_transaction BIGINT NOT NULL DEFAULT 0, -- total number of queries in a single statement
+  average_duration_us BIGINT NOT NULL DEFAULT 0, -- in microseconds
+  average_queries_in_transaction NUMERIC(10,3) NOT NULL DEFAULT 0, -- average number of queries in a single statement
+  masked_query TEXT NOT NULL DEFAULT '',   -- the query with params masked
+  unmasked_query TEXT NOT NULL DEFAULT '', -- the query with params unmasked
+  source_query TEXT NOT NULL DEFAULT ''   -- the original query as it was sent from the source
 );
 
 COMMENT ON COLUMN queries.total_duration_us IS 'us denotes that the duration is in microseconds';

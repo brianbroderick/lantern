@@ -38,7 +38,8 @@ func NewQueries() *Queries {
 		Tables:                    make(map[string]*extractor.Tables),
 		CreateStatementsInQueries: make(map[string]*CreateStatementsInQueries),
 		CreateStatements:          make(map[string]*CreateStatement),
-		Errors:                    make(map[string]int),
+
+		Errors: make(map[string]int),
 	}
 }
 
@@ -52,6 +53,7 @@ func (q *Queries) Process() bool {
 	}
 
 	q.ExtractStats()
+	q.UpsertQueryUsers()
 	q.UpsertTablesInQueries()
 	q.UpsertColumnsInQueries()
 	q.UpsertTableJoinsInQueries()
@@ -145,6 +147,10 @@ func (q *Queries) addQuery(w QueryWorker) {
 
 	if _, ok := q.Queries[uidStr]; !ok {
 		database := w.Databases.AddDatabase(w.Database, "")
+
+		users := make(map[string]*QueryUser)
+		users[w.UserName] = &QueryUser{UID: UuidV5(fmt.Sprintf("%s|%s", w.UserName, uidStr)), QueryUID: uid, UserName: w.UserName, TotalCount: 1, TotalDurationUs: durationUs}
+
 		q.Queries[uidStr] = &Query{
 			UID:                       uid,
 			DatabaseUID:               database.UID,
@@ -156,11 +162,19 @@ func (q *Queries) addQuery(w QueryWorker) {
 			TotalDurationUs:           durationUs,
 			TotalQueriesInTransaction: transactionQueryCount,
 			Command:                   w.Command,
+			Users:                     users,
 		}
 	} else {
 		q.Queries[uidStr].TotalCount++
 		q.Queries[uidStr].TotalDurationUs += durationUs
 		q.Queries[uidStr].TotalQueriesInTransaction += transactionQueryCount
+
+		if _, ok := q.Queries[uidStr].Users[w.UserName]; !ok {
+			q.Queries[uidStr].Users[w.UserName] = &QueryUser{UID: UuidV5(fmt.Sprintf("%s|%s", w.UserName, uidStr)), QueryUID: uid, UserName: w.UserName, TotalCount: 1, TotalDurationUs: durationUs}
+		} else {
+			q.Queries[uidStr].Users[w.UserName].TotalCount++
+			q.Queries[uidStr].Users[w.UserName].TotalDurationUs += durationUs
+		}
 	}
 }
 
