@@ -78,3 +78,18 @@ order by
     -- total_duration_us desc,
     total_count desc;
 ```
+
+Show queries by username:
+
+```
+select user_name, count(1) as uniq_queries, sum(total_count) as total_count, trunc(sum(total_duration_us)/1000000, 3) as total_duration_sec
+from query_users group by user_name order by total_count desc
+```
+
+Show slowest queries for a specific username. Note that we're pulling the totals from the query_users table since multiple users can run the same query:
+
+```
+select q.masked_query, qu.total_count, trunc(qu.total_duration_us::decimal/1000000,3) as total_duration_sec, trunc(q.average_duration_us::decimal/1000000,3) as average_duration_sec
+from queries q
+join query_users qu on q.uid = qu.query_uid where qu.user_name = 'queue_executor' order by q.total_duration_us desc;
+```
