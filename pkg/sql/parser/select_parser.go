@@ -523,6 +523,8 @@ func (p *Parser) parseColumnList(end []token.TokenType) []ast.Expression {
 func (p *Parser) parseColumn(precedence int) ast.Expression {
 	defer p.untrace(p.trace("parseColumn"))
 
+	// fmt.Println("parseColumn: ", p.curToken.Lit)
+
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)

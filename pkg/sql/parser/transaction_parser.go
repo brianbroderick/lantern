@@ -5,6 +5,19 @@ import (
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
+func (p *Parser) parseBeginStatement() *ast.BeginStatement {
+	defer p.untrace(p.trace("parseBeginStatement"))
+
+	s := &ast.BeginStatement{Token: p.curToken}
+	s.Expression = p.parseExpression(STATEMENT)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return s
+}
+
 func (p *Parser) parseCommitStatement() *ast.CommitStatement {
 	defer p.untrace(p.trace("parseCommitStatement"))
 

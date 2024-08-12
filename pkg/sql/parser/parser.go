@@ -131,6 +131,7 @@ const (
 	XIN
 	XCREATE
 	XUPDATE
+	// XSELECTCOLUMN
 )
 
 // We may want to add the caller to the parser, to allow for context in conditions
@@ -257,7 +258,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NOTNULL, p.parseInfixExpression) // this might actually be a postfix operator
 	p.registerInfix(token.LIKE, p.parseInfixExpression)
 	p.registerInfix(token.ILIKE, p.parseInfixExpression)
-	p.registerInfix(token.SIMILAR, p.parseInfixExpression)
+	p.registerInfix(token.SIMILAR, p.parseSimilarToInfixExpression)
 	p.registerInfix(token.BETWEEN, p.parseInfixExpression)
 	p.registerInfix(token.REGEXMATCH, p.parseInfixExpression)
 	p.registerInfix(token.REGEXIMATCH, p.parseInfixExpression)
@@ -537,6 +538,13 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseCommitStatement()
 	case token.ROLLBACK:
 		return p.parseRollbackStatement()
+	case token.IDENT:
+		switch p.curToken.Upper {
+		case "BEGIN":
+			return p.parseBeginStatement()
+		default:
+			return p.parseExpressionStatement()
+		}
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -584,6 +592,8 @@ func (p *Parser) determineInfix(precedence int, leftExp ast.Expression) ast.Expr
 		end = []token.TokenType{token.COMMA}
 	case XCREATE:
 		end = []token.TokenType{token.INCLUDING, token.EXCLUDING}
+	// case XSELECTCOLUMN:
+	// 	end = []token.TokenType{token.FROM, token.WHERE, token.GROUP_BY, token.HAVING, token.ORDER, token.LIMIT, token.OFFSET, token.FETCH, token.FOR, token.SEMICOLON, token.EOF}
 	case XUPDATE:
 		end = []token.TokenType{token.SET, token.FROM, token.WHERE, token.RETURNING, token.SEMICOLON, token.EOF}
 	default:
@@ -809,7 +819,7 @@ func (p *Parser) parsePrefixKeywordExpression() ast.Expression {
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	defer p.untrace(p.trace("parseInfixExpression"))
 
-	expression := &ast.InfixExpression{
+	x := &ast.InfixExpression{
 		Token:      p.curToken,
 		Operator:   p.curToken.Lit,
 		Left:       left,
@@ -818,16 +828,46 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	}
 
 	if p.not {
-		expression.Not = true
+		x.Not = true
 		p.not = false
 	}
 
 	precedence := p.curPrecedence()
 	p.nextToken()
 
-	expression.Right = p.parseExpression(precedence)
+	x.Right = p.parseExpression(precedence)
 
-	return expression
+	return x
+}
+
+func (p *Parser) parseSimilarToInfixExpression(left ast.Expression) ast.Expression {
+	defer p.untrace(p.trace("parseInfixExpression"))
+
+	precedence := p.curPrecedence()
+
+	x := &ast.InfixExpression{
+		Token:      p.curToken,
+		Operator:   p.curToken.Lit,
+		Left:       left,
+		Branch:     p.clause,
+		CommandTag: p.command,
+	}
+
+	if p.not {
+		x.Not = true
+		p.not = false
+	}
+
+	if p.peekTokenIs(token.TO) {
+		x.Operator = "SIMILAR TO"
+		p.nextToken()
+	}
+
+	p.nextToken()
+
+	x.Right = p.parseExpression(precedence)
+
+	return x
 }
 
 func (p *Parser) parseUnionExpression(left ast.Expression) ast.Expression {

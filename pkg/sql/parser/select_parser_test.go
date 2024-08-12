@@ -203,8 +203,8 @@ func TestSingleSelectStatements(t *testing.T) {
 		{"select * from mytable where mycolumn ~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn ~* 'regexp'));"},   // basic regex (case insensitive)
 		{"select * from mytable where mycolumn !~ 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~ 'regexp'));"},   // basic not regex (case sensitive)
 		{"select * from mytable where mycolumn !~* 'regexp';", "(SELECT * FROM mytable WHERE (mycolumn !~* 'regexp'));"}, // basic not regex (case insensitive)
-		// {"select select 'abc' similar to 'abc' from users;", ""}, // TODO: handle similar to
-		// {"select select 'abc' not similar to 'abc' from users;", ""}, // TODO: handle similar to
+		{"select 'abc' similar to 'def' from users;", "(SELECT ('abc' SIMILAR TO 'def') FROM users);"},                   // TODO: handle similar to
+		{"select 'abc' not similar to 'ghi' from users;", "(SELECT ('abc' NOT SIMILAR TO 'ghi') FROM users);"},           // TODO: handle similar to
 
 		// Select: EXISTS operator. In this case, NOT is a prefix operator
 		{"select id from users where exists (select id from addresses where user_id = users.id);", "(SELECT id FROM users WHERE exists((SELECT id FROM addresses WHERE (user_id = users.id))));"},
@@ -355,7 +355,7 @@ func TestSingleSelectStatements(t *testing.T) {
 		// Comments
 		{`select *
 			-- id
-			-- name 
+			-- name
 				from users u
 				JOIN addresses a ON (u.id = a.user_id)
 				where id = 42;`, "(SELECT * FROM users u INNER JOIN addresses a ON (u.id = a.user_id) WHERE (id = 42));"}, // multiple single line comments
