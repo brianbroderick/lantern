@@ -18,6 +18,7 @@ func TestTransactionStatements(t *testing.T) {
 		// Select: simple
 		{"commit;", 1, "COMMIT;"},
 		{"rollback", 1, "ROLLBACK;"},
+		{"begin;", 1, "BEGIN;"},
 	}
 
 	for _, tt := range tests {

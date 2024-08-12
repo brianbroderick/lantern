@@ -8,11 +8,13 @@ import (
 func (p *Parser) parseBeginStatement() *ast.BeginStatement {
 	defer p.untrace(p.trace("parseBeginStatement"))
 
-	s := &ast.BeginStatement{Token: p.curToken}
-	s.Expression = p.parseExpression(STATEMENT)
+	s := &ast.BeginStatement{Token: p.curToken, Expression: &ast.BeginExpression{Token: p.curToken}}
 
 	if p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
+		return s
+	} else {
+		s.Expression = p.parseExpression(STATEMENT)
 	}
 
 	return s
