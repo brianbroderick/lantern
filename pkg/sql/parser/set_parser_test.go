@@ -31,6 +31,8 @@ func TestSetStatements(t *testing.T) {
 		{"set session characteristics as transaction isolation level read committed;", 1, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ COMMITTED;"},
 		{"set session characteristics as transaction isolation level read UNCOMMITTED;", 1, "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;"},
 		{"set transaction isolation level repeatable read;", 1, "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;"},
+		{"set constraints my_id deferred;", 1, "SET CONSTRAINTS my_id DEFERRED;"},
+		{"set constraints all immediate;", 1, "SET CONSTRAINTS ALL IMMEDIATE;"},
 	}
 
 	for _, tt := range tests {

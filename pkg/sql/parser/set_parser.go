@@ -88,6 +88,22 @@ func (p *Parser) parseSetStatement() *ast.SetStatement {
 		stmt.Expression = txn
 	}
 
+	if p.curTokenIs(token.IDENT) && p.curToken.Upper == "CONSTRAINTS" {
+		stmt.HasConstraints = true
+		p.nextToken()
+		if p.curTokenIs(token.ALL) {
+			stmt.IsAll = true
+			p.nextToken()
+		} else if p.curTokenIs(token.IDENT) {
+			stmt.Constraints = p.parseConstraintList()
+		}
+
+		if p.curTokenIs(token.IDENT) {
+			stmt.ConstraintSetting = p.curToken.Lit
+			p.nextToken()
+		}
+	}
+
 	if p.curTokenIs(token.SEMICOLON) {
 		p.nextToken()
 		return stmt
@@ -103,4 +119,26 @@ func (p *Parser) parseSetStatement() *ast.SetStatement {
 	}
 
 	return stmt
+}
+
+func (p *Parser) parseConstraintList() []ast.Expression {
+	defer p.untrace(p.trace("parseExpressionList"))
+
+	list := []ast.Expression{}
+
+	if p.curTokenIs(token.IDENT) && (p.curToken.Upper == "DEFERRED" || p.curToken.Upper == "IMMEDIATE") {
+		return list
+	}
+
+	list = append(list, p.parseExpression(STATEMENT))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseExpression(STATEMENT))
+	}
+
+	p.nextToken()
+
+	return list
 }

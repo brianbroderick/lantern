@@ -4,17 +4,22 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/brianbroderick/lantern/pkg/sql/token"
 )
 
 type SetStatement struct {
-	Token              token.Token `json:"token,omitempty"` // the token.SET token
-	Session            bool        `json:"session,omitempty"`
-	HasCharacteristics bool        `json:"has_characteristics,omitempty"`
-	Local              bool        `json:"local,omitempty"`
-	TimeZone           bool        `json:"timeZone,omitempty"`
-	Expression         Expression  `json:"expression,omitempty"`
+	Token              token.Token  `json:"token,omitempty"` // the token.SET token
+	Session            bool         `json:"session,omitempty"`
+	HasCharacteristics bool         `json:"has_characteristics,omitempty"`
+	Local              bool         `json:"local,omitempty"`
+	TimeZone           bool         `json:"timeZone,omitempty"`
+	Expression         Expression   `json:"expression,omitempty"`
+	HasConstraints     bool         `json:"has_constraints,omitempty"`
+	IsAll              bool         `json:"is_all,omitempty"`
+	Constraints        []Expression `json:"constraints,omitempty"`
+	ConstraintSetting  string       `json:"constraint_setting,omitempty"`
 }
 
 func (s *SetStatement) Clause() token.TokenType      { return s.Token.Type }
@@ -42,7 +47,31 @@ func (s *SetStatement) String(maskParams bool) string {
 		out.WriteString("CHARACTERISTICS AS ")
 	}
 
-	out.WriteString(s.Expression.String(maskParams))
+	if s.Expression != nil {
+		out.WriteString(s.Expression.String(maskParams))
+	}
+
+	if s.HasConstraints {
+		out.WriteString("CONSTRAINTS ")
+	}
+
+	if s.IsAll {
+		out.WriteString("ALL ")
+	}
+
+	if len(s.Constraints) > 0 {
+		for i, c := range s.Constraints {
+			if i > 0 {
+				out.WriteString(", ")
+			}
+			out.WriteString(c.String(maskParams))
+		}
+		out.WriteString(" ")
+	}
+
+	if s.ConstraintSetting != "" {
+		out.WriteString(strings.ToUpper(s.ConstraintSetting))
+	}
 
 	out.WriteString(";")
 
