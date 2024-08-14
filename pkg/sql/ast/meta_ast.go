@@ -9,7 +9,7 @@ import (
 // This file contains the AST for metadata such as SHOW, SAVEPOINT, and RESET, DISCARD, etc.
 
 type ShowStatement struct {
-	Token      token.Token `json:"token,omitempty"` // the token.SHOW token
+	Token      token.Token `json:"token,omitempty"` // the token.IDENT token
 	Expression Expression  `json:"expression,omitempty"`
 }
 
@@ -36,7 +36,7 @@ func (x *ShowStatement) Inspect(maskParams bool) string {
 }
 
 type ShowExpression struct {
-	Token      token.Token     `json:"token,omitempty"` // the token.SHOW token
+	Token      token.Token     `json:"token,omitempty"` // the token.IDENT token
 	Cast       Expression      `json:"cast,omitempty"`
 	Branch     token.TokenType `json:"clause,omitempty"` // location in the tree representing a clause
 	CommandTag token.TokenType `json:"command,omitempty"`
@@ -56,7 +56,9 @@ func (x *ShowExpression) String(maskParams bool) string {
 	out.WriteString(" ")
 
 	if x.Expression != nil {
+		out.WriteString("(")
 		out.WriteString(x.Expression.String(maskParams))
+		out.WriteString(")")
 	}
 
 	return out.String()

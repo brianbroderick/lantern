@@ -542,6 +542,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		switch p.curToken.Upper {
 		case "BEGIN":
 			return p.parseBeginStatement()
+		case "SHOW":
+			return p.parseShowStatement()
 		default:
 			return p.parseExpressionStatement()
 		}

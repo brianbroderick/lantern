@@ -36,6 +36,7 @@ const (
 
 	// Context keywords
 	FUNCTION_CALL
+	SHOW_STATEMENT
 
 	literalBeg   // Literals
 	IDENT        // identity: add, foobar, x, y, my_var, ...
@@ -266,7 +267,8 @@ var Tokens = [...]string{
 	PROGRAM: "PROGRAM",
 
 	// Context Keywords
-	FUNCTION_CALL: "FUNCTION_CALL",
+	FUNCTION_CALL:  "FUNCTION_CALL",
+	SHOW_STATEMENT: "SHOW_STATEMENT",
 
 	IDENT:        "IDENT",
 	INT:          "INTEGER",
