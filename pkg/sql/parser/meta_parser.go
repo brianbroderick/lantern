@@ -71,3 +71,14 @@ func (p *Parser) parseShowStatement() *ast.ShowStatement {
 
 	return stmt
 }
+
+func (p *Parser) parseSavepointStatement() *ast.SavepointStatement {
+	stmt := &ast.SavepointStatement{Token: token.Token{Type: token.SAVEPOINT_STATEMENT, Lit: "SAVEPOINT", Upper: "SAVEPOINT"}}
+	p.nextToken()
+	stmt.Expression = p.parseExpression(LOWEST)
+
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return stmt
+}

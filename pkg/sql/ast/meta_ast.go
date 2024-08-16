@@ -56,9 +56,7 @@ func (x *ShowExpression) String(maskParams bool) string {
 	out.WriteString(" ")
 
 	if x.Expression != nil {
-		out.WriteString("(")
 		out.WriteString(x.Expression.String(maskParams))
-		out.WriteString(")")
 	}
 
 	return out.String()
@@ -66,4 +64,34 @@ func (x *ShowExpression) String(maskParams bool) string {
 
 func (x *ShowExpression) SetCast(cast Expression) {
 	x.Cast = cast
+}
+
+type SavepointStatement struct {
+	Token      token.Token `json:"token,omitempty"` // the token.SAVEPOINT token
+	Expression Expression  `json:"expression,omitempty"`
+}
+
+func (x *SavepointStatement) Clause() token.TokenType      { return x.Expression.Clause() }
+func (x *SavepointStatement) SetClause(c token.TokenType)  {}
+func (x *SavepointStatement) Command() token.TokenType     { return x.Expression.Command() }
+func (x *SavepointStatement) SetCommand(c token.TokenType) {}
+func (x *SavepointStatement) statementNode()               {}
+func (x *SavepointStatement) TokenLiteral() string         { return x.Token.Lit }
+func (x *SavepointStatement) String(maskParams bool) string {
+	var out bytes.Buffer
+
+	out.WriteString(x.Token.Upper)
+
+	if x.Expression != nil {
+		out.WriteString(" ")
+		out.WriteString(x.Expression.String(maskParams))
+	}
+
+	out.WriteString(";")
+
+	return out.String()
+}
+
+func (x *SavepointStatement) Inspect(maskParams bool) string {
+	return x.String(maskParams)
 }

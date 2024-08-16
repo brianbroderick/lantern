@@ -544,6 +544,8 @@ func (p *Parser) parseStatement() ast.Statement {
 			return p.parseBeginStatement()
 		case "SHOW":
 			return p.parseShowStatement()
+		case "SAVEPOINT":
+			return p.parseSavepointStatement()
 		default:
 			return p.parseExpressionStatement()
 		}
