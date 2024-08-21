@@ -25,11 +25,11 @@ func LoadLogFile(f string) string {
 	return string(file)
 }
 
-func AggregateLogs(log, queriesFile, databasesFile string) (*repo.Databases, *repo.Queries) {
+func AggregateLogs(fileName, log, queriesFile, databasesFile string) (*repo.Databases, *repo.Queries) {
 	logit.Clear("queries-process-error")
 
-	databases := repo.NewDatabases()
-	statements := repo.NewQueries()
+	databases := repo.NewDatabases(fileName)
+	statements := repo.NewQueries(fileName)
 
 	l := lexer.New(log)
 	p := parser.New(l)

@@ -7,7 +7,7 @@ import (
 )
 
 func TestAggregateLogs(t *testing.T) {
-	databases, queries := AggregateLogs(SampleCreateLog(), "queries-test.json", "databases-test.json")
+	databases, queries := AggregateLogs("TestAggregateLogs", SampleCreateLog(), "queries-test.json", "databases-test.json")
 
 	assert.Equal(t, 1, len(databases.Databases), "Number of databases")
 	assert.Equal(t, 7, len(queries.Queries), "Number of queries")

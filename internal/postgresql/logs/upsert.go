@@ -37,7 +37,8 @@ func ExtractAndUpsertQueryMetadata() {
 		return
 	}
 
-	queries := repo.NewQueries()
+	// The source should get overwritten by the queries.json file
+	queries := repo.NewQueries("Unknown")
 
 	jsonQueries := repo.Queries{}
 	repo.UnmarshalJSON(data, &jsonQueries)

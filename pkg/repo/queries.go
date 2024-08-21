@@ -15,6 +15,7 @@ import (
 )
 
 type Queries struct {
+	Source                    string                                    `json:"source,omitempty"`
 	Queries                   map[string]*Query                         `json:"queries,omitempty"`
 	FunctionsInQueries        map[string]*extractor.FunctionsInQueries  `json:"functions_in_queries,omitempty"`
 	ColumnsInQueries          map[string]*extractor.ColumnsInQueries    `json:"columns_in_queries,omitempty"`
@@ -28,8 +29,9 @@ type Queries struct {
 }
 
 // NewQueries creates a new Queries struct
-func NewQueries() *Queries {
+func NewQueries(source string) *Queries {
 	return &Queries{
+		Source:                    source,
 		Queries:                   make(map[string]*Query),
 		FunctionsInQueries:        make(map[string]*extractor.FunctionsInQueries),
 		ColumnsInQueries:          make(map[string]*extractor.ColumnsInQueries),

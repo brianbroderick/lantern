@@ -9,6 +9,7 @@ import (
 )
 
 type Databases struct {
+	Source    string               `json:"source,omitempty"`
 	Databases map[string]*Database `json:"databases,omitempty"` // the key is the UUIDv5 sha of the database
 }
 
@@ -31,8 +32,9 @@ func (d *Databases) AddDatabase(database, template string) *Database {
 	return d.Databases[database]
 }
 
-func NewDatabases() *Databases {
+func NewDatabases(source string) *Databases {
 	return &Databases{
+		Source:    source,
 		Databases: make(map[string]*Database),
 	}
 }

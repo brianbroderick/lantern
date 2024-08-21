@@ -40,7 +40,7 @@ func TestQueriesIntegration(t *testing.T) {
 	statements.Upsert()
 	assert.Equal(t, 1, statements.CountInDB())
 
-	queries := NewQueries()
+	queries := NewQueries("TestQueriesIntegration")
 	queries.Queries = statements.Queries
 
 	queries.Process()
@@ -128,8 +128,8 @@ func JsonSources() string {
 }
 
 func TestQueriesAnalyze(t *testing.T) {
-	databases := NewDatabases()
-	queries := NewQueries()
+	databases := NewDatabases("TestQueriesAnalyze")
+	queries := NewQueries("TestQueriesAnalyze")
 	t1 := time.Now()
 
 	source := NewSource("testDB", "testDB")

@@ -27,7 +27,7 @@ func main() {
 
 			fmt.Println("Processing log file", *strArgs["file"])
 			log := logs.LoadLogFile(*strArgs["file"])
-			logs.AggregateLogs(log, "queries.json", "databases.json")
+			logs.AggregateLogs(*strArgs["file"], log, "queries.json", "databases.json")
 		}
 
 		logs.UpsertQueries()
