@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/brianbroderick/lantern/internal/postgresql/logs"
+	"github.com/brianbroderick/lantern/pkg/repo"
 )
 
 func main() {
@@ -22,10 +23,21 @@ func main() {
 		os.Exit(0)
 	case "process":
 		strArgs, _, boolArgs := processCli(os.Args)
-		if boolArgs["rebuildJson"] != nil && *boolArgs["rebuildJson"] {
-			// f := "postgresql.log.2024-07-10-1748.cp"
+		fileName := *strArgs["file"]
 
-			fmt.Println("Processing log file", *strArgs["file"])
+		db := repo.Conn()
+		defer db.Close()
+
+		// Check if this file has been processed
+		pf := repo.NewProcessedFile(fileName)
+		if !pf.HasBeenProcessed(db) {
+			fmt.Println("Processing log file", fileName)
+		} else {
+			fmt.Println("Log file has already been processed", fileName)
+			os.Exit(0)
+		}
+
+		if boolArgs["rebuildJson"] != nil && *boolArgs["rebuildJson"] {
 			log := logs.LoadLogFile(*strArgs["file"])
 			logs.AggregateLogs(*strArgs["file"], log, "queries.json", "databases.json")
 		}
@@ -33,6 +45,9 @@ func main() {
 		logs.UpsertQueries()
 		logs.UpsertDatabases()
 		logs.ExtractAndUpsertQueryMetadata()
+
+		// Log that this file has been processed
+		pf.Processed(db)
 	default:
 		printHelp()
 		os.Exit(1)
