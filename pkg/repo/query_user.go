@@ -42,7 +42,7 @@ func (q *Queries) insValuesQueryUsers() []string {
 	var rows []string
 
 	for _, query := range q.Queries {
-		if query.Users == nil || len(query.Users) == 0 {
+		if len(query.Users) == 0 {
 			continue
 		}
 

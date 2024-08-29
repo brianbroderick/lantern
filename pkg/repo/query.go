@@ -3,6 +3,7 @@ package repo
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/brianbroderick/lantern/pkg/sql/extractor"
 	"github.com/brianbroderick/lantern/pkg/sql/lexer"
@@ -17,6 +18,7 @@ type Query struct {
 	UID                       uuid.UUID             `json:"uid,omitempty"`                          // unique sha of the query
 	DatabaseUID               uuid.UUID             `json:"database_uid,omitempty"`                 // the dataset the query belongs to
 	SourceUID                 uuid.UUID             `json:"source_uid,omitempty"`                   // the source the query belongs to
+	TimestampByHour           time.Time             `json:"timestamp_by_hour,omitempty"`            // the time the query was executed, rounded to the hour
 	Command                   token.TokenType       `json:"command,omitempty"`                      // the type of query
 	TotalCount                int64                 `json:"total_count,omitempty"`                  // the number of times the query was executed
 	TotalDurationUs           int64                 `json:"total_duration_us,omitempty"`            // the total duration of all executions of the query in microseconds
@@ -31,6 +33,7 @@ type Query struct {
 // of passing around a ton of individual variables.
 // This is used both initially when compiling a list of queries and then individually when processing each query
 type QueryWorker struct {
+	TimestampByHour       time.Time
 	Databases             *Databases
 	Source                *Source
 	SourceUID             uuid.UUID

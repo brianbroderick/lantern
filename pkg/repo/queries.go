@@ -67,6 +67,8 @@ func (q *Queries) Process() bool {
 }
 
 // Analyze processes a query and returns a bool whether or not the query was parsed successfully
+// This ends up calling addQuery which adds the query to the Queries struct
+// Then the Queries struct is cached as a JSON file
 func (q *Queries) Analyze(w QueryWorker) bool {
 	l := lexer.New(w.Input)
 	p := parser.New(l)
@@ -156,6 +158,7 @@ func (q *Queries) addQuery(w QueryWorker) {
 
 		q.Queries[uidStr] = &Query{
 			UID:                       uid,
+			TimestampByHour:           w.TimestampByHour,
 			DatabaseUID:               database.UID,
 			SourceUID:                 sourceUID,
 			SourceQuery:               w.Input,

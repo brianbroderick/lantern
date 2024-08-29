@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/brianbroderick/lantern/internal/postgresql/ast"
 	"github.com/brianbroderick/lantern/internal/postgresql/lexer"
@@ -50,13 +51,19 @@ loop:
 			continue loop
 		}
 
+		timestamp, err := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", query.Date, query.Time), loadTz(query.Timezone))
+		if HasErr("time.Parse", err) {
+			continue loop
+		}
+
 		w := repo.QueryWorker{
-			Databases:   databases,
-			Database:    query.Database,
-			Input:       query.Query,
-			UserName:    query.User,
-			DurationUs:  convertTime(query.DurationLit, query.DurationMeasure),
-			MustExtract: false, // We're passing in false into mustExtract because that'll happen at a later step
+			TimestampByHour: time.Date(timestamp.Year(), timestamp.Month(), timestamp.Day(), timestamp.Hour(), 0, 0, 0, loadTz("UTC")),
+			Databases:       databases,
+			Database:        query.Database,
+			Input:           query.Query,
+			UserName:        query.User,
+			DurationUs:      convertTime(query.DurationLit, query.DurationMeasure),
+			MustExtract:     false, // We're passing in false into mustExtract because that'll happen at a later step
 		}
 
 		analyzed++
@@ -135,4 +142,36 @@ func writeFile(file string, data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func loadTz(short string) *time.Location {
+	var tz *time.Location
+	var err error
+
+	switch short {
+	case "UTC":
+		return time.UTC
+	case "PDT", "PST":
+		tz, err = time.LoadLocation("America/Los_Angeles")
+		if HasErr("time.LoadLocation", err) {
+			return time.UTC
+		}
+	case "EDT", "EST":
+		tz, err = time.LoadLocation("America/New_York")
+		if HasErr("time.LoadLocation", err) {
+			return time.UTC
+		}
+	case "CDT", "CST":
+		tz, err = time.LoadLocation("America/Chicago")
+		if HasErr("time.LoadLocation", err) {
+			return time.UTC
+		}
+	case "MDT", "MST":
+		tz, err = time.LoadLocation("America/Denver")
+		if HasErr("time.LoadLocation", err) {
+			return time.UTC
+		}
+	}
+
+	return tz
 }
