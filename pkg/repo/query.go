@@ -80,18 +80,23 @@ func (q *Query) Process(w QueryWorker, qs *Queries) bool {
 func (q *Query) MarshalJSON() ([]byte, error) {
 	type Alias Query
 	return json.Marshal(&struct {
-		Command string `json:"command,omitempty"`
+		Command         string `json:"command,omitempty"`
+		TimestampByHour string `json:"timestamp_by_hour,omitempty"`
+
 		*Alias
 	}{
-		Command: q.Command.String(),
-		Alias:   (*Alias)(q),
+		Command:         q.Command.String(),
+		TimestampByHour: q.TimestampByHour.Format("2006-01-02 15:04:05"),
+		Alias:           (*Alias)(q),
 	})
 }
 
 func (q *Query) UnmarshalJSON(data []byte) error {
 	type Alias Query
 	aux := &struct {
-		Command string `json:"command,omitempty"`
+		Command         string `json:"command,omitempty"`
+		TimestampByHour string `json:"timestamp_by_hour,omitempty"`
+
 		*Alias
 	}{
 		Alias: (*Alias)(q),
@@ -100,5 +105,10 @@ func (q *Query) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	q.Command = token.Lookup(aux.Command)
+	t, err := time.Parse("2006-01-02 15:04:05", aux.TimestampByHour)
+	if err != nil {
+		return err
+	}
+	q.TimestampByHour = t
 	return nil
 }

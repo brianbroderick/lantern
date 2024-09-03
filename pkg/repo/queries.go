@@ -17,6 +17,7 @@ import (
 type Queries struct {
 	Source                    string                                    `json:"source,omitempty"`
 	Queries                   map[string]*Query                         `json:"queries,omitempty"`
+	QueriesByTime             map[string]*QueriesByTime                 `json:"queries_by_time,omitempty"` // key is the hour
 	FunctionsInQueries        map[string]*extractor.FunctionsInQueries  `json:"functions_in_queries,omitempty"`
 	ColumnsInQueries          map[string]*extractor.ColumnsInQueries    `json:"columns_in_queries,omitempty"`
 	TablesInQueries           map[string]*extractor.TablesInQueries     `json:"tables_in_queries,omitempty"`
@@ -28,11 +29,16 @@ type Queries struct {
 	Errors map[string]int `json:"errors,omitempty"`
 }
 
+type QueriesByTime struct {
+	Queries map[string]*Query
+}
+
 // NewQueries creates a new Queries struct
 func NewQueries(source string) *Queries {
 	return &Queries{
 		Source:                    source,
 		Queries:                   make(map[string]*Query),
+		QueriesByTime:             make(map[string]*QueriesByTime),
 		FunctionsInQueries:        make(map[string]*extractor.FunctionsInQueries),
 		ColumnsInQueries:          make(map[string]*extractor.ColumnsInQueries),
 		TablesInQueries:           make(map[string]*extractor.TablesInQueries),
@@ -150,6 +156,48 @@ func (q *Queries) addQuery(w QueryWorker) {
 		transactionQueryCount = w.TransactionQueryCount
 	}
 
+	// Queries by Time
+	ts := w.TimestampByHour.Format("2006-01-02 15:04:05")
+	if _, ok := q.QueriesByTime[ts]; !ok {
+		q.QueriesByTime[ts] = &QueriesByTime{
+			Queries: make(map[string]*Query),
+		}
+	}
+
+	if _, ok := q.QueriesByTime[ts].Queries[uidStr]; !ok {
+		database := w.Databases.AddDatabase(w.Database, "")
+
+		users := make(map[string]*QueryUser)
+		users[w.UserName] = &QueryUser{UID: UuidV5(fmt.Sprintf("%s|%s", w.UserName, uidStr)), QueryUID: uid, UserName: w.UserName, TotalCount: 1, TotalDurationUs: durationUs}
+
+		q.QueriesByTime[ts].Queries[uidStr] = &Query{
+			UID:                       uid,
+			TimestampByHour:           w.TimestampByHour,
+			DatabaseUID:               database.UID,
+			SourceUID:                 sourceUID,
+			SourceQuery:               w.Input,
+			MaskedQuery:               w.Masked,
+			UnmaskedQuery:             w.Unmasked,
+			TotalCount:                1,
+			TotalDurationUs:           durationUs,
+			TotalQueriesInTransaction: transactionQueryCount,
+			Command:                   w.Command,
+			Users:                     users,
+		}
+	} else {
+		q.QueriesByTime[ts].Queries[uidStr].TotalCount++
+		q.QueriesByTime[ts].Queries[uidStr].TotalDurationUs += durationUs
+		q.QueriesByTime[ts].Queries[uidStr].TotalQueriesInTransaction += transactionQueryCount
+
+		if _, ok := q.QueriesByTime[ts].Queries[uidStr].Users[w.UserName]; !ok {
+			q.QueriesByTime[ts].Queries[uidStr].Users[w.UserName] = &QueryUser{UID: UuidV5(fmt.Sprintf("%s|%s", w.UserName, uidStr)), QueryUID: uid, UserName: w.UserName, TotalCount: 1, TotalDurationUs: durationUs}
+		} else {
+			q.QueriesByTime[ts].Queries[uidStr].Users[w.UserName].TotalCount++
+			q.QueriesByTime[ts].Queries[uidStr].Users[w.UserName].TotalDurationUs += durationUs
+		}
+	}
+
+	// All Queries
 	if _, ok := q.Queries[uidStr]; !ok {
 		database := w.Databases.AddDatabase(w.Database, "")
 
