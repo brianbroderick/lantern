@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS query_stats;

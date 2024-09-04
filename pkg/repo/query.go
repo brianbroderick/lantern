@@ -15,17 +15,30 @@ import (
 )
 
 type Query struct {
-	UID                       uuid.UUID             `json:"uid,omitempty"`                          // unique sha of the query
-	DatabaseUID               uuid.UUID             `json:"database_uid,omitempty"`                 // the dataset the query belongs to
-	SourceUID                 uuid.UUID             `json:"source_uid,omitempty"`                   // the source the query belongs to
-	TimestampByHour           time.Time             `json:"timestamp_by_hour,omitempty"`            // the time the query was executed, rounded to the hour
-	Command                   token.TokenType       `json:"command,omitempty"`                      // the type of query
+	UID           uuid.UUID               `json:"uid,omitempty"`            // unique sha of the query
+	DatabaseUID   uuid.UUID               `json:"database_uid,omitempty"`   // the dataset the query belongs to
+	SourceUID     uuid.UUID               `json:"source_uid,omitempty"`     // the source the query belongs to
+	QueryByHours  map[string]*QueryByHour `json:"query_by_hours,omitempty"` // query stats per hour
+	Command       token.TokenType         `json:"command,omitempty"`        // the type of query
+	MaskedQuery   string                  `json:"masked_query,omitempty"`   // the query with parameters masked
+	UnmaskedQuery string                  `json:"unmasked_query,omitempty"` // the query with parameters unmasked
+	SourceQuery   string                  `json:"source,omitempty"`         // the original query from the source
+
+	// TimestampByHour           time.Time               `json:"timestamp_by_hour,omitempty"`            // the time the query was executed, rounded to the hour
+	// TotalCount                int64                   `json:"total_count,omitempty"`                  // the number of times the query was executed
+	// TotalDurationUs           int64                   `json:"total_duration_us,omitempty"`            // the total duration of all executions of the query in microseconds
+	// TotalQueriesInTransaction int64                   `json:"total_queries_in_transaction,omitempty"` // the sum total number of queries each time this query was executed in a transaction
+	// Users                     map[string]*QueryUser   `json:"users,omitempty"`                        // the users who executed the query
+}
+
+type QueryByHour struct {
+	UID                       uuid.UUID             `json:"uid,omitempty"`                          // unique sha of the query plus the time
+	QueryUID                  uuid.UUID             `json:"query_uid,omitempty"`                    // unique sha of the query
+	QueriedDate               string                `json:"queried_date,omitempty"`                 // the date the query was executed
+	QueriedHour               int                   `json:"queried_hour,omitempty"`                 // the hour the query was executed
 	TotalCount                int64                 `json:"total_count,omitempty"`                  // the number of times the query was executed
 	TotalDurationUs           int64                 `json:"total_duration_us,omitempty"`            // the total duration of all executions of the query in microseconds
 	TotalQueriesInTransaction int64                 `json:"total_queries_in_transaction,omitempty"` // the sum total number of queries each time this query was executed in a transaction
-	MaskedQuery               string                `json:"masked_query,omitempty"`                 // the query with parameters masked
-	UnmaskedQuery             string                `json:"unmasked_query,omitempty"`               // the query with parameters unmasked
-	SourceQuery               string                `json:"source,omitempty"`                       // the original query from the source
 	Users                     map[string]*QueryUser `json:"users,omitempty"`                        // the users who executed the query
 }
 
@@ -80,22 +93,22 @@ func (q *Query) Process(w QueryWorker, qs *Queries) bool {
 func (q *Query) MarshalJSON() ([]byte, error) {
 	type Alias Query
 	return json.Marshal(&struct {
-		Command         string `json:"command,omitempty"`
-		TimestampByHour string `json:"timestamp_by_hour,omitempty"`
+		Command string `json:"command,omitempty"`
+		// TimestampByHour string `json:"timestamp_by_hour,omitempty"`
 
 		*Alias
 	}{
-		Command:         q.Command.String(),
-		TimestampByHour: q.TimestampByHour.Format("2006-01-02 15:04:05"),
-		Alias:           (*Alias)(q),
+		Command: q.Command.String(),
+		// TimestampByHour: q.TimestampByHour.Format("2006-01-02 15:04:05"),
+		Alias: (*Alias)(q),
 	})
 }
 
 func (q *Query) UnmarshalJSON(data []byte) error {
 	type Alias Query
 	aux := &struct {
-		Command         string `json:"command,omitempty"`
-		TimestampByHour string `json:"timestamp_by_hour,omitempty"`
+		Command string `json:"command,omitempty"`
+		// TimestampByHour string `json:"timestamp_by_hour,omitempty"`
 
 		*Alias
 	}{
@@ -105,10 +118,10 @@ func (q *Query) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	q.Command = token.Lookup(aux.Command)
-	t, err := time.Parse("2006-01-02 15:04:05", aux.TimestampByHour)
-	if err != nil {
-		return err
-	}
-	q.TimestampByHour = t
+	// t, err := time.Parse("2006-01-02 15:04:05", aux.TimestampByHour)
+	// if err != nil {
+	// 	return err
+	// }
+	// q.TimestampByHour = t
 	return nil
 }
