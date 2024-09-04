@@ -55,6 +55,7 @@ func (q *Queries) Process() bool {
 	}
 
 	q.ExtractStats()
+	q.UpsertQueryByHours()
 	q.UpsertQueryUsers()
 	q.UpsertTablesInQueries()
 	q.UpsertColumnsInQueries()

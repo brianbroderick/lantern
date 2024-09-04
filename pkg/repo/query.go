@@ -31,17 +31,6 @@ type Query struct {
 	// Users                     map[string]*QueryUser   `json:"users,omitempty"`                        // the users who executed the query
 }
 
-type QueryByHour struct {
-	UID                       uuid.UUID             `json:"uid,omitempty"`                          // unique sha of the query plus the time
-	QueryUID                  uuid.UUID             `json:"query_uid,omitempty"`                    // unique sha of the query
-	QueriedDate               string                `json:"queried_date,omitempty"`                 // the date the query was executed
-	QueriedHour               int                   `json:"queried_hour,omitempty"`                 // the hour the query was executed
-	TotalCount                int64                 `json:"total_count,omitempty"`                  // the number of times the query was executed
-	TotalDurationUs           int64                 `json:"total_duration_us,omitempty"`            // the total duration of all executions of the query in microseconds
-	TotalQueriesInTransaction int64                 `json:"total_queries_in_transaction,omitempty"` // the sum total number of queries each time this query was executed in a transaction
-	Users                     map[string]*QueryUser `json:"users,omitempty"`                        // the users who executed the query
-}
-
 // This is an interim struct with additional Query meta data. The struct is passed around and built up instead
 // of passing around a ton of individual variables.
 // This is used both initially when compiling a list of queries and then individually when processing each query
